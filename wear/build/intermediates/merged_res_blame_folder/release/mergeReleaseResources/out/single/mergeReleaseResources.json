@@ -1,0 +1,2026 @@
+[
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_googleg_standard_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/googleg_standard_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_textfield_search_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_textfield_search_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_switch_to_on_mtrl_00001.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_alert_dialog_button_bar_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_alert_dialog_button_bar_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-v21_notification_action.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout-v21/notification_action.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_ic_commit_search_api_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_ic_commit_search_api_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_fingerprint_dialog_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/layout/fingerprint_dialog_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_radio_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_textfield_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_textfield_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_cab_background_top_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_cab_background_top_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_5_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_5_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v26_biometric_error_color.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/color-v26/biometric_error_color.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_activity_chooser_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_activity_chooser_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_edittext.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_edittext.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_check_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_check_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_browser_actions_context_menu_page.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-browser-1.4.0-3:/layout/browser_actions_context_menu_page.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_tab_indicator_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_tab_indicator_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_focused_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_focused_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_text_select_handle_middle_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_text_select_handle_middle_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_overlay_confirmation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_overlay_confirmation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-watch-v20_common_google_signin_btn_text_light_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-auth-21.1.1-15:/drawable-watch-v20/common_google_signin_btn_text_light_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_btn_colored_borderless_text_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_btn_colored_borderless_text_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_notification_tile_bg.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/notification_tile_bg.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_textfield_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_textfield_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_radio_to_off_mtrl_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_radio_to_off_mtrl_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_checkbox_checked_mtrl_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_checkbox_checked_mtrl_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_common_google_signin_btn_text_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/common_google_signin_btn_text_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_search_dropdown_item_icons_2line.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_search_dropdown_item_icons_2line.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldrtl-xxhdpi-v17_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-ldrtl-xxhdpi-v17/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_text_select_handle_right_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_text_select_handle_right_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_spinner_textfield_background_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_spinner_textfield_background_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_action_item_icon_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_action_item_icon_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_action_drawer_title_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_action_drawer_title_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_adx_ic_other_sign_in.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-credentials-1.6.0-43:/drawable/adx_ic_other_sign_in.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_tooltip_exit.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_tooltip_exit.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_browser_actions_context_menu_row.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-browser-1.4.0-3:/layout/browser_actions_context_menu_row.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_ws_switch_thumb_color_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/color/ws_switch_thumb_color_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_focused_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_focused_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_list_selector_background_transition_holo_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_list_selector_background_transition_holo_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_common_google_signin_btn_icon_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/common_google_signin_btn_icon_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_unchecked_box_inner_merged_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_unchecked_box_inner_merged_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_radio_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_radio_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_ic_arrow_down_24dp.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/drawable-v21/ic_arrow_down_24dp.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_abc_list_divider_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v21/abc_list_divider_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_mode_bar.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_mode_bar.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v23_abc_control_background_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v23/abc_control_background_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_borderless_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_borderless_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_navigation_drawer_item_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_navigation_drawer_item_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_spinner.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_spinner.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_answer.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_answer.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_decline.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_decline.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notification_bg_normal_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notification_bg_normal_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_common_google_signin_btn_text_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/common_google_signin_btn_text_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_radio_off_to_on_mtrl_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_radio_off_to_on_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_ic_more_horiz_24dp_wht.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_ic_more_horiz_24dp_wht.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_googleg_disabled_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/googleg_disabled_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_unchecked_icon_null_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_unchecked_icon_null_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_cab_background_top_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_cab_background_top_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_checkbox_unchecked_mtrl.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_checkbox_unchecked_mtrl.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_btn_colored_text_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_btn_colored_text_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_googleg_standard_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/googleg_standard_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_slide_in_top.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_slide_in_top.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_3_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_3_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_scrubber_control_off_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_scrubber_control_off_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_list_menu_item_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_list_menu_item_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_notification_bg_low_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-mdpi-v4/notification_bg_low_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_ab_share_pack_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_rectangular_vignette_bottom.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material-1.5.0-97:/drawable/rectangular_vignette_bottom.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_wearable_drawer_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_wearable_drawer_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_disabled.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_disabled.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_abc_edit_text_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v21/abc_edit_text_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_selector_disabled_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_selector_disabled_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_scrubber_control_off_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_scrubber_control_off_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_switch_thumb_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/switch_thumb_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_abc_dialog_material_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v21/abc_dialog_material_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_textfield_search_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_textfield_search_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notification_oversize_large_icon_bg.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notification_oversize_large_icon_bg.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_selector_disabled_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_selector_disabled_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_textfield_search_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_textfield_search_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_cascading_menu_item_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_cascading_menu_item_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_on_mtrl_ring_outer_path_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_on_mtrl_ring_outer_path_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_radio_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_radio_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_tooltip.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_tooltip.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_widget_checkbox.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_widget_checkbox.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notification_bg_low_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notification_bg_low_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_7_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_7_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_expand_button.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/expand_button.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_search_url_text.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_search_url_text.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_category.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_category.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_dark_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_dark_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_switch_to_on_mtrl_00012.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_notification_action_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-v21/notification_action_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_notification_bg_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-xhdpi-v4/notification_bg_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_close_enter.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_close_enter.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_switch_track.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_switch_track.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_switch_to_on_mtrl_00001.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_thumb_mtrl_14w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_thumb_mtrl_14w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_switch_to_on_mtrl_00001.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_open_on_phone_arrow_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/open_on_phone_arrow_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_list_fragment.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_list_fragment.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/font_google_sans_flex_semi_bold.ttf.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/font/google_sans_flex_semi_bold.ttf"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_4_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_4_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_textfield_search_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_textfield_search_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_common_google_signin_btn_text_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/common_google_signin_btn_text_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_answer_low.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_answer_low.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_dark_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_dark_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_tile_preview.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/drawable/tile_preview.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_checkbox_unchecked_mtrl_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_checkbox_unchecked_mtrl_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ratingbar_indicator_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ratingbar_indicator_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_thumb_mtrl_18w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_thumb_mtrl_18w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_thumb_mtrl_16w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_thumb_mtrl_16w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_common_google_signin_btn_icon_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/common_google_signin_btn_icon_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_radio_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_ab_share_pack_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_switch_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_list_menu_item_checkbox.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_list_menu_item_checkbox.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_thumb_mtrl_17w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_thumb_mtrl_17w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_common_google_signin_btn_text_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/common_google_signin_btn_text_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-v21_notification_action_tombstone.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout-v21/notification_action_tombstone.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_dialog_edittext.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_dialog_edittext.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_switch_to_on_mtrl_00012.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-xxxhdpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_text.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_text.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_selector_disabled_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_selector_disabled_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_divider_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_divider_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_scrubber_primary_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_scrubber_primary_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_thumb_mtrl_14w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_thumb_mtrl_14w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/raw_firebase_common_keep.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-firebase-common-21.0.0-39:/raw/firebase_common_keep.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_slide_out_bottom.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_slide_out_bottom.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_radio_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_radio_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_on_mtrl_dot_group_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_on_mtrl_dot_group_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_popup_exit.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_popup_exit.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_switch_thumb_material_anim.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_switch_thumb_material_anim.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_switch_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_dark_focused.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_dark_focused.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_abc_btn_colored_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v21/abc_btn_colored_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_rectangular_vignette_top.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material-1.5.0-97:/drawable/rectangular_vignette_top.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_text_select_handle_middle_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_text_select_handle_middle_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_decline_low.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_decline_low.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_textfield_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_textfield_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_abc_action_bar_item_background_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-v21/abc_action_bar_item_background_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_check_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_check_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_scrubber_control_to_pressed_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_check_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_check_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_list_selector_background_transition_holo_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_list_selector_background_transition_holo_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_popup_background_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_popup_background_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/font_google_sans_flex_regular.ttf.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/font/google_sans_flex_regular.ttf"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_clear_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_clear_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_radio_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_radio_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_notification_bg.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/notification_bg.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_menu_hardkey_panel_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_menu_hardkey_panel_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_background_cache_hint_selector_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_background_cache_hint_selector_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_animation_interpolator_1.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_animation_interpolator_1.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_switch_to_on_mtrl_00012.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_text_select_handle_left_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_text_select_handle_left_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_scrubber_primary_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_scrubber_primary_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldrtl-hdpi-v17_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-ldrtl-hdpi-v17/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_list_selector_holo_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_list_selector_holo_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_dropdown.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_dropdown.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_wear_m3c_open_on_phone_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material3-1.5.0-27:/drawable/wear_m3c_open_on_phone_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_1_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_1_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_widget_switch_compat.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_widget_switch_compat.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_popup_menu_header_item_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_popup_menu_header_item_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_popup_background_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_popup_background_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_common_google_signin_btn_icon_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/common_google_signin_btn_icon_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-v21_notification_template_icon_group.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout-v21/notification_template_icon_group.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-v21_notification_template_custom_big.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout-v21/notification_template_custom_big.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_scrubber_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_scrubber_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_textfield_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_textfield_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_item_background_holo_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_item_background_holo_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-xhdpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_googleg_disabled_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/googleg_disabled_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_pressed_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_pressed_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_menu_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_menu_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_animation_interpolator_3.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_animation_interpolator_3.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_search_api_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_search_api_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_googleg_standard_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/googleg_standard_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ime_base_split_test_activity.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout/ime_base_split_test_activity.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_text_select_handle_middle_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_text_select_handle_middle_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_test_level_drawable.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/test_level_drawable.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_common_google_signin_btn_icon_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/common_google_signin_btn_icon_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-watch-v20_common_google_signin_btn_text_dark_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-auth-21.1.1-15:/drawable-watch-v20/common_google_signin_btn_text_dark_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_focused_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_focused_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_textfield_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_textfield_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_bar_title_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_bar_title_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-v21_preference_list_divider_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/drawable-v21/preference_list_divider_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_cab_background_top_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_cab_background_top_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_pressed_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_pressed_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_scrubber_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_scrubber_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_thumb_mtrl_18w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_thumb_mtrl_18w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_radio_material_anim.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_radio_material_anim.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notify_panel_notification_icon_bg.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notify_panel_notification_icon_bg.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_category_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_category_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_star_black_48dp.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_star_black_48dp.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_ic_expand_more_white_22.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_ic_expand_more_white_22.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_open_on_phone_path_2_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/open_on_phone_path_2_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_list_selector_holo_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_list_selector_holo_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_checked_box_outer_merged_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_checked_box_outer_merged_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_radio_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_radio_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_list_menu_item_icon.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_list_menu_item_icon.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_common_google_signin_btn_icon_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/common_google_signin_btn_icon_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_scrubber_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_scrubber_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_action_item_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_action_item_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_longpressed_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_longpressed_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_open_on_phone_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/open_on_phone_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_fade_out.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_fade_out.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_focused_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_focused_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_open_enter.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_open_enter.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_googleg_disabled_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/googleg_disabled_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_check_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_check_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_off_mtrl_dot_group_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_off_mtrl_dot_group_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_copy_mtrl_am_alpha.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_copy_mtrl_am_alpha.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_activity_chooser_view_list_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_activity_chooser_view_list_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_hint_foreground_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_hint_foreground_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_common_google_signin_btn_icon_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/common_google_signin_btn_icon_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-anydpi-v23_fingerprint_dialog_fp_icon.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-anydpi-v23/fingerprint_dialog_fp_icon.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_fade_enter.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_fade_enter.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_switch_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_scrubber_control_to_pressed_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_check_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_check_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_screen_simple_overlay_action_mode.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_screen_simple_overlay_action_mode.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_open_on_phone_animation_interpolator_1.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/open_on_phone_animation_interpolator_1.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_popup_enter.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_popup_enter.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_custom_dialog.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout/custom_dialog.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_information_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_information_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_tooltip_frame_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/tooltip_frame_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_seekbar_tick_mark_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_seekbar_tick_mark_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_answer_video_low.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_answer_video_low.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-watch-v20_abc_dialog_material_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-watch-v20/abc_dialog_material_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_animation_interpolator_2.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_animation_interpolator_2.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_radio_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_2_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_2_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-xxhdpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_switch_to_on_mtrl_00012.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_screen_content_include.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_screen_content_include.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_dark_focused.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_dark_focused.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_thumb_mtrl_17w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_thumb_mtrl_17w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_radio_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_tab_indicator_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_tab_indicator_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_btn_check_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_btn_check_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_notification_template_part_time.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout/notification_template_part_time.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_scrubber_control_off_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_scrubber_control_off_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_list_menu_item_radio.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_list_menu_item_radio.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_thumb_mtrl_14w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_thumb_mtrl_14w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_text_select_handle_left_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_text_select_handle_left_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_pressed_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_pressed_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_dialog_title_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_dialog_title_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_cab_background_top_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_cab_background_top_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notification_bg_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notification_bg_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_launcher.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/drawable/ic_launcher.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_hint_foreground_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_hint_foreground_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_default_mtrl_shape.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_default_mtrl_shape.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_selector_disabled_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_selector_disabled_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_tooltip_frame_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/tooltip_frame_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_radio_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-watch-v20_common_google_signin_btn_text_disabled.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-auth-21.1.1-15:/drawable-watch-v20/common_google_signin_btn_text_disabled.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_common_full_open_on_phone.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/common_full_open_on_phone.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_primary_text_disable_only_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_primary_text_disable_only_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_longpressed_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_longpressed_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_fade_exit.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_fade_exit.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_information.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_information.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_pressed_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_pressed_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_switch_thumb_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_switch_thumb_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_tab_indicator_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_tab_indicator_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_thumb_mtrl_17w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_thumb_mtrl_17w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_ws_switch_track_color_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/color/ws_switch_track_color_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_text_select_handle_right_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_text_select_handle_right_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_fast_out_slow_in.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/fast_out_slow_in.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_checkbox_checked_mtrl_animation_interpolator_1.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_checkbox_checked_mtrl_animation_interpolator_1.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_screen_simple.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_screen_simple.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_common_google_signin_btn_text_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/common_google_signin_btn_text_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_pressed_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_pressed_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_scrubber_control_to_pressed_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_scrubber_control_to_pressed_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_radio_off_mtrl.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_radio_off_mtrl.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_notification_icon_background.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/notification_icon_background.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_menu_hardkey_panel_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_menu_hardkey_panel_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_alert_dialog_title_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_alert_dialog_title_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_vector_test.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-resources-1.6.1-55:/drawable/abc_vector_test.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_common_google_signin_btn_text_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/common_google_signin_btn_text_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_vector_tint_color.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-ui-release-42:/color/vector_tint_color.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_overflow_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_overflow_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_tab_indicator_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_tab_indicator_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_on_mtrl_ring_outer_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_on_mtrl_ring_outer_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_cab_background_top_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_cab_background_top_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_image_frame.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/image_frame.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_notification_template_part_chronometer.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout/notification_template_part_chronometer.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_popup_menu_item_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_popup_menu_item_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_action_drawer_peek_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_action_drawer_peek_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_textfield_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_textfield_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_check_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_check_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_switch_to_on_mtrl_00001.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_btn_check_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_btn_check_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_text_select_handle_right_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_text_select_handle_right_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_notification_bg_normal_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-mdpi-v4/notification_bg_normal_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_select_dialog_multichoice_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/select_dialog_multichoice_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_common_google_signin_btn_text_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/common_google_signin_btn_text_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_selector_disabled_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_selector_disabled_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_ic_commit_search_api_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_ic_commit_search_api_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_notification_bg_low_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-mdpi-v4/notification_bg_low_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_unchecked_check_path_merged_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_unchecked_check_path_merged_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_checkbox_unchecked_mtrl_animation_interpolator_1.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_checkbox_unchecked_mtrl_animation_interpolator_1.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_adx_ic_passkey.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-credentials-1.6.0-43:/drawable/adx_ic_passkey.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_common_google_signin_btn_icon_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xhdpi-v4/common_google_signin_btn_icon_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_selector_disabled_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_selector_disabled_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_select_dialog_singlechoice_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/select_dialog_singlechoice_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_widget_seekbar_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_widget_seekbar_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_divider_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_divider_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_textfield_search_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_textfield_search_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ratingbar_small_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ratingbar_small_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_ab_back_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_ab_back_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_arrow_drop_right_black_24dp.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_arrow_drop_right_black_24dp.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_full_sad.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_full_sad.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_thumb_mtrl_15w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_thumb_mtrl_15w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_tooltip_enter.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_tooltip_enter.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_menu_hardkey_panel_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_menu_hardkey_panel_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldrtl-mdpi-v17_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-ldrtl-mdpi-v17/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_action_drawer_item_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_action_drawer_item_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_text_select_handle_left_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_text_select_handle_left_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_secondary_text_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_secondary_text_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_seekbar_thumb_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_seekbar_thumb_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_secondary_text_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_secondary_text_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldrtl-xxxhdpi-v17_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-ldrtl-xxxhdpi-v17/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_circular_vignette_top.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material-1.5.0-97:/drawable/circular_vignette_top.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_ic_commit_search_api_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_ic_commit_search_api_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/xml_image_share_filepaths.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-browser-1.4.0-3:/xml/image_share_filepaths.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_vector_tint_theme_color.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-ui-release-42:/color/vector_tint_theme_color.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_googleg_standard_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/googleg_standard_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_track_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_track_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_btn_check_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_btn_check_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_notification_bg_low_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-xhdpi-v4/notification_bg_low_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_thumb_mtrl_16w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_thumb_mtrl_16w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_close_exit.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_close_exit.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_recyclerview.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_recyclerview.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_textfield_search_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_textfield_search_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-watch-v20_abc_alert_dialog_button_bar_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_failure_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/failure_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_ic_expand_less_white_22.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_ic_expand_less_white_22.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_scrubber_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_scrubber_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_light_focused.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_light_focused.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_thumb_mtrl_18w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_thumb_mtrl_18w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_menu_item_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_menu_item_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_go_search_api_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_go_search_api_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_checkbox_checked_to_unchecked_mtrl_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_checkbox_checked_to_unchecked_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_popup_background_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_popup_background_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_divider_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_divider_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_ic_commit_search_api_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_ic_commit_search_api_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_background_cache_hint_selector_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_background_cache_hint_selector_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_switch_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_light_focused.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_light_focused.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldrtl-xhdpi-v17_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-ldrtl-xhdpi-v17/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_text_select_handle_left_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_text_select_handle_left_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_switch_thumb_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/switch_thumb_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_notification_bg_low_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-xhdpi-v4/notification_bg_low_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_textfield_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_textfield_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_mode_close_item_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_mode_close_item_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_textfield_search_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_textfield_search_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_notification_bg_normal_pressed.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-xhdpi-v4/notification_bg_normal_pressed.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_btn_switch_to_on_mtrl_00001.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_check_to_on_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_check_to_on_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_icon_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_icon_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_radio_on_mtrl.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_radio_on_mtrl.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_fade_in.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_fade_in.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_expanded_menu_layout.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_expanded_menu_layout.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_scrubber_control_off_mtrl_alpha.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_scrubber_control_off_mtrl_alpha.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_star_half_black_48dp.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_star_half_black_48dp.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-mdpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_spinner_mtrl_am_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_spinner_mtrl_am_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_common_google_signin_btn_icon_light_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-xxhdpi-v4/common_google_signin_btn_icon_light_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_longpressed_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_longpressed_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_slide_out_top.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_slide_out_top.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_text_select_handle_right_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_text_select_handle_right_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_text_select_handle_right_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_text_select_handle_right_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim-v21_fragment_fast_out_extra_slow_in.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/anim-v21/fragment_fast_out_extra_slow_in.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_widget_seekbar.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_widget_seekbar.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_notification_bg_low.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/notification_bg_low.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_off_mtrl_ring_outer_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_off_mtrl_ring_outer_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_color_highlight_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_color_highlight_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_common_google_signin_btn_text_dark_normal_background.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/common_google_signin_btn_text_dark_normal_background.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_search_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_search_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ime_secondary_split_test_activity.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/layout/ime_secondary_split_test_activity.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_voice_search_api_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_voice_search_api_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_full_sad.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_full_sad.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-v26_abc_screen_toolbar.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout-v26/abc_screen_toolbar.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_widget_switch.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_widget_switch.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_track_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_track_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_call_answer_video.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable/ic_call_answer_video.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_shrink_fade_out_from_bottom.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_shrink_fade_out_from_bottom.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_radio_on_to_off_mtrl_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_radio_on_to_off_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_cut_mtrl_alpha.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_cut_mtrl_alpha.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_item_background_holo_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_item_background_holo_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_disabled.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_disabled.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_checkbox_checked_mtrl.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_checkbox_checked_mtrl.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_tab_indicator_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_tab_indicator_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_check_material_anim.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_check_material_anim.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_common_full_open_on_phone.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-hdpi-v4/common_full_open_on_phone.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_light_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_light_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_navigation_drawer_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_navigation_drawer_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_btn_checkbox_unchecked_to_checked_mtrl_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/btn_checkbox_unchecked_to_checked_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_text_select_handle_middle_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_text_select_handle_middle_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_divider_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_divider_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_primary_text_disable_only_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_primary_text_disable_only_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_radio_to_on_mtrl_015.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_radio_to_on_mtrl_015.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_notification_bg_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-mdpi-v4/notification_bg_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_googleg_disabled_color_18.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable-mdpi-v4/googleg_disabled_color_18.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_text_cursor_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_text_cursor_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_ab_share_pack_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_adx_ic_password.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-credentials-1.6.0-43:/drawable/adx_ic_password.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_list_pressed_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_list_pressed_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_primary_text_material_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_primary_text_material_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_common_google_signin_btn_text_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/color/common_google_signin_btn_text_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_popup_background_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_popup_background_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_common_google_signin_btn_tint.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/color/common_google_signin_btn_tint.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_common_google_signin_btn_text_dark.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/color/common_google_signin_btn_text_dark.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_open_on_phone_path_1_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/open_on_phone_path_1_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_btn_switch_to_on_mtrl_00012.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-anydpi-v24_fingerprint_dialog_error.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-anydpi-v24/fingerprint_dialog_error.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_seek_thumb.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_seek_thumb.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_generic_confirmation_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/anim/generic_confirmation_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_scrubber_primary_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_scrubber_primary_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_seekbar_track_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_seekbar_track_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_cab_background_internal_bg.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_cab_background_internal_bg.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_selector_disabled_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_selector_disabled_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_longpressed_holo.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_longpressed_holo.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_slide_in_bottom.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_slide_in_bottom.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-ldpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-ldpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_btn_check_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_btn_check_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_ws_switch_thumb_mtrl_15w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xhdpi-v4/ws_switch_thumb_mtrl_15w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_wear_m3c_failure_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material3-1.5.0-27:/drawable/wear_m3c_failure_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_abc_textfield_search_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xhdpi-v4/abc_textfield_search_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_tab_indicator_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_tab_indicator_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_6_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_6_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v23_fingerprint_dialog_error.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-biometric-1.1.0-37:/drawable-hdpi-v23/fingerprint_dialog_error.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_btn_checkable.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_btn_checkable.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_radio_to_off_mtrl_ring_outer_path_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_radio_to_off_mtrl_ring_outer_path_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/font_google_sans_flex_variable.ttf.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/font/google_sans_flex_variable.ttf"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_abc_grow_fade_in_from_bottom.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/abc_grow_fade_in_from_bottom.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xhdpi-v4_notify_panel_notification_icon_bg.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-xhdpi-v4/notify_panel_notification_icon_bg.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_notify_panel_notification_icon_bg.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-mdpi-v4/notify_panel_notification_icon_bg.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ratingbar_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ratingbar_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_notification_bg_low_normal.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-core-1.16.0-20:/drawable-hdpi-v4/notification_bg_low_normal.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_textfield_search_activated_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_textfield_search_activated_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_ws_switch_thumb_mtrl_16w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-xxhdpi-v4/ws_switch_thumb_mtrl_16w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_icon_light_normal.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_icon_light_normal.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_list_pressed_holo_dark.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_list_pressed_holo_dark.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/interpolator_btn_radio_to_on_mtrl_animation_interpolator_0.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/interpolator/btn_radio_to_on_mtrl_animation_interpolator_0.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_share_mtrl_alpha.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_share_mtrl_alpha.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_selectall_mtrl_alpha.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_selectall_mtrl_alpha.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_track_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_track_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_circular_vignette_bottom.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material-1.5.0-97:/drawable/circular_vignette_bottom.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_action_bar_up_container.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_action_bar_up_container.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_scrubber_control_to_pressed_mtrl_000.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_open_on_phone_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/open_on_phone_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/font_google_sans_flex_medium.ttf.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/font/google_sans_flex_medium.ttf"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxxhdpi-v4_abc_text_select_handle_left_mtrl.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxxhdpi-v4/abc_text_select_handle_left_mtrl.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_ws_single_page_nav_drawer_peek_view.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/layout/ws_single_page_nav_drawer_peek_view.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/animator_fragment_open_exit.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-fragment-1.5.7-88:/animator/fragment_open_exit.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_wear_m3c_check_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-compose-material3-1.5.0-27:/drawable/wear_m3c_check_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_menu_hardkey_panel_mtrl_mult.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_menu_hardkey_panel_mtrl_mult.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_abc_ic_menu_paste_mtrl_am_alpha.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable/abc_ic_menu_paste_mtrl_am_alpha.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_select_dialog_item_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/select_dialog_item_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_support_simple_spinner_dropdown_item.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/support_simple_spinner_dropdown_item.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ic_nordic.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-horologist-tiles-0.7.15-47:/drawable/ic_nordic.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_ws_switch_thumb_mtrl_15w.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable-hdpi-v4/ws_switch_thumb_mtrl_15w.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_preference_dropdown_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-preference-1.1.0-82:/layout/preference_dropdown_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_textfield_default_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_textfield_default_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_list_selector_disabled_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_list_selector_disabled_holo_light.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_confirmation_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/confirmation_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_common_google_signin_btn_text_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-play-services-base-18.5.0-2:/drawable/common_google_signin_btn_text_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_scrubber_primary_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_scrubber_primary_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable_ws_ic_more_vert_24dp_wht.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-wear-1.3.0-36:/drawable/ws_ic_more_vert_24dp_wht.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color-v23_abc_tint_default.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color-v23/abc_tint_default.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_alert_dialog_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_alert_dialog_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout-watch-v20_abc_alert_dialog_title_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout-watch-v20/abc_alert_dialog_title_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/color_abc_primary_text_material_light.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/color/abc_primary_text_material_light.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_checked_icon_null_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_checked_icon_null_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-hdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-hdpi-v4/abc_switch_track_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-main-109:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-xxhdpi-v4_abc_ab_share_pack_mtrl_alpha.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-xxhdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/anim_btn_checkbox_to_checked_box_inner_merged_animation.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/anim/btn_checkbox_to_checked_box_inner_merged_animation.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/layout_abc_select_dialog_material.xml.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/layout/abc_select_dialog_material.xml"
+    },
+    {
+        "merged": "com.creativeblisslabs.wearproductivity.wear-release-108:/drawable-mdpi-v4_abc_list_pressed_holo_light.9.png.flat",
+        "source": "com.creativeblisslabs.wearproductivity.wear-appcompat-1.6.1-80:/drawable-mdpi-v4/abc_list_pressed_holo_light.9.png"
+    }
+]

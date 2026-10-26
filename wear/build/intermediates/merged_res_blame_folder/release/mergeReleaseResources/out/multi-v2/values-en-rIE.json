@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.creativeblisslabs.wearproductivity.wear-mergeReleaseResources-105:/values-en-rIE/values-en-rIE.xml",
+            "map": [
+                {
+                    "source": "/Users/manpreet/.gradle/caches/8.13/transforms/888651f75b96ac9bf915da1d687f6733/transformed/horologist-composables-0.7.15/res/values-en-rIE/values-en-rIE.xml",
+                    "from": {
+                        "startLines": "2,6,10,14,15,16,17,18,19,20,21,22,23,24",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,221,393,565,654,708,766,849,905,988,1049,1108,1173,1241",
+                        "endLines": "5,9,13,14,15,16,17,18,19,20,21,22,23,24",
+                        "endColumns": "12,12,12,88,53,57,82,55,82,60,58,64,67,64",
+                        "endOffsets": "216,388,560,649,703,761,844,900,983,1044,1103,1168,1236,1301"
+                    }
+                }
+            ]
+        }
+    ]
+}

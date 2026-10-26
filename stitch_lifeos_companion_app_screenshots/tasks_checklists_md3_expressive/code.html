@@ -1,0 +1,382 @@
+<!DOCTYPE html><html class="dark" lang="en" style="width: 390px; height: 875px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<meta content="mobile_tab" name="shell-type">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  @layer base {
+    html, body {
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      background-color: #111318;
+      font-family: 'Roboto Flex', sans-serif;
+    }
+    body {
+      overscroll-behavior: none;
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 20px);
+    }
+  }
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "tertiary": "#ffb59e",
+          "on-primary": "#002b75",
+          "outline-variant": "#434652",
+          "secondary-fixed-dim": "#62dbb2",
+          "surface-variant": "#33353a",
+          "background": "#111318",
+          "primary-fixed-dim": "#b3c5ff",
+          "on-primary-fixed-variant": "#0940a0",
+          "surface-container": "#1e2025",
+          "on-secondary-fixed": "#002117",
+          "tertiary-fixed": "#ffdbd0",
+          "outline": "#8e909e",
+          "on-tertiary-fixed": "#3a0b00",
+          "on-tertiary-container": "#681a00",
+          "surface-tint": "#b3c5ff",
+          "surface-container-lowest": "#0c0e13",
+          "primary-container": "#769bff",
+          "on-background": "#e2e2e9",
+          "on-surface-variant": "#c4c6d4",
+          "on-tertiary": "#5e1700",
+          "inverse-primary": "#3059b9",
+          "on-error-container": "#ffdad6",
+          "on-tertiary-fixed-variant": "#7f2a0d",
+          "secondary": "#62dbb2",
+          "on-primary-container": "#003080",
+          "tertiary-container": "#f17f5b",
+          "on-surface": "#e2e2e9",
+          "surface": "#111318",
+          "on-primary-fixed": "#001849",
+          "on-error": "#690005",
+          "tertiary-fixed-dim": "#ffb59e",
+          "surface-bright": "#37393f",
+          "surface-dim": "#111318",
+          "surface-container-high": "#282a2f",
+          "error": "#ffb4ab",
+          "surface-container-low": "#1a1b21",
+          "secondary-fixed": "#80f8cd",
+          "on-secondary-fixed-variant": "#00513d",
+          "error-container": "#93000a",
+          "surface-container-highest": "#33353a",
+          "on-secondary": "#003829",
+          "primary-fixed": "#dae1ff",
+          "on-secondary-container": "#003123",
+          "inverse-surface": "#e2e2e9",
+          "inverse-on-surface": "#2e3036",
+          "secondary-container": "#18a47e",
+          "primary": "#b3c5ff"
+        },
+        borderRadius: {
+          "DEFAULT": "1rem",
+          "lg": "2rem",
+          "xl": "3rem",
+          "full": "9999px"
+        }
+      }
+    }
+  };
+</script>
+</head>
+<body class="bg-background text-on-surface flex flex-col min-h-screen selection:bg-primary-container selection:text-on-primary-container antialiased">
+<!-- Google Pixel MD3 Expressive Top App Bar -->
+<header class="fixed top-0 inset-x-0 z-40 bg-[#111318]/95 backdrop-blur-xl pt-safe">
+<div class="px-5 pt-3 pb-2.5 flex items-center justify-between">
+<div class="flex items-center space-x-3.5">
+<div class="w-11 h-11 rounded-[20px] bg-primary-container/20 flex items-center justify-center text-primary transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[26px]">task_alt</span>
+</div>
+<div>
+<h1 class="text-[26px] font-extrabold tracking-tight text-on-surface leading-tight">Tasks &amp; Lists</h1>
+<div class="flex items-center space-x-1.5 text-xs text-secondary font-medium tracking-wide">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse shadow-[0_0_8px_rgba(98,219,178,0.7)]"></span>
+
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-1.5">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/60 active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/60 active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[24px]">more_vert</span>
+</button>
+<div class="w-10 h-10 rounded-full ring-2 ring-primary-container/50 overflow-hidden ml-1 active:scale-95 transition-transform">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9JTqTr4leN2sEHYc5Tz4UAMxQto-yLmUmWU496QF-U-1v4I7D0qrvBLAn6ryHKFrRYK868dolnym7pP8DRFupjU68ZsP9nX0e3ptK0EOJupXx5dZfpVPhAhNC-QRx4Nr-ISvQRgM3SiqAbdpEyZ-YB4kuaHqMr5VJs06gHF7YDq2pHV8lWUttfRBjvZoSlcQ8C3KqslJhq5lBVRRXQpsPt2YQWF5gkbLP26ciCXf0PX_1DbkgvgqQ1w">
+</div>
+</div>
+</div>
+<!-- M3 Expressive Tactile Filter Pill Carousel -->
+<div class="flex items-center space-x-2.5 overflow-x-auto no-scrollbar px-5 pb-3.5 pt-1">
+<button class="filter-chip active flex items-center space-x-2 px-4 py-2.5 rounded-full bg-primary-container text-on-primary-container text-sm font-bold shadow-md shadow-primary-container/15 active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[19px]">done_all</span>
+<span>All</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-[#003080]/25 text-on-primary-container">12</span>
+</button>
+<button class="filter-chip flex items-center space-x-2 px-4 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant hover:text-on-surface text-sm font-medium hover:bg-surface-bright active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[19px]">today</span>
+<span>Today</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-highest text-on-surface-variant">5</span>
+</button>
+<button class="filter-chip flex items-center space-x-2 px-4 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant hover:text-on-surface text-sm font-medium hover:bg-surface-bright active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[19px]">business_center</span>
+<span>Work</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-highest text-on-surface-variant">3</span>
+</button>
+<button class="filter-chip flex items-center space-x-2 px-4 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant hover:text-on-surface text-sm font-medium hover:bg-surface-bright active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[19px]">shopping_bag</span>
+<span>Groceries</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-highest text-on-surface-variant">4</span>
+</button>
+<button class="filter-chip flex items-center space-x-2 px-4 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant hover:text-on-surface text-sm font-medium hover:bg-surface-bright active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[19px]">mic</span>
+<span>Voice Notes</span>
+</button>
+</div>
+</header>
+<!-- Main Scrollable Area -->
+<main class="flex-1 w-full max-w-lg mx-auto pt-40 pb-36 px-4 space-y-6">
+<!-- 3. Hero Pinned Task (Asymmetric MD3 Expressive Card) -->
+
+<!-- 4. Today's Focus Section -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-1.5">
+<div class="flex items-center space-x-2.5">
+<h3 class="text-lg font-bold tracking-tight text-on-surface">Today's Focus</h3>
+<span class="text-xs px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-bold">3 of 5</span>
+</div>
+<button class="text-xs font-bold text-primary hover:text-primary-fixed flex items-center space-x-1 active:scale-95 transition-transform">
+<span class="">Sort by urgency</span>
+<span class="material-symbols-outlined text-[17px]">sort</span>
+</button>
+</div>
+<div class="space-y-2.5">
+<!-- Task Item 1 -->
+<div class="flex items-center justify-between p-4 rounded-[26px] bg-surface-container hover:bg-surface-container-high transition-all">
+<div class="flex items-start space-x-3.5 min-w-0 flex-1">
+<button class="mt-0.5 w-6 h-6 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[16px] check-icon font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1 pr-2">
+<p class="text-[15px] font-semibold text-on-surface truncate task-title">Pick up dry cleaning &amp; birthday card</p>
+<div class="flex items-center space-x-2 mt-1">
+<span class="text-xs text-secondary font-semibold flex items-center space-x-1">
+<span class="material-symbols-outlined text-[14px]">vibration</span>
+<span class="">5:00 PM Haptic</span>
+</span>
+<span class="text-[11px] text-on-surface-variant">• Main St. Cleaners</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full text-xs font-bold bg-surface-container-highest text-tertiary shrink-0">#Personal</span>
+</div>
+<!-- Task Item 2 -->
+<div class="flex items-center justify-between p-4 rounded-[26px] bg-surface-container hover:bg-surface-container-high transition-all">
+<div class="flex items-start space-x-3.5 min-w-0 flex-1">
+<button class="mt-0.5 w-6 h-6 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[16px] check-icon font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1 pr-2">
+<p class="text-[15px] font-semibold text-on-surface truncate task-title">Finalize LifeOS Wear OS design tokens</p>
+<div class="flex items-center space-x-2 mt-1">
+<span class="text-xs text-primary font-semibold flex items-center space-x-1">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+<span class="">Synced</span>
+</span>
+<span class="text-[11px] text-on-surface-variant">• PR #142 Ready</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full text-xs font-bold bg-primary-container/20 text-primary shrink-0">#Design</span>
+</div>
+<!-- Task Item 3 (Completed) -->
+<div class="flex items-center justify-between p-4 rounded-[26px] bg-surface-container-low/70 transition-all opacity-75">
+<div class="flex items-start space-x-3.5 min-w-0 flex-1">
+<button class="mt-0.5 w-6 h-6 rounded-full bg-secondary text-on-secondary border-2 border-secondary flex items-center justify-center transition-all active:scale-85 shrink-0 shadow-sm shadow-secondary/30" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[16px] check-icon font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1 pr-2">
+<p class="text-[15px] font-semibold text-on-surface-variant line-through truncate task-title">Drink 500ml water post-workout</p>
+<p class="text-xs text-secondary mt-1 flex items-center space-x-1 font-medium">
+<span class="material-symbols-outlined text-[14px]">watch</span>
+<span class="">Done via Pixel Watch at 10:15 AM</span>
+</p>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container/20 text-secondary shrink-0">#Health</span>
+</div>
+</div>
+</section>
+<!-- 5. Streamlined Grocery / Quick List Section -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-1.5">
+<div class="flex items-center space-x-2.5">
+<h3 class="text-lg font-bold tracking-tight text-on-surface">Grocery List</h3>
+<span class="text-xs px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-bold">4 items</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant flex items-center space-x-1">
+<span class="material-symbols-outlined text-[15px]">storefront</span>
+<span class="">Whole Foods Downtown</span>
+</span>
+</div>
+<div class="rounded-[28px] bg-surface-container p-2 space-y-1">
+<div class="flex items-center justify-between px-3.5 py-3 rounded-2xl hover:bg-surface-container-high transition-colors">
+<div class="flex items-center space-x-3.5 min-w-0">
+<button class="w-5 h-5 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[14px] check-icon font-bold">check</span>
+</button>
+<span class="text-sm font-semibold text-on-surface task-title">Organic Almond Milk</span>
+</div>
+<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">Aisle 2</span>
+</div>
+<div class="flex items-center justify-between px-3.5 py-3 rounded-2xl hover:bg-surface-container-high transition-colors">
+<div class="flex items-center space-x-3.5 min-w-0">
+<button class="w-5 h-5 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[14px] check-icon font-bold">check</span>
+</button>
+<span class="text-sm font-semibold text-on-surface task-title">Ripe Hass Avocados (3x)</span>
+</div>
+<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">Produce</span>
+</div>
+<div class="flex items-center justify-between px-3.5 py-3 rounded-2xl hover:bg-surface-container-high transition-colors">
+<div class="flex items-center space-x-3.5 min-w-0">
+<button class="w-5 h-5 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[14px] check-icon font-bold">check</span>
+</button>
+<span class="text-sm font-semibold text-on-surface task-title">Nitro Cold Brew Concentrate</span>
+</div>
+<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">Aisle 4</span>
+</div>
+<div class="flex items-center justify-between px-3.5 py-3 rounded-2xl hover:bg-surface-container-high transition-colors">
+<div class="flex items-center space-x-3.5 min-w-0">
+<button class="w-5 h-5 rounded-full border-2 border-outline hover:border-primary text-transparent flex items-center justify-center transition-all active:scale-85 shrink-0" onclick="toggleM3Check(this)">
+<span class="material-symbols-outlined text-[14px] check-icon font-bold">check</span>
+</button>
+<span class="text-sm font-semibold text-on-surface task-title">High-Protein Greek Yogurt</span>
+</div>
+<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">Dairy</span>
+</div>
+</div>
+</section>
+<!-- 6. Wrist Voice Transcript Card (Google Recorder / Pixel Style) -->
+
+</main>
+<!-- 7. Extended Floating Action Button (Signature M3 Expressive Pill FAB) -->
+<div class="fixed right-5 bottom-24 z-40 pointer-events-auto">
+<button class="flex items-center space-x-2.5 pl-5 pr-4 py-4 rounded-[24px] bg-primary-container text-on-primary-container shadow-2xl shadow-black/60 hover:bg-primary-container/90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[24px] font-bold">add</span>
+<span class="font-extrabold text-sm tracking-wide">New Task</span>
+<span class="w-[1px] h-5 bg-on-primary-container/25 mx-1"></span>
+<div class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-on-primary-container/10 active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</div>
+</button>
+</div>
+<!-- 8. Authentic M3 Expressive Bottom Navigation Bar -->
+<nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-[#111318]/95 backdrop-blur-2xl border-t border-surface-container-high/40">
+<div class="max-w-md mx-auto px-4 py-2 flex items-center justify-around">
+<!-- Today Tab -->
+<a class="group flex flex-col items-center justify-center py-1 min-w-[64px]" href="#">
+<div class="px-5 py-1 rounded-full text-on-surface-variant group-hover:bg-surface-container-high transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">today</span>
+</div>
+<span class="text-[11px] font-semibold text-on-surface-variant mt-1">Today</span>
+</a>
+<!-- Active: Habits / Tasks Tab -->
+<a class="group flex flex-col items-center justify-center py-1 min-w-[64px]" href="#">
+<div class="px-5 py-1 rounded-full bg-primary-container text-on-primary-container transition-all flex items-center justify-center shadow-md shadow-primary-container/20">
+<span class="material-symbols-outlined text-[22px] font-bold">checklist</span>
+</div>
+<span class="text-[11px] font-extrabold text-on-surface mt-1">Habits</span>
+</a>
+<!-- Sleep & Clock Tab -->
+<a class="group flex flex-col items-center justify-center py-1 min-w-[64px]" href="#">
+<div class="px-5 py-1 rounded-full text-on-surface-variant group-hover:bg-surface-container-high transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">schedule</span>
+</div>
+<span class="text-[11px] font-semibold text-on-surface-variant mt-1">Sleep &amp; Clock</span>
+</a>
+<!-- Remote Tab -->
+<a class="group flex flex-col items-center justify-center py-1 min-w-[64px]" href="#">
+<div class="px-5 py-1 rounded-full text-on-surface-variant group-hover:bg-surface-container-high transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">cast</span>
+</div>
+<span class="text-[11px] font-semibold text-on-surface-variant mt-1">Remote</span>
+</a>
+</div>
+</nav>
+<script>
+  // M3 filter chip toggle micro-interaction
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => {
+        c.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-md', 'shadow-primary-container/15', 'font-bold');
+        c.classList.add('bg-surface-container-high', 'text-on-surface-variant', 'font-medium');
+      });
+      chip.classList.remove('bg-surface-container-high', 'text-on-surface-variant', 'font-medium');
+      chip.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-md', 'shadow-primary-container/15', 'font-bold');
+    });
+  });
+
+  // M3 Checkbox toggle interaction
+  function toggleM3Check(btn) {
+    const container = btn.closest('.flex') || btn.parentElement;
+    const title = container.querySelector('.task-title');
+    const isChecked = btn.classList.contains('bg-secondary');
+
+    if (!isChecked) {
+      btn.classList.add('bg-secondary', 'text-on-secondary', 'border-secondary', 'shadow-sm', 'shadow-secondary/30');
+      btn.classList.remove('border-outline', 'text-transparent');
+      if (title) {
+        title.classList.add('line-through', 'text-on-surface-variant');
+      }
+    } else {
+      btn.classList.remove('bg-secondary', 'text-on-secondary', 'border-secondary', 'shadow-sm', 'shadow-secondary/30');
+      btn.classList.add('border-outline', 'text-transparent');
+      if (title) {
+        title.classList.remove('line-through', 'text-on-surface-variant');
+      }
+    }
+  }
+
+  // Voice to task conversion trigger
+  function convertVoiceToTask(btn) {
+    btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">done</span><span>Added</span>';
+    btn.classList.remove('bg-primary', 'text-on-primary');
+    btn.classList.add('bg-secondary', 'text-on-secondary');
+    setTimeout(() => {
+      const section = btn.closest('section');
+      if (section) {
+        section.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        section.style.opacity = '0.4';
+        section.style.pointerEvents = 'none';
+        section.style.transform = 'scale(0.98)';
+      }
+    }, 500);
+  }
+</script>
+
+
+</body></html>

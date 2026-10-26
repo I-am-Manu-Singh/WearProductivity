@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wear OS - Calendar & Agenda Dot View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700;800&family=Google+Sans+Flex:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      color: #ffffff;
+      font-family: 'Roboto Flex', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Wear OS Circular Viewport (Google Pixel Watch 3 45mm scale: 456x456 calibrated) */
+    .watch-dial {
+      width: 390px;
+      height: 390px;
+      max-width: 390px;
+      max-height: 390px;
+      border-radius: 50%;
+      background: #000000;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px #1a1c22, 0 16px 40px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 14px 14px 14px;
+    }
+
+    /* Subtle Bezel Guide glow */
+    .watch-dial::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Scrollable Container with Rotary Feel */
+    .tile-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    /* Weekday Strip Grid */
+    .calendar-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      width: 88%;
+      margin: 2px 0 6px 0;
+    }
+
+    .day-pill {
+      background: #14171d;
+      border-radius: 20px;
+      padding: 6px 2px 7px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .day-pill.active-today {
+      background: #1e2638;
+      border: 1.5px solid #769bff;
+      box-shadow: 0 0 12px rgba(118, 155, 255, 0.25);
+    }
+
+    /* Multi-category markers */
+    .dot-matrix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5px;
+      margin-top: 3px;
+      height: 5px;
+    }
+
+    .cat-dot {
+      width: 4.5px;
+      height: 4.5px;
+      border-radius: 50%;
+    }
+
+    .cat-events { background-color: #769bff; }    /* Cobalt / Lavender */
+    .cat-tasks { background-color: #6fe5ad; }     /* Mint Green */
+    .cat-fasting { background-color: #ff9171; }   /* Coral / Terracotta */
+    .cat-alarms { background-color: #e5c158; }    /* Warm Amber */
+
+    /* Contoured Agenda Cards hugging the curved sides */
+    .agenda-card {
+      background: #16181f;
+      border-radius: 18px;
+      width: 92%;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      margin-bottom: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .agenda-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .agenda-card.urgent {
+      background: #1c1d27;
+      border-left: 3.5px solid #769bff;
+    }
+
+    .agenda-card.fasting-accent {
+      background: #1d1816;
+      border-left: 3.5px solid #ff9171;
+    }
+
+    /* Bottom Carousel Dot Navigation - Strictly No Tabs */
+    .carousel-nav-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding-bottom: 2px;
+      z-index: 5;
+    }
+
+    .c-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #37393f;
+      transition: all 0.2s ease;
+    }
+
+    .c-dot.active {
+      width: 14px;
+      height: 4px;
+      border-radius: 6px;
+      background: #769bff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Wear OS Circular Bezel Frame -->
+  <div class="watch-dial">
+
+    <div class="tile-content">
+
+      <!-- 1. Glanceable Top Status (Flat Wear OS style, No warped/bent text) -->
+      <div class="w-full flex items-center justify-between px-7 pt-1">
+        <div class="flex items-center gap-1.5 bg-[#171b24] px-2.5 py-0.5 rounded-full border border-[#262c3b]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#769bff] animate-pulse"></span>
+          <span class="text-[10px] font-bold tracking-wider text-[#a4c0ff] uppercase">OCT 25</span>
+        </div>
+        <div class="flex items-center gap-1 text-[11px] font-semibold text-zinc-400">
+          <span>10:42</span>
+        </div>
+      </div>
+
+      <!-- 2. Synchronized Week Strip with Multi-Category Dot Markers -->
+      <div class="calendar-strip">
+        <!-- Mon 23 -->
+        <div class="day-pill">
+          <span class="text-[9px] font-medium text-zinc-400">M</span>
+          <span class="text-[12px] font-bold text-zinc-300">23</span>
+          <div class="dot-matrix">
+            <span class="cat-dot cat-events"></span>
+            <span class="cat-dot cat-tasks"></span>
+          </div>
+        </div>
+
+        <!-- Tue 24 -->
+        <div class="day-pill">
+          <span class="text-[9px] font-medium text-zinc-400">T</span>
+          <span class="text-[12px] font-bold text-zinc-300">24</span>
+          <div class="dot-matrix">
+            <span class="cat-dot cat-tasks"></span>
+            <span class="cat-dot cat-fasting"></span>
+          </div>
+        </div>
+
+        <!-- Wed 25 (TODAY - Active Selected Pill) -->
+        <div class="day-pill active-today">
+          <span class="text-[9px] font-bold text-[#769bff]">WED</span>
+          <span class="text-[13px] font-extrabold text-white">25</span>
+          <div class="dot-matrix">
+            <span class="cat-dot cat-events" title="Events"></span>
+            <span class="cat-dot cat-tasks" title="Tasks"></span>
+            <span class="cat-dot cat-fasting" title="Fasting"></span>
+            <span class="cat-dot cat-alarms" title="Alarms"></span>
+          </div>
+        </div>
+
+        <!-- Thu 26 -->
+        <div class="day-pill">
+          <span class="text-[9px] font-medium text-zinc-400">T</span>
+          <span class="text-[12px] font-bold text-zinc-300">26</span>
+          <div class="dot-matrix">
+            <span class="cat-dot cat-events"></span>
+            <span class="cat-dot cat-alarms"></span>
+          </div>
+        </div>
+
+        <!-- Fri 27 -->
+        <div class="day-pill">
+          <span class="text-[9px] font-medium text-zinc-400">F</span>
+          <span class="text-[12px] font-bold text-zinc-300">27</span>
+          <div class="dot-matrix">
+            <span class="cat-dot cat-tasks"></span>
+            <span class="cat-dot cat-fasting"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Legend / Synchronized Category Indicator Key -->
+      <div class="flex items-center justify-center gap-3 py-0.5 px-4 bg-[#0d0f14] rounded-full border border-[#1b1e27]">
+        <div class="flex items-center gap-1">
+          <span class="cat-dot cat-events"></span>
+          <span class="text-[8px] font-medium text-zinc-300">Events</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="cat-dot cat-tasks"></span>
+          <span class="text-[8px] font-medium text-zinc-300">Tasks</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="cat-dot cat-fasting"></span>
+          <span class="text-[8px] font-medium text-zinc-300">Fast</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="cat-dot cat-alarms"></span>
+          <span class="text-[8px] font-medium text-zinc-300">Alarms</span>
+        </div>
+      </div>
+
+      <!-- 4. Contoured Today Schedule Agenda (Form-fitted for circular bezel) -->
+      <div class="w-full flex flex-col items-center gap-1.5 my-1">
+        
+        <!-- Agenda Item 1: Event (Next Up in 15M) -->
+        <div class="agenda-card urgent">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-[#1b253b] flex items-center justify-center text-[#769bff]">
+              <!-- Event Calendar Icon -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] font-bold text-white truncate max-w-[130px]">Q3 Strategy Sync</span>
+              <span class="text-[9px] text-[#9cb6ff] font-medium">11:00 AM • Room 402</span>
+            </div>
+          </div>
+          <span class="text-[9px] font-extrabold bg-[#223150] text-[#a4c0ff] px-2 py-0.5 rounded-full whitespace-nowrap">IN 15M</span>
+        </div>
+
+        <!-- Agenda Item 2: Fasting Phase Transition -->
+        <div class="agenda-card fasting-accent">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-[#351e18] flex items-center justify-center text-[#ff9171]">
+              <!-- Fasting Flame / Utensil Icon -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] font-bold text-white truncate max-w-[130px]">Fasting Window Ends</span>
+              <span class="text-[9px] text-[#ffb49e] font-medium">1:00 PM • 16:8 Completed</span>
+            </div>
+          </div>
+          <span class="text-[9px] font-bold text-[#ff9171] bg-[#3a1d17] px-1.5 py-0.5 rounded-full">16h</span>
+        </div>
+
+        <!-- Agenda Item 3: Key Task + Alarm Sync -->
+        <div class="agenda-card" style="border-left: 3.5px solid #6fe5ad;">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-[#162a22] flex items-center justify-center text-[#6fe5ad]">
+              <!-- Checkmark Task Icon -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] font-bold text-zinc-100 truncate max-w-[135px]">Review Launch Deck</span>
+              <span class="text-[9px] text-zinc-400 font-medium">2:30 PM • Alarm Set (🔔)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#e5c158]" title="Alarm Synced"></span>
+            <span class="text-[9px] font-semibold text-zinc-400">Task 3/5</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 5. Bottom Wear OS Carousel Dot Navigation (Strictly NO topappbar or bottom tabs) -->
+      <div class="carousel-nav-dots">
+        <span class="c-dot"></span>
+        <span class="c-dot"></span>
+        <span class="c-dot active"></span>
+        <span class="c-dot"></span>
+        <span class="c-dot"></span>
+        <span class="c-dot"></span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

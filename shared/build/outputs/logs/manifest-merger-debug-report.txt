@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml:1:1-72
+INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml:1:1-72
+	package
+		INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml:1:11-69
+uses-sdk
+INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml
+INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/shared/src/androidMain/AndroidManifest.xml

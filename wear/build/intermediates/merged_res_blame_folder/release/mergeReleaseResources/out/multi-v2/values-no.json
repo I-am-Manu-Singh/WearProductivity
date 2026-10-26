@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.creativeblisslabs.wearproductivity.wear-mergeReleaseResources-105:/values-no/values-no.xml",
+            "map": [
+                {
+                    "source": "/Users/manpreet/.gradle/caches/8.13/transforms/888651f75b96ac9bf915da1d687f6733/transformed/horologist-composables-0.7.15/res/values-no/values-no.xml",
+                    "from": {
+                        "startLines": "2,6,10,14,15,16,17,18,19,20,21,22,23,24",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,221,394,567,656,710,768,852,906,992,1053,1113,1178,1244",
+                        "endLines": "5,9,13,14,15,16,17,18,19,20,21,22,23,24",
+                        "endColumns": "12,12,12,88,53,57,83,53,85,60,59,64,65,64",
+                        "endOffsets": "216,389,562,651,705,763,847,901,987,1048,1108,1173,1239,1304"
+                    }
+                }
+            ]
+        }
+    ]
+}

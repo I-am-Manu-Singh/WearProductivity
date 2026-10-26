@@ -1,0 +1,12 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher
+drawable tile_preview
+font google_sans_flex_medium
+font google_sans_flex_regular
+font google_sans_flex_semi_bold
+font google_sans_flex_variable
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme.LifeOSWear

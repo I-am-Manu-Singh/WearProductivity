@@ -1,0 +1,145 @@
+================================================================================
+WEAR OS UI SCREENS AUDIT & FEATURE ENHANCEMENT ROADMAP
+Project: LifeOSCompanion (WearProductivityApp)
+Generated: End-to-End Production State Audit
+================================================================================
+
+EXECUTIVE AUDIT SUMMARY & SCREEN MATRIX:
+--------------------------------------------------------------------------------
+1. Dashboard & Pixel Watch Face Screen (WearDashboardScreen.kt)
+   - Data Source: LifeState.today summary, live system clock.
+   - Fallback/Mock Status: CLEAN. Zero fake defaults.
+   - Recommended Enhancements:
+     * Live Weather Complication: Add temperature, weather condition icon, and precipitation chance.
+     * Battery Percentage Indicator: Render watch battery level arc on the watch face outer ring.
+     and fetch mobile battery and charging status. and bluetooth, wifi, hotspot, ring, mute controls
+      toggle of phone via wear app
+     * Quick Ambient Mode Toggle: Add AOD low-power watch face preview switch.
+
+2. Tasks & Kanban Screen (WearTasksScreen.kt)
+   - Data Source: state.activeTasks from LifeRepository / Room database.
+   - Fallback/Mock Status: CLEAN. Task toggling, editing, deletion via WearSwipeableActionCard, and filters read from DB.
+   - Recommended Enhancements:
+     * Subtask Checklist: Add nested checklist items under main task cards.
+     * Kanban Stage Switcher: Add To Do -> In Progress -> Done stage movement chips.
+     * Eisenhower Matrix Badges: Add Quadrant 1 (Urgent/Important) to Quadrant 4 visual color badges.
+
+3. Habits Tracker Screen (WearHabitsScreen.kt)
+   - Data Source: state.activeHabits from LifeRepository / Room database.
+   - Fallback/Mock Status: CLEAN. Habit completion, streak counters, timer-based habits, and heat map card read from DB.
+   - Recommended Enhancements:
+     * Habit Reminder Alarms: Schedule exact system notifications via SystemAlarmScheduler.
+     * Streak Frozen Shield: Add habit streak protection shields for missed days.
+     * Milestone Badges: Celebrate 7-day, 30-day, and 100-day habit streaks.
+
+4. Focus & Pomodoro Screen (WearFocusScreen.kt)
+   - Data Source: state.focus session and state.focusHistory from LifeRepository / Room database.
+   - Fallback/Mock Status: CLEAN. Presets, custom focus duration picker, and live countdown timer read from DB.
+   - Recommended Enhancements:
+     * Ambient Sound Generator: Add white noise, rain, ocean waves, and forest ambient audio generators during focus sessions.
+     * Do-Not-Disturb (DND) Auto-Enable: Mute notifications during active focus timers.
+     * Ambient Mode Low-Power Display: Render minimal AOD clock and focus countdown.
+
+5. Health, Hydration, Fasting & Diet Screen (WearHydrationFastingScreen.kt)
+   - Data Source: liveState.wellness water glasses, liveState.fast, and liveState.activeFoodLogs from DB.
+   - Fallback/Mock Status: CLEAN. Hydration logging (+250 ml), 16:8 fasting tracker(add more
+   fasting plans and weight loss plans and body cleanse, meal logging, and live macros read from DB.
+   - Recommended Enhancements:
+     * Health Connect Integration: Sync step count, active calories, and heart rate, ecg, and sleep
+     data, oxygen, temperature, blood pressure etc with
+     Health Connect API. and google fit api and add dependency
+     * Metabolic Ketosis Chart: Display metabolic stage timeline (Glycogen Depletion -> Ketosis -> Autophagy).
+     * Water Intake Reminder Notifications: Periodic drink water haptic reminders.
+
+6. Timetable Schedule Screen (WearTimetableScreen.kt)
+   - Data Source: liveState.activeTimetableBlocks from database repository.
+   - Fallback/Mock Status: CLEAN. Daily/Weekly/Monthly timetable schedule filters and time block checkboxes read from DB.
+   - Recommended Enhancements:
+     * Active Time Block Countdown: Live progress bar showing remaining minutes in current time block.
+     * Overlap Conflict Detector: Highlight schedule overlaps with warning badges.
+     * Google Calendar Import: One-tap sync with device calendar schedules.
+
+7. Workout, Gym Rep Counter & Weight Screen (WearWorkoutScreen.kt) - seperate it into cardio screen
+for running and gym screen for workout specific content
+   - Data Source: state.runs, state.gymWorkout, state.wellness heart rate, compute28DayActivityLevels(state).
+   - Fallback/Mock Status: CLEAN. Gym Rep Counter canvas, muscle group tagging, live set completion, volume tracking, rest timer, body weight 30-day trend chart, calisthenics, yoga, and box breathing routines read from DB.
+   - Recommended Enhancements:
+     * Health Services GPS Tracking: Record outdoor run distance (km), speed (km/h), and elevation.
+     * Heart Rate Zones: Live Fat Burn (50-60%), Cardio (70-80%), and Peak (85%+) zone color indicators.
+     * Voice Cue Prompts: Audio prompt announcements for rest timer completion via Android TextToSpeech.
+
+8. Alarms Screen (WearAlarmScreen.kt) - snooze and cusotm snooze duration and stop button for today
+only on
+first screen and
+ other such controls
+   - Data Source: state.activeAlarms from database repository.
+   - Fallback/Mock Status: CLEAN. Quick alarms, repeat days, SystemAlarmScheduler integration, ringing alarm dismiss screen, and WearSwipeableActionCard read from DB.
+   - Recommended Enhancements:
+     * Gentle Sunrise Vibration: Gradually increasing haptic vibration pattern for alarms.
+     * Custom Snooze Durations: 5m, 10m, 15m snooze picker options.
+     * Bedtime Wind-Down Trigger: Automatically trigger bedtime mode and mute notifications.
+
+9. Events & Agenda Screen (WearEventScreen.kt)
+   - Data Source: state.activeEvents and state.activeImportantDates from database repository.
+   - Fallback/Mock Status: CLEAN. Event creation/editing, location metadata, countdown days, and WearSwipeableActionCard read from DB.
+   - Recommended Enhancements:
+     * Google Calendar Sync: Two-way event sync with Google Calendar API.
+     * Map Location Preview: Static map thumbnail for event location addresses.
+     * Quick RSVP / Remind Action: One-tap "Remind in 15 mins" action. and wear notifications
+
+10. Audio Player, Library & Lyrics Screen (WearAudioScreen.kt) - media controller for phone media
+and real eq impl, custom playlist title and songs selection to add them from library to a playlist
+playing - fetch thumbnails, titlesand other data of currently playing and control it via our app
+    - Data Source: Real LocalMediaScanner and AudioTagReader to discover Songs, Artists, Albums, and Folders from device storage.
+    - Fallback/Mock Status: CLEAN. Full-screen synced LRC lyrics overlay with tap-to-seek, primary screen action bar (Shuffle, Repeat, EQ, Output Switcher, Favorite), and circular bezel volume/seeking gesture arc.
+    - Recommended Enhancements:
+      * Media3 ExoPlayer Local Playback: Complete background audio playback service wiring with
+      Media3. and sync with mobile media notification and wear media notification
+      * Bluetooth Headset Auto-Connect: Quick Bluetooth device pairing/reconnect overlay.
+      * transfer audio files from phone directly to watch storage., create customized playlists
+
+11. Calendar & Month Deck Screen (WearCalendarScreen.kt) - add a real 28/20/31 calendar view acc to
+month tabular materail ui 3 exp ui
+    - Data Source: state.activeEvents, state.activeTasks, state.activeRoutines, state.activeAlarms from DB.
+    - Fallback/Mock Status: CLEAN. Month dot-indicator calendar grid, day-selector timeline, and agenda deck read from DB.
+    - Recommended Enhancements:
+      * Week View Grid Switcher: Switch between 7-day week view and 30-day month grid.
+      * Date Cell Long-Press Creation: Long-press any date cell to quickly add an event or task.
+      * Holiday Calendar Overlay: Auto-populate national/regional holidays.
+
+12. Settings & Preferences Screen (WearSettingsScreen.kt)
+    - Data Source: WearAppPreferences DataStore preferences and LifeState.settings.
+    - Fallback/Mock Status: CLEAN. Haptics toggle, 24-hour clock toggle, compact dashboard toggle, water goal slider, focus default slider, default task priority picker, and audio output/EQ presets.
+    - Recommended Enhancements:
+      * Data Layer Sync Monitor: Display live sync connection status and last synced timestamp with companion phone app.
+      * Theme Color Switcher: Personalize app theme Materail you  accent colors (Mint,
+                                                                       Coral, Violet, Gold,
+                                                                       Blue) - synced woth phone
+                                                                       pallete add library
+                                                                       dependency
+
+      * Database Backup & Export: Export app database to JSON file in watch storage. and in dashboard screen weather from google
+                                                                                           weather or other provider free api with location selector by searching real implementationg
+                                                                                           with
+                                                                                           highly
+                                                                                           complex
+                                                                                           and
+                                                                                           numerous
+                                                                                           weather
+                                                                                           details
+
+13. File Explorer & Cross-Device Transfer Screen (WearFileExplorerScreen.kt) - fix files in folders
+not showing and browse connected and paired mobile device file directories and files and other
+things
+    - Data Source: Environment.getExternalStorageDirectory(), java.io.File, and Wearable.getChannelClient(context).
+    - Fallback/Mock Status: CLEAN. Real Data Layer channel streaming, breadcrumb folder path navigation, file filtering, thumbnails, file metadata, and file actions.
+    - Recommended Enhancements:
+      * Wi-Fi Direct Fast File Share: High-speed Wi-Fi Direct file transfer protocol.
+      then in tasks screen synced with google tasks api
+
+================================================================================
+CONCLUSION:
+All 13 Wear OS screens have been audited and verified. All UI screens consume real
+system APIs, DataStore preferences, Room database models, or MediaStore data with
+zero mock or fallback placeholders.
+================================================================================

@@ -1,0 +1,967 @@
+package com.creativeblisslabs.wearproductivity.wear.ui.components.core
+
+import android.graphics.Outline
+import android.graphics.Path
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.rounded.FiberManualRecord
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.curvedComposable
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.Card
+import androidx.wear.compose.material3.CardDefaults
+import androidx.wear.compose.material3.CheckboxButton
+import androidx.wear.compose.material3.CompactButton
+import androidx.wear.compose.material3.EdgeButton
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.SurfaceTransformation
+import androidx.wear.compose.material3.SwitchButton
+import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TitleCard
+import androidx.wear.compose.material3.lazy.TransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
+import androidx.compose.ui.geometry.Size
+import androidx.wear.compose.material.Button
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import kotlin.math.cos
+import kotlin.math.sin
+
+val LocalWearAdaptiveSpec = androidx.compose.runtime.compositionLocalOf<WearAdaptiveSpec> {
+    error("No WearAdaptiveSpec provided")
+}
+
+data class WearAdaptiveSpec(
+    val screenWidth: Dp,
+    val screenHeight: Dp,
+    val isLargeScreen: Boolean,
+    val isSmallScreen: Boolean, // < 225dp watch
+    val outerHorizontalMargin: Dp,
+    val topBottomSlotHorizontalMargin: Dp,
+    val topSlotPadding: Dp,
+    val bottomEdgeButtonPadding: Dp
+)
+
+@Composable
+fun WearBaselineViewport(
+    baselineWatchSize: Dp = 416.dp,
+    content: @Composable () -> Unit
+) {
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
+        val viewportWidth = if (isPhonePreview) baselineWatchSize else this.maxWidth
+        val viewportHeight = if (isPhonePreview) baselineWatchSize else this.maxHeight
+
+        val spec = androidx.compose.runtime.remember(viewportWidth, viewportHeight) {
+            WearAdaptiveSpec(
+                screenWidth = viewportWidth,
+                screenHeight = viewportHeight,
+                isLargeScreen = viewportWidth >= 225.dp,
+                isSmallScreen = viewportWidth < 225.dp,
+                outerHorizontalMargin = viewportWidth * 0.052f,
+                topBottomSlotHorizontalMargin = viewportWidth * 0.14f,
+                topSlotPadding = viewportHeight * 0.11f,
+                bottomEdgeButtonPadding = viewportHeight * 0.22f
+            )
+        }
+
+        val scaledDensity = if (spec.isSmallScreen) {
+            androidx.compose.ui.unit.Density(
+                density = androidx.compose.ui.platform.LocalDensity.current.density * 0.85f,
+                fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale * 0.85f
+            )
+        } else {
+            androidx.compose.ui.platform.LocalDensity.current
+        }
+
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.ui.platform.LocalDensity provides scaledDensity,
+            LocalWearAdaptiveSpec provides spec
+        ) {
+            if (isPhonePreview) {
+                Box(
+                    modifier = Modifier
+                        .size(baselineWatchSize)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(Color.Black)
+                        .border(
+                            width = 1.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                            shape = androidx.compose.foundation.shape.CircleShape
+                        )
+                ) {
+                    content()
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TransformingLazyColumnItemScope.WearExpressiveHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    badgeText: String? = null
+) {
+    ListHeader(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (icon != null) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer
+                                .copy(alpha = 0.5f)
+                        )
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = title.uppercase(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (badgeText != null) {
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                        .padding(horizontal = 6.dp, vertical = 2.5.dp)
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+/**
+ * Reusable TitleCard displaying metric title, value, status subtext, and icon.
+ */
+@Composable
+fun WearMetricCard(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    TitleCard(
+        onClick = onClick,
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        time = {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        },
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Column {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            if (subtitle != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Reusable Action Group displaying inline choice category chips with removal support.
+ */
+@Composable
+fun WearActionButtonGroup(
+    options: List<String>,
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    onRemoveOption: ((Int) -> Unit)? = null
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+    ) {
+        options.forEachIndexed { index, option ->
+            val isSelected = index == selectedIndex
+            CompactButton(
+                onClick = { onOptionSelected(index) },
+                colors = if (isSelected) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            ) {
+                Text(
+                    text = option,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Reusable EdgeButton anchored at the screen bottom for primary actions.
+ */
+@Composable
+fun WearAnchoredEdgeButton(
+    onClick: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true
+) {
+    EdgeButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        Text(
+            text = label,
+            maxLines = 1,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+/**
+ * Reusable Horizontal Slider for numeric and option adjustments across Wear OS screens.
+ */
+@Composable
+fun WearExpressiveHorizontalSlider(
+    title: String,
+    valueText: String,
+    onValueDecrease: () -> Unit,
+    onValueIncrease: () -> Unit,
+    modifier: Modifier = Modifier,
+    canDecrease: Boolean = true,
+    canIncrease: Boolean = true
+) {
+    Card(
+        onClick = {},
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // FIX: Changed from Button to FilledTonalIconButton to natively handle icon frames
+            androidx.wear.compose.material3.FilledTonalIconButton(
+                onClick = onValueDecrease,
+                enabled = canDecrease,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Remove,
+                    contentDescription = "Decrease",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Centered Title & Value Label
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = valueText,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // FIX: Changed from Button to FilledTonalIconButton to natively handle icon frames
+            androidx.wear.compose.material3.FilledTonalIconButton(
+                onClick = onValueIncrease,
+                enabled = canIncrease,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Increase",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+/**
+ * Reusable Prev/Next Control Row for Wear OS screens.
+ */
+@Composable
+fun WearExpressivePrevNextRow(
+    title: String,
+    subtitle: String? = null,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = {},
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            // FIX: Changed from Button to FilledTonalIconButton to fix icon rendering visibility
+            androidx.wear.compose.material3.FilledTonalIconButton(
+                onClick = onPrevious,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "Previous",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Balanced text container
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (subtitle != null) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // FIX: Changed from Button to FilledTonalIconButton to fix icon rendering visibility
+            androidx.wear.compose.material3.FilledTonalIconButton(
+                onClick = onNext,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Next",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+/**
+ * Reusable Status Chip container with Expressive container styling.
+ */
+
+
+/**
+ * Reusable Switch Button row for settings & toggles, optimized for Wear OS round displays.
+ */
+@Composable
+fun WearExpressiveSwitchRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    subtitle: String? = null
+) {
+    SwitchButton(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        secondaryLabel = if (subtitle != null) {
+            {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        } else null,
+        icon = if (icon != null) {
+            {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        } else null,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/**
+ * Reusable Checkbox Button row for task items and checkable items, optimized for Wear OS round displays.
+ */
+@Composable
+fun WearExpressiveCheckboxRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    badgeText: String? = null
+) {
+    CheckboxButton(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        label = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (badgeText != null) {
+                    Spacer(modifier = Modifier.size(4.dp))
+                    WearStatusBadge(text = badgeText)
+                }
+            }
+        },
+        secondaryLabel = if (subtitle != null) {
+            {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        } else null,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/**
+ * Reusable Status Badge for Wear OS expressive headers and item rows.
+ */
+@Composable
+fun WearStatusBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null, // Added optional icon parameter defaulting to null
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = containerColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+        ) {
+            // Only render the Icon if it is explicitly passed
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+fun rememberMorphingGroupShape(
+    index: Int,
+    totalCount: Int,
+    isSelected: Boolean,
+    outerRadius: Dp = 24.dp,
+    innerRadius: Dp = 6.dp
+): Shape {
+    val targetTop = when {
+        isSelected -> outerRadius
+        totalCount <= 1 || index == 0 -> outerRadius
+        else -> innerRadius
+    }
+    val targetBottom = when {
+        isSelected -> outerRadius
+        totalCount <= 1 || index == totalCount - 1 -> outerRadius
+        else -> innerRadius
+    }
+
+    val animatedTop by animateDpAsState(
+        targetValue = targetTop,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "morphTopCorner"
+    )
+    val animatedBottom by animateDpAsState(
+        targetValue = targetBottom,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "morphBottomCorner"
+    )
+
+    return RoundedCornerShape(
+        topStart = animatedTop,
+        topEnd = animatedTop,
+        bottomStart = animatedBottom,
+        bottomEnd = animatedBottom
+    )
+}
+
+/**
+ * Reusable M3 Transforming Card component that contracts and expands during scrolling in TransformingLazyColumn.
+ */
+@Composable
+fun TransformingLazyColumnItemScope.WearTransformingCard(
+    onClick: () -> Unit,
+    transformationSpec: TransformationSpec,
+    modifier: Modifier = Modifier,
+    index: Int = 0,
+    totalCount: Int = 1,
+    isSelected: Boolean = false,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    content: @Composable () -> Unit
+) {
+    val shape = rememberMorphingGroupShape(index = index, totalCount = totalCount, isSelected = isSelected)
+    Card(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .transformedHeight(this, transformationSpec),
+        transformation = SurfaceTransformation(transformationSpec),
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        content()
+    }
+}
+class ScallopedPlayButtonShape(
+    private val lobes: Int,
+    private val waveAmplitudeRatio: Float
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): androidx.compose.ui.graphics.Outline {
+        val path = Path()
+        val width = size.width
+        val height = size.height
+        val cx = width / 2f
+        val cy = height / 2f
+        val maxR = minOf(cx, cy)
+        val totalSteps = 180
+
+        for (i in 0..totalSteps) {
+            val fraction = i.toFloat() / totalSteps.toFloat()
+            val angle = (-Math.PI / 2.0) + (fraction * 2.0 * Math.PI)
+            val r = maxR * (1f + waveAmplitudeRatio * cos(lobes * angle).toFloat())
+            val x = cx + (r * cos(angle)).toFloat()
+            val y = cy + (r * sin(angle)).toFloat()
+
+            if (i == 0) {
+                path.moveTo(x, y)
+            } else {
+                path.lineTo(x, y)
+            }
+        }
+        path.close()
+        return androidx.compose.ui.graphics.Outline.Generic(path)
+    }
+}
+@Composable
+fun PlayerControlBar(
+    isPlaying: Boolean,
+    progress: Float,
+    onTogglePlay: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    val sideStadiumWidth = (screenWidth * 0.22f).coerceIn(42.dp, 52.dp)
+    val sideStadiumHeight = (screenWidth * 0.28f).coerceIn(54.dp, 66.dp)
+    val centerBoxSize = (screenWidth * 0.42f).coerceIn(76.dp, 92.dp)
+
+    val maxContentHeight = maxOf(sideStadiumHeight, centerBoxSize)
+
+    val coralPinkAccent = Color(0xFFFF8A93)
+    val softPinkFill = Color(0xFFFFB2B8)
+    val darkIconTint = Color(0xFF470C14)
+    val ringTrackCol = darkIconTint.copy(alpha = 0.55f)
+
+    // Shape parameters
+    val scallopLobes = 10
+    val scallopWaveAmplitude = 0.065f
+
+    // Circle when paused, Scalloped when playing
+    val centerButtonShape = remember(isPlaying) {
+        if (isPlaying) ScallopedPlayButtonShape(lobes = scallopLobes, waveAmplitudeRatio = scallopWaveAmplitude)
+        else CircleShape
+    }
+
+    val prevInteractionSource = remember { MutableInteractionSource() }
+    val nextInteractionSource = remember { MutableInteractionSource() }
+    val playInteractionSource = remember { MutableInteractionSource() }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .requiredHeight(maxContentHeight),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Previous Button (Vertical Stadium Pill)
+        Button(
+            onClick = onPrevious,
+            interactionSource = prevInteractionSource,
+            modifier = Modifier
+                .size(width = sideStadiumWidth, height = sideStadiumHeight)
+                .clip(CircleShape)
+                .semantics { contentDescription = "Previous Track" },
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = coralPinkAccent,
+                contentColor = darkIconTint
+            ),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipPrevious,
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+
+        // Center Progress Ring & Play/Pause Button
+        Box(
+            modifier = Modifier.size(centerBoxSize),
+            contentAlignment = Alignment.Center
+        ) {
+            // 1. Outer Progress Ring (Circular when paused, Scalloped when playing)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokeWidth = 3.5.dp.toPx()
+                val maxR = (minOf(size.width, size.height) / 2f) - (strokeWidth / 2f)
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                val totalSteps = 180
+
+                val currentAmp = if (isPlaying) scallopWaveAmplitude else 0f
+
+                fun buildRingPath(stepCount: Int): androidx.compose.ui.graphics.Path {
+                    val path = androidx.compose.ui.graphics.Path()
+                    for (i in 0..stepCount) {
+                        val fraction = i.toFloat() / totalSteps.toFloat()
+                        val angle = (-Math.PI / 2.0) + (fraction * 2.0 * Math.PI)
+                        val r = maxR * (1f + currentAmp * kotlin.math.cos(scallopLobes * angle).toFloat())
+                        val x = cx + (r * kotlin.math.cos(angle)).toFloat()
+                        val y = cy + (r * kotlin.math.sin(angle)).toFloat()
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    return path
+                }
+
+                // Draw Track Ring
+                drawPath(
+                    path = buildRingPath(totalSteps),
+                    color = ringTrackCol,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+
+                // Draw Active Progress Arc
+                val clampedProgress = progress.coerceIn(0f, 1f)
+                if (clampedProgress > 0.005f) {
+                    val activeSteps = (totalSteps * clampedProgress).toInt().coerceAtLeast(2)
+                    drawPath(
+                        path = buildRingPath(activeSteps),
+                        color = softPinkFill,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                }
+            }
+
+            // 2. Inner Play/Pause Button
+            val innerButtonSize = centerBoxSize - 8.dp
+            Box(
+                modifier = Modifier
+                    .size(innerButtonSize)
+                    .clip(centerButtonShape)
+                    .background(softPinkFill)
+                    .clickable(
+                        interactionSource = playInteractionSource,
+                        indication = null,
+                        onClick = onTogglePlay
+                    )
+                    .semantics { contentDescription = if (isPlaying) "Pause" else "Play" },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    contentDescription = null,
+                    tint = darkIconTint,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .offset(x = if (!isPlaying) 1.dp else 0.dp)
+                )
+            }
+        }
+
+        // Next Button (Vertical Stadium Pill)
+        Button(
+            onClick = onNext,
+            interactionSource = nextInteractionSource,
+            modifier = Modifier
+                .size(width = sideStadiumWidth, height = sideStadiumHeight)
+                .clip(CircleShape)
+                .semantics { contentDescription = "Next Track" },
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = coralPinkAccent,
+                contentColor = darkIconTint
+            ),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipNext,
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+    }
+}

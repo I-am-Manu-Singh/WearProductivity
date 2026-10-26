@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.creativeblisslabs.wearproductivity.mobile-mergeDebugResources-90:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/Users/manpreet/.gradle/caches/8.13/transforms/d06ea67c56be5ee810777f17724ba0ce/transformed/appcompat-1.6.1/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                }
+            ]
+        }
+    ]
+}

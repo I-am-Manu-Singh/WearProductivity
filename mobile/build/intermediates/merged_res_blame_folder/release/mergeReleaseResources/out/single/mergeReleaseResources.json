@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.lifeos.mobile-release-64:/drawable_ic_launcher.xml.flat",
+        "source": "com.lifeos.mobile-main-65:/drawable/ic_launcher.xml"
+    },
+    {
+        "merged": "com.lifeos.mobile-release-64:/layout_glance_default_layout.xml.flat",
+        "source": "com.lifeos.mobile-main-65:/layout/glance_default_layout.xml"
+    },
+    {
+        "merged": "com.lifeos.mobile-release-64:/xml_life_widget_info.xml.flat",
+        "source": "com.lifeos.mobile-main-65:/xml/life_widget_info.xml"
+    },
+    {
+        "merged": "com.lifeos.mobile-release-64:/xml_file_paths.xml.flat",
+        "source": "com.lifeos.mobile-main-65:/xml/file_paths.xml"
+    }
+]

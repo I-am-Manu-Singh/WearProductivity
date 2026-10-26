@@ -1,0 +1,855 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.creativeblisslabs.wearproductivity.mobile"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+11-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:2:5-77
+11-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:2:22-74
+12    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+12-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:3:5-79
+12-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:3:22-76
+13    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+13-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:4:5-79
+13-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:4:22-76
+14    <uses-permission android:name="android.permission.BODY_SENSORS" />
+14-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:5:5-71
+14-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:5:22-68
+15    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+15-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:6:5-79
+15-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:6:22-76
+16    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+16-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:7:5-81
+16-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:7:22-78
+17    <uses-permission android:name="android.permission.VIBRATE" />
+17-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:8:5-66
+17-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:8:22-63
+18    <uses-permission android:name="android.permission.WAKE_LOCK" />
+18-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:9:5-68
+18-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:9:22-65
+19    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+19-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:10:5-77
+19-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:10:22-74
+20    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+20-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:11:5-92
+20-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:11:22-89
+21    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+21-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:12:5-75
+21-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:12:22-72
+22    <uses-permission
+22-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:13:5-107
+23        android:name="android.permission.READ_EXTERNAL_STORAGE"
+23-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:13:22-77
+24        android:maxSdkVersion="32" />
+24-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:13:78-104
+25    <uses-permission android:name="android.permission.INTERNET" />
+25-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:25:5-67
+25-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:25:22-64
+26    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+26-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:26:5-79
+26-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:26:22-76
+27    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+27-->[com.google.android.recaptcha:recaptcha:18.6.1] /Users/manpreet/.gradle/caches/8.13/transforms/9f270b7e70d3327de419a5ff442d1e72/transformed/recaptcha-18.6.1/AndroidManifest.xml:9:5-98
+27-->[com.google.android.recaptcha:recaptcha:18.6.1] /Users/manpreet/.gradle/caches/8.13/transforms/9f270b7e70d3327de419a5ff442d1e72/transformed/recaptcha-18.6.1/AndroidManifest.xml:9:22-95
+28    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+28-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:25:5-81
+28-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:25:22-78
+29    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
+29-->[androidx.biometric:biometric:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/7263bc8d1de09e061368eb282cc03321/transformed/biometric-1.1.0/AndroidManifest.xml:24:5-72
+29-->[androidx.biometric:biometric:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/7263bc8d1de09e061368eb282cc03321/transformed/biometric-1.1.0/AndroidManifest.xml:24:22-69
+30    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+30-->[androidx.biometric:biometric:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/7263bc8d1de09e061368eb282cc03321/transformed/biometric-1.1.0/AndroidManifest.xml:27:5-74
+30-->[androidx.biometric:biometric:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/7263bc8d1de09e061368eb282cc03321/transformed/biometric-1.1.0/AndroidManifest.xml:27:22-71
+31
+32    <permission
+32-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
+33        android:name="com.creativeblisslabs.wearproductivity.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+33-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
+34        android:protectionLevel="signature" />
+34-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+35
+36    <uses-permission android:name="com.creativeblisslabs.wearproductivity.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+36-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
+36-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
+37
+38    <application
+38-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:15:5-99:19
+39        android:name="com.creativeblisslabs.wearproductivity.mobile.LifeOSApplication"
+39-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:16:9-42
+40        android:allowBackup="true"
+40-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:17:9-35
+41        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+41-->[androidx.core:core:1.15.0] /Users/manpreet/.gradle/caches/8.13/transforms/c8ffd7747c759e6d58357069f732d9ac/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
+42        android:debuggable="true"
+43        android:extractNativeLibs="false"
+44        android:icon="@drawable/ic_launcher"
+44-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:18:9-45
+45        android:label="@string/app_name"
+45-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:20:9-41
+46        android:roundIcon="@drawable/ic_launcher"
+46-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:19:9-50
+47        android:supportsRtl="true"
+47-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:21:9-35
+48        android:theme="@style/Theme.LifeOS" >
+48-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:22:9-44
+49        <receiver
+49-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:23:9-25:40
+50            android:name="com.creativeblisslabs.wearproductivity.mobile.platform.MobileReminderReceiver"
+50-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:24:13-60
+51            android:exported="false" />
+51-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:25:13-37
+52
+53        <provider
+54            android:name="androidx.core.content.FileProvider"
+54-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:27:13-62
+55            android:authorities="com.creativeblisslabs.wearproductivity.mobile.files"
+55-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:28:13-57
+56            android:exported="false"
+56-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:29:13-37
+57            android:grantUriPermissions="true" >
+57-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:30:13-47
+58            <meta-data
+58-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:31:13-33:54
+59                android:name="android.support.FILE_PROVIDER_PATHS"
+59-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:32:17-67
+60                android:resource="@xml/file_paths" />
+60-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:33:17-51
+61        </provider>
+62
+63        <activity
+63-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:35:9-42:20
+64            android:name="com.creativeblisslabs.wearproductivity.mobile.MainActivity"
+64-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:36:13-41
+65            android:exported="true" >
+65-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:37:13-36
+66            <intent-filter>
+66-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:38:13-41:29
+67                <action android:name="android.intent.action.MAIN" />
+67-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:39:17-69
+67-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:39:25-66
+68
+69                <category android:name="android.intent.category.LAUNCHER" />
+69-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:40:17-77
+69-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:40:27-74
+70            </intent-filter>
+71        </activity>
+72
+73        <service
+73-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:44:9-52:19
+74            android:name="com.creativeblisslabs.wearproductivity.mobile.media.MobileMediaLibraryService"
+74-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:45:13-60
+75            android:exported="true"
+75-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:46:13-36
+76            android:foregroundServiceType="mediaPlayback" >
+76-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:47:13-58
+77            <intent-filter>
+77-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:48:13-51:29
+78                <action android:name="androidx.media3.session.MediaLibraryService" />
+78-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:49:17-86
+78-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:49:25-83
+79                <action android:name="android.media.browse.MediaBrowserService" />
+79-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:50:17-83
+79-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:50:25-80
+80            </intent-filter>
+81        </service>
+82        <service
+82-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:54:9-62:19
+83            android:name="com.creativeblisslabs.wearproductivity.mobile.platform.MobileDataService"
+83-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:55:13-55
+84            android:exported="true" >
+84-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:56:13-36
+85            <intent-filter>
+85-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:57:13-61:29
+86                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+86-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:58:17-87
+86-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:58:25-84
+87                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+87-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:59:17-91
+87-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:59:25-88
+88
+89                <data
+89-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:17-93
+90                    android:host="*"
+90-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:45-61
+91                    android:pathPrefix="/lifeos"
+91-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:62-90
+92                    android:scheme="wear" />
+92-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:23-44
+93            </intent-filter>
+94        </service>
+95
+96        <receiver
+96-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:64:9-74:20
+97            android:name="com.creativeblisslabs.wearproductivity.mobile.widgets.LifeWidgetReceiver"
+97-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:65:13-55
+98            android:exported="true"
+98-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:66:13-36
+99            android:label="LifeOS Today" >
+99-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:67:13-41
+100            <intent-filter>
+100-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:68:13-70:29
+101                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+101-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:17-84
+101-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:25-81
+102            </intent-filter>
+103
+104            <meta-data
+104-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:71:13-73:60
+105                android:name="android.appwidget.provider"
+105-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:72:17-58
+106                android:resource="@xml/life_widget_info" />
+106-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:73:17-57
+107        </receiver>
+108        <receiver
+108-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:76:9-86:20
+109            android:name="com.creativeblisslabs.wearproductivity.mobile.widgets.NutritionWidgetReceiver"
+109-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:77:13-60
+110            android:exported="true"
+110-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:78:13-36
+111            android:label="LifeOS Nutrition &amp; Macros" >
+111-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:79:13-58
+112            <intent-filter>
+112-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:68:13-70:29
+113                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+113-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:17-84
+113-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:25-81
+114            </intent-filter>
+115
+116            <meta-data
+116-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:71:13-73:60
+117                android:name="android.appwidget.provider"
+117-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:72:17-58
+118                android:resource="@xml/life_widget_info" />
+118-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:73:17-57
+119        </receiver>
+120        <receiver
+120-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:88:9-98:20
+121            android:name="com.creativeblisslabs.wearproductivity.mobile.widgets.SensorsWidgetReceiver"
+121-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:89:13-58
+122            android:exported="true"
+122-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:90:13-36
+123            android:label="LifeOS Watch Biometrics" >
+123-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:91:13-52
+124            <intent-filter>
+124-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:68:13-70:29
+125                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+125-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:17-84
+125-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:69:25-81
+126            </intent-filter>
+127
+128            <meta-data
+128-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:71:13-73:60
+129                android:name="android.appwidget.provider"
+129-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:72:17-58
+130                android:resource="@xml/life_widget_info" />
+130-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:73:17-57
+131        </receiver>
+132
+133        <activity
+133-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:23:9-28:62
+134            android:name="androidx.glance.appwidget.action.ActionTrampolineActivity"
+134-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:24:13-85
+135            android:enabled="true"
+135-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:25:13-35
+136            android:excludeFromRecents="true"
+136-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:26:13-46
+137            android:exported="false"
+137-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:27:13-37
+138            android:theme="@android:style/Theme.NoDisplay" />
+138-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:28:13-59
+139        <activity
+139-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:29:9-36:81
+140            android:name="androidx.glance.appwidget.action.InvisibleActionTrampolineActivity"
+140-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:30:13-94
+141            android:enabled="true"
+141-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:31:13-35
+142            android:exported="false"
+142-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:32:13-37
+143            android:launchMode="singleInstance"
+143-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:33:13-48
+144            android:noHistory="true"
+144-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:34:13-37
+145            android:taskAffinity="androidx.glance.appwidget.ListAdapterCallbackTrampoline"
+145-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:35:13-91
+146            android:theme="@style/Widget.Glance.AppWidget.CallbackTrampoline" />
+146-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:36:13-78
+147
+148        <receiver
+148-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:38:9-41:40
+149            android:name="androidx.glance.appwidget.action.ActionCallbackBroadcastReceiver"
+149-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:39:13-92
+150            android:enabled="true"
+150-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:40:13-35
+151            android:exported="false" />
+151-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:41:13-37
+152        <receiver
+152-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:42:9-45:40
+153            android:name="androidx.glance.appwidget.UnmanagedSessionReceiver"
+153-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:43:13-78
+154            android:enabled="true"
+154-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:44:13-35
+155            android:exported="false" />
+155-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:45:13-37
+156        <receiver
+156-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:46:9-53:20
+157            android:name="androidx.glance.appwidget.MyPackageReplacedReceiver"
+157-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:47:13-79
+158            android:enabled="true"
+158-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:48:13-35
+159            android:exported="false" >
+159-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:49:13-37
+160            <intent-filter>
+160-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:50:13-52:29
+161                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+161-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:51:17-84
+161-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:51:25-81
+162            </intent-filter>
+163        </receiver>
+164
+165        <service
+165-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:55:9-58:72
+166            android:name="androidx.glance.appwidget.GlanceRemoteViewsService"
+166-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:56:13-78
+167            android:exported="true"
+167-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:57:13-36
+168            android:permission="android.permission.BIND_REMOTEVIEWS" />
+168-->[androidx.glance:glance-appwidget:1.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/b31fdaa4d7a8736e00472582b79ae130/transformed/glance-appwidget-1.1.1/AndroidManifest.xml:58:13-69
+169        <service
+169-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:8:9-14:19
+170            android:name="com.google.firebase.components.ComponentDiscoveryService"
+170-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:9:13-84
+171            android:directBootAware="true"
+171-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:32:13-43
+172            android:exported="false" >
+172-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:10:13-37
+173            <meta-data
+173-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:11:13-13:85
+174                android:name="com.google.firebase.components:com.google.firebase.auth.ktx.FirebaseAuthLegacyRegistrar"
+174-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:12:17-119
+175                android:value="com.google.firebase.components.ComponentRegistrar" />
+175-->[com.google.firebase:firebase-auth-ktx:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/7cafcf283f487335162e1a96e8ec5daa/transformed/firebase-auth-ktx-23.2.0/AndroidManifest.xml:13:17-82
+176            <meta-data
+176-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:69:13-71:85
+177                android:name="com.google.firebase.components:com.google.firebase.auth.FirebaseAuthRegistrar"
+177-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:70:17-109
+178                android:value="com.google.firebase.components.ComponentRegistrar" />
+178-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:71:17-82
+179            <meta-data
+179-->[com.google.firebase:firebase-firestore-ktx:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/a2fa4fded116d8bc03d7164c75855c12/transformed/firebase-firestore-ktx-25.1.2/AndroidManifest.xml:12:13-14:85
+180                android:name="com.google.firebase.components:com.google.firebase.firestore.ktx.FirebaseFirestoreLegacyRegistrar"
+180-->[com.google.firebase:firebase-firestore-ktx:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/a2fa4fded116d8bc03d7164c75855c12/transformed/firebase-firestore-ktx-25.1.2/AndroidManifest.xml:13:17-129
+181                android:value="com.google.firebase.components.ComponentRegistrar" />
+181-->[com.google.firebase:firebase-firestore-ktx:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/a2fa4fded116d8bc03d7164c75855c12/transformed/firebase-firestore-ktx-25.1.2/AndroidManifest.xml:14:17-82
+182            <meta-data
+182-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:17:13-19:85
+183                android:name="com.google.firebase.components:com.google.firebase.firestore.FirebaseFirestoreKtxRegistrar"
+183-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:18:17-122
+184                android:value="com.google.firebase.components.ComponentRegistrar" />
+184-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:19:17-82
+185            <meta-data
+185-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:20:13-22:85
+186                android:name="com.google.firebase.components:com.google.firebase.firestore.FirestoreRegistrar"
+186-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:21:17-111
+187                android:value="com.google.firebase.components.ComponentRegistrar" />
+187-->[com.google.firebase:firebase-firestore:25.1.2] /Users/manpreet/.gradle/caches/8.13/transforms/7d2ee61eae561157724457225217aec0/transformed/firebase-firestore-25.1.2/AndroidManifest.xml:22:17-82
+188            <meta-data
+188-->[com.google.firebase:firebase-common-ktx:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/862ee3a588a8264fbd91922aedf86638/transformed/firebase-common-ktx-21.0.0/AndroidManifest.xml:12:13-14:85
+189                android:name="com.google.firebase.components:com.google.firebase.ktx.FirebaseCommonLegacyRegistrar"
+189-->[com.google.firebase:firebase-common-ktx:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/862ee3a588a8264fbd91922aedf86638/transformed/firebase-common-ktx-21.0.0/AndroidManifest.xml:13:17-116
+190                android:value="com.google.firebase.components.ComponentRegistrar" />
+190-->[com.google.firebase:firebase-common-ktx:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/862ee3a588a8264fbd91922aedf86638/transformed/firebase-common-ktx-21.0.0/AndroidManifest.xml:14:17-82
+191            <meta-data
+191-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:35:13-37:85
+192                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+192-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:36:17-109
+193                android:value="com.google.firebase.components.ComponentRegistrar" />
+193-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:37:17-82
+194        </service>
+195
+196        <activity
+196-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:29:9-46:20
+197            android:name="com.google.firebase.auth.internal.GenericIdpActivity"
+197-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:30:13-80
+198            android:excludeFromRecents="true"
+198-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:31:13-46
+199            android:exported="true"
+199-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:32:13-36
+200            android:launchMode="singleTask"
+200-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:33:13-44
+201            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+201-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:34:13-72
+202            <intent-filter>
+202-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:35:13-45:29
+203                <action android:name="android.intent.action.VIEW" />
+203-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:36:17-69
+203-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:36:25-66
+204
+205                <category android:name="android.intent.category.DEFAULT" />
+205-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:38:17-76
+205-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:38:27-73
+206                <category android:name="android.intent.category.BROWSABLE" />
+206-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:39:17-78
+206-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:39:27-75
+207
+208                <data
+208-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:17-93
+209                    android:host="firebase.auth"
+209-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:45-61
+210                    android:path="/"
+211                    android:scheme="genericidp" />
+211-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:23-44
+212            </intent-filter>
+213        </activity>
+214        <activity
+214-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:47:9-64:20
+215            android:name="com.google.firebase.auth.internal.RecaptchaActivity"
+215-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:48:13-79
+216            android:excludeFromRecents="true"
+216-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:49:13-46
+217            android:exported="true"
+217-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:50:13-36
+218            android:launchMode="singleTask"
+218-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:51:13-44
+219            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+219-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:52:13-72
+220            <intent-filter>
+220-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:53:13-63:29
+221                <action android:name="android.intent.action.VIEW" />
+221-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:36:17-69
+221-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:36:25-66
+222
+223                <category android:name="android.intent.category.DEFAULT" />
+223-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:38:17-76
+223-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:38:27-73
+224                <category android:name="android.intent.category.BROWSABLE" />
+224-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:39:17-78
+224-->[com.google.firebase:firebase-auth:23.2.0] /Users/manpreet/.gradle/caches/8.13/transforms/07cf046601c22bf9edfdb5e8ec64fbac/transformed/firebase-auth-23.2.0/AndroidManifest.xml:39:27-75
+225
+226                <data
+226-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:17-93
+227                    android:host="firebase.auth"
+227-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:45-61
+228                    android:path="/"
+229                    android:scheme="recaptcha" />
+229-->/Users/manpreet/Desktop/AndroidStudioProjects/WearProductivityApp/mobile/src/main/AndroidManifest.xml:60:23-44
+230            </intent-filter>
+231        </activity>
+232
+233        <service
+233-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:24:9-32:19
+234            android:name="androidx.credentials.playservices.CredentialProviderMetadataHolder"
+234-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:25:13-94
+235            android:enabled="true"
+235-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:26:13-35
+236            android:exported="false" >
+236-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:27:13-37
+237            <meta-data
+237-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:29:13-31:104
+238                android:name="androidx.credentials.CREDENTIAL_PROVIDER_KEY"
+238-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:30:17-76
+239                android:value="androidx.credentials.playservices.CredentialProviderPlayServicesImpl" />
+239-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:31:17-101
+240        </service>
+241
+242        <activity
+242-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:34:9-41:20
+243            android:name="androidx.credentials.playservices.controllers.identityauth.HiddenActivity"
+243-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:35:13-101
+244            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+244-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:36:13-87
+245            android:enabled="true"
+245-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:37:13-35
+246            android:exported="false"
+246-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:38:13-37
+247            android:fitsSystemWindows="true"
+247-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:39:13-45
+248            android:theme="@style/Theme.Hidden" >
+248-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:40:13-48
+249        </activity>
+250        <activity
+250-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:42:9-49:20
+251            android:name="androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity"
+251-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:43:13-129
+252            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+252-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:44:13-87
+253            android:enabled="true"
+253-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:45:13-35
+254            android:exported="false"
+254-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:46:13-37
+255            android:fitsSystemWindows="true"
+255-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:47:13-45
+256            android:theme="@style/Theme.Hidden" >
+256-->[androidx.credentials:credentials-play-services-auth:1.6.0] /Users/manpreet/.gradle/caches/8.13/transforms/bb9ee1f05b7969898b881834c1940d11/transformed/credentials-play-services-auth-1.6.0/AndroidManifest.xml:48:13-48
+257        </activity>
+258        <activity
+258-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:23:9-27:75
+259            android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
+259-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:24:13-93
+260            android:excludeFromRecents="true"
+260-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:25:13-46
+261            android:exported="false"
+261-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:26:13-37
+262            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+262-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:27:13-72
+263        <!--
+264            Service handling Google Sign-In user revocation. For apps that do not integrate with
+265            Google Sign-In, this service will never be started.
+266        -->
+267        <service
+267-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:33:9-37:51
+268            android:name="com.google.android.gms.auth.api.signin.RevocationBoundService"
+268-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:34:13-89
+269            android:exported="true"
+269-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:35:13-36
+270            android:permission="com.google.android.gms.auth.api.signin.permission.REVOCATION_NOTIFICATION"
+270-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:36:13-107
+271            android:visibleToInstantApps="true" />
+271-->[com.google.android.gms:play-services-auth:21.1.1] /Users/manpreet/.gradle/caches/8.13/transforms/25d5913bd63ba7bcc36159f7b5dcccae/transformed/play-services-auth-21.1.1/AndroidManifest.xml:37:13-48
+272
+273        <activity
+273-->[com.google.android.gms:play-services-base:18.5.0] /Users/manpreet/.gradle/caches/8.13/transforms/03fae547def6e1f3ff674abe316f5762/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+274            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+274-->[com.google.android.gms:play-services-base:18.5.0] /Users/manpreet/.gradle/caches/8.13/transforms/03fae547def6e1f3ff674abe316f5762/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+275            android:exported="false"
+275-->[com.google.android.gms:play-services-base:18.5.0] /Users/manpreet/.gradle/caches/8.13/transforms/03fae547def6e1f3ff674abe316f5762/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+276            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+276-->[com.google.android.gms:play-services-base:18.5.0] /Users/manpreet/.gradle/caches/8.13/transforms/03fae547def6e1f3ff674abe316f5762/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+277
+278        <provider
+278-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:23:9-28:39
+279            android:name="com.google.firebase.provider.FirebaseInitProvider"
+279-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:24:13-77
+280            android:authorities="com.creativeblisslabs.wearproductivity.mobile.firebaseinitprovider"
+280-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:25:13-72
+281            android:directBootAware="true"
+281-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:26:13-43
+282            android:exported="false"
+282-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:27:13-37
+283            android:initOrder="100" />
+283-->[com.google.firebase:firebase-common:21.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/7a539529a4f6e813ecaa7fdeb8210758/transformed/firebase-common-21.0.0/AndroidManifest.xml:28:13-36
+284        <provider
+284-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:29:9-37:20
+285            android:name="androidx.startup.InitializationProvider"
+285-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:30:13-67
+286            android:authorities="com.creativeblisslabs.wearproductivity.mobile.androidx-startup"
+286-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:31:13-68
+287            android:exported="false" >
+287-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:32:13-37
+288            <meta-data
+288-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:34:13-36:52
+289                android:name="androidx.work.WorkManagerInitializer"
+289-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:35:17-68
+290                android:value="androidx.startup" />
+290-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:36:17-49
+291            <meta-data
+291-->[androidx.emoji2:emoji2:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/3052fdd006cc860730b60a0a606a566f/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+292                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+292-->[androidx.emoji2:emoji2:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/3052fdd006cc860730b60a0a606a566f/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+293                android:value="androidx.startup" />
+293-->[androidx.emoji2:emoji2:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/3052fdd006cc860730b60a0a606a566f/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+294            <meta-data
+294-->[androidx.lifecycle:lifecycle-process:2.9.1] /Users/manpreet/.gradle/caches/8.13/transforms/02ff424ee349c95728aad302575710e9/transformed/lifecycle-process-2.9.1/AndroidManifest.xml:29:13-31:52
+295                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+295-->[androidx.lifecycle:lifecycle-process:2.9.1] /Users/manpreet/.gradle/caches/8.13/transforms/02ff424ee349c95728aad302575710e9/transformed/lifecycle-process-2.9.1/AndroidManifest.xml:30:17-78
+296                android:value="androidx.startup" />
+296-->[androidx.lifecycle:lifecycle-process:2.9.1] /Users/manpreet/.gradle/caches/8.13/transforms/02ff424ee349c95728aad302575710e9/transformed/lifecycle-process-2.9.1/AndroidManifest.xml:31:17-49
+297            <meta-data
+297-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+298                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+298-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+299                android:value="androidx.startup" />
+299-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+300        </provider>
+301
+302        <service
+302-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:39:9-45:35
+303            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+303-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:40:13-88
+304            android:directBootAware="false"
+304-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:41:13-44
+305            android:enabled="@bool/enable_system_alarm_service_default"
+305-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:42:13-72
+306            android:exported="false" />
+306-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:43:13-37
+307        <service
+307-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:46:9-52:35
+308            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+308-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:47:13-84
+309            android:directBootAware="false"
+309-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:48:13-44
+310            android:enabled="@bool/enable_system_job_service_default"
+310-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:49:13-70
+311            android:exported="true"
+311-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:50:13-36
+312            android:permission="android.permission.BIND_JOB_SERVICE" />
+312-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:51:13-69
+313        <service
+313-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:53:9-59:35
+314            android:name="androidx.work.impl.foreground.SystemForegroundService"
+314-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:54:13-81
+315            android:directBootAware="false"
+315-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:55:13-44
+316            android:enabled="@bool/enable_system_foreground_service_default"
+316-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:56:13-77
+317            android:exported="false" />
+317-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:57:13-37
+318
+319        <receiver
+319-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:61:9-66:35
+320            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+320-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:62:13-88
+321            android:directBootAware="false"
+321-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:63:13-44
+322            android:enabled="true"
+322-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:64:13-35
+323            android:exported="false" />
+323-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:65:13-37
+324        <receiver
+324-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:67:9-77:20
+325            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
+325-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:68:13-106
+326            android:directBootAware="false"
+326-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:69:13-44
+327            android:enabled="false"
+327-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:70:13-36
+328            android:exported="false" >
+328-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:71:13-37
+329            <intent-filter>
+329-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:73:13-76:29
+330                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+330-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:74:17-87
+330-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:74:25-84
+331                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+331-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:75:17-90
+331-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:75:25-87
+332            </intent-filter>
+333        </receiver>
+334        <receiver
+334-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:78:9-88:20
+335            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
+335-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:79:13-104
+336            android:directBootAware="false"
+336-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:80:13-44
+337            android:enabled="false"
+337-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:81:13-36
+338            android:exported="false" >
+338-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:82:13-37
+339            <intent-filter>
+339-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:84:13-87:29
+340                <action android:name="android.intent.action.BATTERY_OKAY" />
+340-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:85:17-77
+340-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:85:25-74
+341                <action android:name="android.intent.action.BATTERY_LOW" />
+341-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:86:17-76
+341-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:86:25-73
+342            </intent-filter>
+343        </receiver>
+344        <receiver
+344-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:89:9-99:20
+345            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
+345-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:90:13-104
+346            android:directBootAware="false"
+346-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:91:13-44
+347            android:enabled="false"
+347-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:92:13-36
+348            android:exported="false" >
+348-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:93:13-37
+349            <intent-filter>
+349-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:95:13-98:29
+350                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+350-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:96:17-83
+350-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:96:25-80
+351                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+351-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:97:17-82
+351-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:97:25-79
+352            </intent-filter>
+353        </receiver>
+354        <receiver
+354-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:100:9-109:20
+355            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
+355-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:101:13-103
+356            android:directBootAware="false"
+356-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:102:13-44
+357            android:enabled="false"
+357-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:103:13-36
+358            android:exported="false" >
+358-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:104:13-37
+359            <intent-filter>
+359-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:106:13-108:29
+360                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+360-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:107:17-79
+360-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:107:25-76
+361            </intent-filter>
+362        </receiver>
+363        <receiver
+363-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:110:9-121:20
+364            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+364-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:111:13-88
+365            android:directBootAware="false"
+365-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:112:13-44
+366            android:enabled="false"
+366-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:113:13-36
+367            android:exported="false" >
+367-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:114:13-37
+368            <intent-filter>
+368-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:116:13-120:29
+369                <action android:name="android.intent.action.BOOT_COMPLETED" />
+369-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:117:17-79
+369-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:117:25-76
+370                <action android:name="android.intent.action.TIME_SET" />
+370-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:118:17-73
+370-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:118:25-70
+371                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+371-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:119:17-81
+371-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:119:25-78
+372            </intent-filter>
+373        </receiver>
+374        <receiver
+374-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:122:9-131:20
+375            android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver"
+375-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:123:13-99
+376            android:directBootAware="false"
+376-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:124:13-44
+377            android:enabled="@bool/enable_system_alarm_service_default"
+377-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:125:13-72
+378            android:exported="false" >
+378-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:126:13-37
+379            <intent-filter>
+379-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:128:13-130:29
+380                <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies" />
+380-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:129:17-98
+380-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:129:25-95
+381            </intent-filter>
+382        </receiver>
+383        <receiver
+383-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:132:9-142:20
+384            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+384-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:133:13-78
+385            android:directBootAware="false"
+385-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:134:13-44
+386            android:enabled="true"
+386-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:135:13-35
+387            android:exported="true"
+387-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:136:13-36
+388            android:permission="android.permission.DUMP" >
+388-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:137:13-57
+389            <intent-filter>
+389-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:139:13-141:29
+390                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+390-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:140:17-88
+390-->[androidx.work:work-runtime:2.10.0] /Users/manpreet/.gradle/caches/8.13/transforms/cce800e91093131aac5afda09853787d/transformed/work-runtime-2.10.0/AndroidManifest.xml:140:25-85
+391            </intent-filter>
+392        </receiver>
+393
+394        <service
+394-->[androidx.room:room-runtime-android:2.7.0-alpha13] /Users/manpreet/.gradle/caches/8.13/transforms/c311111295bef9519e2343d452321f1c/transformed/room-runtime-release/AndroidManifest.xml:24:9-28:63
+395            android:name="androidx.room.MultiInstanceInvalidationService"
+395-->[androidx.room:room-runtime-android:2.7.0-alpha13] /Users/manpreet/.gradle/caches/8.13/transforms/c311111295bef9519e2343d452321f1c/transformed/room-runtime-release/AndroidManifest.xml:25:13-74
+396            android:directBootAware="true"
+396-->[androidx.room:room-runtime-android:2.7.0-alpha13] /Users/manpreet/.gradle/caches/8.13/transforms/c311111295bef9519e2343d452321f1c/transformed/room-runtime-release/AndroidManifest.xml:26:13-43
+397            android:exported="false" />
+397-->[androidx.room:room-runtime-android:2.7.0-alpha13] /Users/manpreet/.gradle/caches/8.13/transforms/c311111295bef9519e2343d452321f1c/transformed/room-runtime-release/AndroidManifest.xml:27:13-37
+398        <service
+398-->[androidx.core:core-remoteviews:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/8dc8bd503326e5929b5a30fff036b904/transformed/core-remoteviews-1.1.0/AndroidManifest.xml:24:9-27:63
+399            android:name="androidx.core.widget.RemoteViewsCompatService"
+399-->[androidx.core:core-remoteviews:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/8dc8bd503326e5929b5a30fff036b904/transformed/core-remoteviews-1.1.0/AndroidManifest.xml:25:13-73
+400            android:permission="android.permission.BIND_REMOTEVIEWS" />
+400-->[androidx.core:core-remoteviews:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/8dc8bd503326e5929b5a30fff036b904/transformed/core-remoteviews-1.1.0/AndroidManifest.xml:26:13-69
+401        <service
+401-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:24:9-32:19
+402            android:name="androidx.health.platform.client.impl.sdkservice.HealthDataSdkService"
+402-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:25:13-96
+403            android:enabled="true"
+403-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:26:13-35
+404            android:exported="true" >
+404-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:27:13-36
+405            <intent-filter>
+405-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:29:13-31:29
+406                <action android:name="androidx.health.platform.client.ACTION_BIND_SDK_SERVICE" />
+406-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:30:17-98
+406-->[androidx.health.connect:connect-client:1.1.0] /Users/manpreet/.gradle/caches/8.13/transforms/2a410eee106e604f312f7de0f747d2e5/transformed/connect-client-1.1.0/AndroidManifest.xml:30:25-95
+407            </intent-filter>
+408        </service>
+409
+410        <uses-library
+410-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:25:9-27:40
+411            android:name="androidx.window.extensions"
+411-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:26:13-54
+412            android:required="false" />
+412-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:27:13-37
+413        <uses-library
+413-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:28:9-30:40
+414            android:name="androidx.window.sidecar"
+414-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:29:13-51
+415            android:required="false" />
+415-->[androidx.window:window:1.0.0] /Users/manpreet/.gradle/caches/8.13/transforms/14c09925808923faf056f8a2b6a84e26/transformed/window-1.0.0/AndroidManifest.xml:30:13-37
+416
+417        <meta-data
+417-->[com.google.android.gms:play-services-basement:18.9.0] /Users/manpreet/.gradle/caches/8.13/transforms/cb71b1eed10ba62d6d1b999f5819178c/transformed/play-services-basement-18.9.0/AndroidManifest.xml:21:9-23:69
+418            android:name="com.google.android.gms.version"
+418-->[com.google.android.gms:play-services-basement:18.9.0] /Users/manpreet/.gradle/caches/8.13/transforms/cb71b1eed10ba62d6d1b999f5819178c/transformed/play-services-basement-18.9.0/AndroidManifest.xml:22:13-58
+419            android:value="@integer/google_play_services_version" />
+419-->[com.google.android.gms:play-services-basement:18.9.0] /Users/manpreet/.gradle/caches/8.13/transforms/cb71b1eed10ba62d6d1b999f5819178c/transformed/play-services-basement-18.9.0/AndroidManifest.xml:23:13-66
+420
+421        <activity
+421-->[androidx.compose.ui:ui-tooling-android:1.8.2] /Users/manpreet/.gradle/caches/8.13/transforms/97163f4235e879c698d45b361081be8d/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+422            android:name="androidx.compose.ui.tooling.PreviewActivity"
+422-->[androidx.compose.ui:ui-tooling-android:1.8.2] /Users/manpreet/.gradle/caches/8.13/transforms/97163f4235e879c698d45b361081be8d/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+423            android:exported="true" />
+423-->[androidx.compose.ui:ui-tooling-android:1.8.2] /Users/manpreet/.gradle/caches/8.13/transforms/97163f4235e879c698d45b361081be8d/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+424
+425        <receiver
+425-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+426            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+426-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+427            android:directBootAware="false"
+427-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+428            android:enabled="true"
+428-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+429            android:exported="true"
+429-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+430            android:permission="android.permission.DUMP" >
+430-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+431            <intent-filter>
+431-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+432                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+432-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+432-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+433            </intent-filter>
+434            <intent-filter>
+434-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+435                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+435-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+435-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+436            </intent-filter>
+437            <intent-filter>
+437-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+438                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+438-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+438-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+439            </intent-filter>
+440            <intent-filter>
+440-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+441                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+441-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+441-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/manpreet/.gradle/caches/8.13/transforms/d6b947a29f6099fdd223ca99e85af9b3/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+442            </intent-filter>
+443        </receiver> <!-- The activities will be merged into the manifest of the hosting app. -->
+444        <activity
+444-->[com.google.android.play:core-common:2.0.3] /Users/manpreet/.gradle/caches/8.13/transforms/60e8fb1627f93a6f9981489bf880ad49/transformed/core-common-2.0.3/AndroidManifest.xml:14:9-18:65
+445            android:name="com.google.android.play.core.common.PlayCoreDialogWrapperActivity"
+445-->[com.google.android.play:core-common:2.0.3] /Users/manpreet/.gradle/caches/8.13/transforms/60e8fb1627f93a6f9981489bf880ad49/transformed/core-common-2.0.3/AndroidManifest.xml:15:13-93
+446            android:exported="false"
+446-->[com.google.android.play:core-common:2.0.3] /Users/manpreet/.gradle/caches/8.13/transforms/60e8fb1627f93a6f9981489bf880ad49/transformed/core-common-2.0.3/AndroidManifest.xml:16:13-37
+447            android:stateNotNeeded="true"
+447-->[com.google.android.play:core-common:2.0.3] /Users/manpreet/.gradle/caches/8.13/transforms/60e8fb1627f93a6f9981489bf880ad49/transformed/core-common-2.0.3/AndroidManifest.xml:17:13-42
+448            android:theme="@style/Theme.PlayCore.Transparent" />
+448-->[com.google.android.play:core-common:2.0.3] /Users/manpreet/.gradle/caches/8.13/transforms/60e8fb1627f93a6f9981489bf880ad49/transformed/core-common-2.0.3/AndroidManifest.xml:18:13-62
+449    </application>
+450
+451</manifest>
