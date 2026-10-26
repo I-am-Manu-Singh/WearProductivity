@@ -1,5 +1,6 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.calendar
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ContentUris
@@ -360,6 +361,7 @@ private object UnifiedPlannerPrefs {
 // =============================================================================
 // MAIN UNIFIED ENTRY POINT: WEAR CALENDAR + TASKS + EVENTS + ALARMS STUDIO
 // =============================================================================
+@SuppressLint("SuspiciousIndentation")
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -3373,94 +3375,6 @@ private fun ViewportConstrainedCalendarConfirmation(
     }
 }
 
-@Composable
-private fun WearBaselineViewport(
-    baselineWatchSize: Dp = 416.dp,
-    content: @Composable (WearAdaptiveSpec) -> Unit
-) {
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
-        val viewportWidth = if (isPhonePreview) baselineWatchSize else this.maxWidth
-        val viewportHeight = if (isPhonePreview) baselineWatchSize else this.maxHeight
-
-        val spec = remember(viewportWidth, viewportHeight) {
-            WearAdaptiveSpec(
-                screenWidth = viewportWidth,
-                screenHeight = viewportHeight,
-                isLargeScreen = viewportWidth >= 225.dp,
-                outerHorizontalMargin = viewportWidth * 0.052f,
-                topBottomSlotHorizontalMargin = viewportWidth * 0.14f,
-                topSlotPadding = viewportHeight * 0.11f,
-                bottomEdgeButtonPadding = viewportHeight * 0.22f
-            )
-        }
-
-        if (isPhonePreview) {
-            Box(
-                modifier = Modifier
-                    .size(baselineWatchSize)
-                    .clip(CircleShape)
-                    .background(Color.Black)
-                    .border(
-                        width = 1.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                        shape = CircleShape
-                    )
-            ) {
-                content(spec)
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                content(spec)
-            }
-        }
-    }
-}
-
-@Composable
-private fun VerticalPagerIndicator(
-    currentPage: Int,
-    pageCount: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-            .padding(vertical = 5.dp, horizontal = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        repeat(pageCount) { index ->
-            val isSelected = index == currentPage
-            val dotHeight by animateDpAsState(
-                targetValue = if (isSelected) 10.dp else 4.dp,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                label = "pagerDotHeight"
-            )
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(dotHeight)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-            )
-        }
-    }
-}
-
 // =============================================================================
 // DATE & RECURRENCE MATCHING UTILITIES
 // =============================================================================
@@ -3532,19 +3446,3 @@ private val weekdays = setOf(
 )
 private val weekends = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
 
-private fun TextStyle.tabularNums(): TextStyle = this.copy(
-    fontFeatureSettings = "tnum",
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)
-
-private fun TextStyle.compactLineHeight(): TextStyle = this.copy(
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)

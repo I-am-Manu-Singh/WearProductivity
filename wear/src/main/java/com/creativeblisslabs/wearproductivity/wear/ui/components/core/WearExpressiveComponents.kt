@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -81,7 +82,16 @@ import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.compose.ui.geometry.Size
 import androidx.wear.compose.material.Button
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.wear.compose.foundation.CurvedLayout
+import androidx.wear.compose.material3.AlertDialogDefaults
+import androidx.wear.compose.material3.ConfirmationDialogDefaults
+import androidx.wear.compose.material3.confirmationDialogCurvedText
+import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -732,6 +742,69 @@ fun rememberMorphingGroupShape(
         bottomEnd = animatedBottom
     )
 }
+@Composable
+fun ViewportConstrainedCurvedConfirmation(
+    label: String,
+    onDismiss: () -> Unit
+) {
+    val curvedTextStyle = ConfirmationDialogDefaults.curvedTextStyle
+
+    LaunchedEffect(label) {
+        delay(1_800L)
+        onDismiss()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.92f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center
+    ) {
+        CurvedLayout(modifier = Modifier.fillMaxSize()) {
+            confirmationDialogCurvedText(text = label, style = curvedTextStyle)
+        }
+        ConfirmationDialogDefaults.SuccessIcon()
+    }
+}
+
+@Composable
+fun ViewportConstrainedAlertDialog(
+    spec: WearAdaptiveSpec,
+    title: String,
+    body: String,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.95f))
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = spec.topBottomSlotHorizontalMargin, vertical = 20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            AlertDialogDefaults.ConfirmButton(onClick = onDismiss)
+        }
+    }
+}
 
 /**
  * Reusable M3 Transforming Card component that contracts and expands during scrolling in TransformingLazyColumn.
@@ -765,6 +838,59 @@ fun TransformingLazyColumnItemScope.WearTransformingCard(
         content()
     }
 }
+fun TextStyle.compactLineHeight(): TextStyle = this.copy(
+    lineHeight = 1.1.em,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both
+    )
+)
+
+fun TextStyle.tabularNums(): TextStyle = this.copy(
+    fontFeatureSettings = "tnum",
+    lineHeight = 1.1.em,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both
+    )
+)
+
+
+@Composable
+fun VerticalPagerIndicator(
+    currentPage: Int,
+    pageCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
+            .padding(vertical = 5.dp, horizontal = 3.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        repeat(pageCount) { index ->
+            val isSelected = index == currentPage
+            val dotHeight by animateDpAsState(
+                targetValue = if (isSelected) 10.dp else 4.dp,
+                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                label = "pagerDotHeight"
+            )
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(dotHeight)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+            )
+        }
+    }
+}
+
 class ScallopedPlayButtonShape(
     private val lobes: Int,
     private val waveAmplitudeRatio: Float
@@ -796,7 +922,7 @@ class ScallopedPlayButtonShape(
             }
         }
         path.close()
-        return androidx.compose.ui.graphics.Outline.Generic(path)
+        return androidx.compose.ui.graphics.Outline.Generic(path as androidx.compose.ui.graphics.Path)
     }
 }
 @Composable

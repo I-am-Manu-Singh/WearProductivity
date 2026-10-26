@@ -2770,46 +2770,4 @@ private fun ViewportConstrainedFileExplorerConfirmation(
     }
 }
 
-@Composable
-private fun VerticalPagerIndicator(
-    currentPage: Int,
-    pageCount: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-            .padding(vertical = 5.dp, horizontal = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        repeat(pageCount) { index ->
-            val isSelected = index == currentPage
-            val dotHeight by animateDpAsState(
-                targetValue = if (isSelected) 10.dp else 4.dp,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                label = "pagerDotHeight"
-            )
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(dotHeight)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-            )
-        }
-    }
-}
 
-private fun TextStyle.tabularNums(): TextStyle = this.copy(
-    fontFeatureSettings = "tnum",
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)

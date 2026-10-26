@@ -1,5 +1,6 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.dashboard
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
@@ -120,6 +121,7 @@ private data class FaceMetric(
 
 
 
+@SuppressLint("SuspiciousIndentation")
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -607,8 +609,7 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
         )
     )
 
-    val adaptiveSpec = com.creativeblisslabs.wearproductivity.wear.ui.components.core.LocalWearAdaptiveSpec.current
-
+    val adaptiveSpec = LocalWearAdaptiveSpec.current
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -1796,169 +1797,6 @@ private fun M3DashboardStatsDeckPage(
 // =============================================================================
 // IN-VIEWPORT CONSTRAINED OVERLAYS & SHARED UTILITIES
 // =============================================================================
-@Composable
-private fun ViewportConstrainedCurvedConfirmation(
-    label: String,
-    onDismiss: () -> Unit
-) {
-    val curvedTextStyle = ConfirmationDialogDefaults.curvedTextStyle
-
-    LaunchedEffect(label) {
-        delay(1_800L)
-        onDismiss()
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.92f))
-            .clickable(onClick = onDismiss),
-        contentAlignment = Alignment.Center
-    ) {
-        CurvedLayout(modifier = Modifier.fillMaxSize()) {
-            confirmationDialogCurvedText(text = label, style = curvedTextStyle)
-        }
-        ConfirmationDialogDefaults.SuccessIcon()
-    }
-}
-
-@Composable
-private fun ViewportConstrainedAlertDialog(
-    spec: WearAdaptiveSpec,
-    title: String,
-    body: String,
-    onDismiss: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.95f))
-            .clickable(onClick = onDismiss)
-            .padding(horizontal = spec.topBottomSlotHorizontalMargin, vertical = 20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = body,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            AlertDialogDefaults.ConfirmButton(onClick = onDismiss)
-        }
-    }
-}
-
-@Composable
-private fun WearBaselineViewport(
-    baselineWatchSize: Dp = 416.dp,
-    content: @Composable (WearAdaptiveSpec) -> Unit
-) {
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
-        val viewportWidth = if (isPhonePreview) baselineWatchSize else this.maxWidth
-        val viewportHeight = if (isPhonePreview) baselineWatchSize else this.maxHeight
-
-        val spec = remember(viewportWidth, viewportHeight) {
-            WearAdaptiveSpec(
-                screenWidth = viewportWidth,
-                screenHeight = viewportHeight,
-                isLargeScreen = viewportWidth >= 225.dp,
-                isSmallScreen = viewportWidth < 225.dp,
-                outerHorizontalMargin = viewportWidth * 0.052f,
-                topBottomSlotHorizontalMargin = viewportWidth * 0.14f,
-                topSlotPadding = viewportHeight * 0.11f,
-                bottomEdgeButtonPadding = viewportHeight * 0.22f
-            )
-        }
-
-        val scaledDensity = if (spec.isSmallScreen) {
-            androidx.compose.ui.unit.Density(
-                density = androidx.compose.ui.platform.LocalDensity.current.density * 0.85f,
-                fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale * 0.85f
-            )
-        } else {
-            androidx.compose.ui.platform.LocalDensity.current
-        }
-
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides scaledDensity) {
-            if (isPhonePreview) {
-                Box(
-                    modifier = Modifier
-                        .size(baselineWatchSize)
-                        .clip(CircleShape)
-                        .background(Color.Black)
-                        .border(
-                            width = 1.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                            shape = CircleShape
-                        )
-                ) {
-                    content(spec)
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black)
-                ) {
-                    content(spec)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun VerticalPagerIndicator(
-    currentPage: Int,
-    pageCount: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-            .padding(vertical = 5.dp, horizontal = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        repeat(pageCount) { index ->
-            val isSelected = index == currentPage
-            val dotHeight by animateDpAsState(
-                targetValue = if (isSelected) 10.dp else 4.dp,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                label = "pagerDotHeight"
-            )
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(dotHeight)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-            )
-        }
-    }
-}
 
 private fun formatStoredAlarmTime(raw: String, use24HourClock: Boolean): String {
     val match = Regex("""^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$""", RegexOption.IGNORE_CASE)
@@ -1980,20 +1818,3 @@ private fun formatStoredAlarmTime(raw: String, use24HourClock: Boolean): String 
         String.format(Locale.getDefault(), "%d:%02d %s", twelveHour, minute, suffix)
     }
 }
-
-private fun TextStyle.tabularNums(): TextStyle = this.copy(
-    fontFeatureSettings = "tnum",
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)
-
-private fun TextStyle.compactLineHeight(): TextStyle = this.copy(
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)

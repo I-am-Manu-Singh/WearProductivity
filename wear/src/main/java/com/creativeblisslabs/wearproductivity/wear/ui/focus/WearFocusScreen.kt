@@ -110,14 +110,13 @@ private fun formatTimerClock(totalSeconds: Int): String {
     return String.format(Locale.ROOT, "%02d:%02d", mins, secs)
 }
 
-data class WearAdaptiveSpecDeleted(
-
 data class FocusTopicPreset(
     val id: String,
     val name: String,
     val focusMinutes: Int,
     val breakMinutes: Int,
     val type: FocusType = FocusType.Custom
+)
 
 enum class AmbientSoundMode(val label: String) {
     OFF("Off"),
@@ -324,58 +323,6 @@ private object FocusTopicPrefs {
     }
 }
 
-@Composable
-fun WearBaselineViewport(
-    baselineWatchSize: Dp = 416.dp,
-    content: @Composable (WearAdaptiveSpec) -> Unit
-) {
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
-        val viewportWidth = if (isPhonePreview) baselineWatchSize else this.maxWidth
-        val viewportHeight = if (isPhonePreview) baselineWatchSize else this.maxHeight
-
-        val spec = remember(viewportWidth, viewportHeight) {
-            WearAdaptiveSpec(
-                screenWidth = viewportWidth,
-                screenHeight = viewportHeight,
-                isLargeScreen = viewportWidth >= 225.dp,
-                outerHorizontalMargin = viewportWidth * 0.052f,
-                topBottomSlotHorizontalMargin = viewportWidth * 0.14f,
-                topSlotPadding = viewportHeight * 0.11f,
-                bottomEdgeButtonPadding = viewportHeight * 0.22f
-        }
-
-        if (isPhonePreview) {
-            Box(
-                modifier = Modifier
-                    .size(baselineWatchSize)
-                    .clip(CircleShape)
-                    .background(Color.Black)
-                    .border(
-                        width = 1.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                        shape = CircleShape
-                    )
-            ) {
-                content(spec)
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                content(spec)
-            }
-        }
-    }
-}
-
 // =============================================================================
 // MAIN ENTRY SCREEN
 // =============================================================================
@@ -498,6 +445,7 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
                 minutes = safeDuration,
                 type = type,
                 subject = topicName
+            )
             sessionNotice = "Started $topicName (${safeDuration}m)" to false
         }
     }
@@ -571,6 +519,7 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
                     minutesFocused = elapsedMinutes,
                     completed = focus.remainingSeconds <= 60
                 )
+            )
         }
         sessionNotice = "Session Logged ($elapsedMinutes min)" to false
         coroutineScope.launch { repository.stopFocusSession() }
@@ -636,6 +585,7 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
                 focusMinutes = parsedFocus,
                 breakMinutes = parsedBreak,
                 type = FocusType.Custom
+            )
             customTopics.add(0, newPreset)
             selectTopicPreset(newPreset)
             coroutineScope.launch { repository.addFocusTopic(cleanName) }
@@ -670,8 +620,19 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
             .filterNot { it.stamp.id in deletedHistoryIds }
     }
 
-    val adaptiveSpec = com.creativeblisslabs.wearproductivity.wear.ui.components.core.LocalWearAdaptiveSpec.current
-
+    WearBaselineViewport {
+        // 1. Retrieve the spec from CompositionLocal inside the block
+        val coreSpec = LocalWearAdaptiveSpec.current
+        val adaptiveSpec = WearAdaptiveSpec(
+            screenWidth = coreSpec.screenWidth,
+            screenHeight = coreSpec.screenHeight,
+            isLargeScreen = coreSpec.isLargeScreen,
+            isSmallScreen = coreSpec.isSmallScreen,
+            outerHorizontalMargin = coreSpec.outerHorizontalMargin,
+            topBottomSlotHorizontalMargin = coreSpec.topBottomSlotHorizontalMargin,
+            topSlotPadding = coreSpec.topSlotPadding,
+            bottomEdgeButtonPadding = coreSpec.bottomEdgeButtonPadding
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -877,7 +838,7 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
                 )
             }
         }
-    
+    }
 }
 
 // =============================================================================
@@ -904,7 +865,7 @@ private fun ActiveFocusBoundaryCanvasPage(
     onOpenCustomPicker: () -> Unit,
     onOpenDashboard: () -> Unit,
     onSelectAmbientMode: (AmbientSoundMode) -> Unit
-    ) {
+) {
     val isActive = focus.active
     val isPaused = focus.isPaused
     val isBreakActive = isActive && (focus.type == FocusType.ShortBreak || focus.type == FocusType.LongBreak)
@@ -1175,13 +1136,13 @@ private fun ActiveFocusBoundaryCanvasPage(
                     }
                 }
 
-                    WearActionButtonGroup(
-                        options = AmbientSoundMode.entries.map { it.label },
-                        selectedIndex = if (isSoundMuted) 0 else ambientMode.ordinal,
-                        onOptionSelected = { idx ->
-                            onSelectAmbientMode(AmbientSoundMode.entries[idx])
-                        }
-                    )
+                WearActionButtonGroup(
+                    options = AmbientSoundMode.entries.map { it.label },
+                    selectedIndex = if (isSoundMuted) 0 else ambientMode.ordinal,
+                    onOptionSelected = { idx ->
+                        onSelectAmbientMode(AmbientSoundMode.entries[idx])
+                    }
+                )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -1436,6 +1397,7 @@ private fun FocusDashboardTransformingPage(
                 onClick = if (isActive) onJumpToCanvas else onStartSession,
                 label = if (isActive) "Timer Ring" else "Start ${activeTopic.name}",
                 icon = if (isActive) Icons.Rounded.KeyboardArrowUp else Icons.Default.PlayArrow
+            )
         }
     ) { contentPadding ->
         TransformingLazyColumn(
@@ -1750,51 +1712,3 @@ private fun ViewportConstrainedFocusConfirmation(
         }
     }
 }
-
-@Composable
-private fun VerticalPagerIndicator(
-    currentPage: Int,
-    pageCount: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-            .padding(vertical = 5.dp, horizontal = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        repeat(pageCount) { index ->
-            val isSelected = index == currentPage
-            val dotHeight by animateDpAsState(
-                targetValue = if (isSelected) 10.dp else 4.dp,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                label = "pagerDotHeight"
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(dotHeight)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-        }
-    }
-}
-
-private fun TextStyle.tabularNums(): TextStyle = this.copy(
-    fontFeatureSettings = "tnum",
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-
-private fun TextStyle.compactLineHeight(): TextStyle = this.copy(
-    lineHeight = 1.1.em,
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
