@@ -1,4 +1,3 @@
-
 # Sensitive credentials, keys & environment files
 .env
 .env.*
@@ -12,3 +11,15 @@ google-services.json
 GoogleService-Info.plist
 *.apk
 *.aab
+
+# Gradle and Build directories
+.gradle/
+build/
+**/build/
+.kotlin/
+.idea/
+*.iml
+
+# OS specific files
+.DS_Store
+Thumbs.db
