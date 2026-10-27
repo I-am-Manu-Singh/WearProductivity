@@ -430,7 +430,37 @@ fun WearWorkoutScreen(
     // Custom Programs, PR Records & History State
     val programs = remember {
         mutableStateListOf<WorkoutProgramItem>().apply {
-            addAll(WorkoutStudioPrefs.loadPrograms(context, activeRuns))
+            val savedPrograms =
+                WorkoutStudioPrefs.loadPrograms(context, activeRuns)
+
+            val jsonPrograms = exerciseRepository.allWorkouts.map { plan ->
+                val exerciseNames = exerciseRepository.getWorkoutExercises(plan.id)
+                    .map { it.name }
+
+                WorkoutProgramItem(
+                    id = plan.id,
+                    name = plan.name,
+                    discipline = runCatching {
+                        WorkoutDiscipline.valueOf(plan.discipline.uppercase())
+                    }.getOrDefault(WorkoutDiscipline.GYM),
+                    muscleOrZone = plan.muscleOrZone,
+                    targetSets = plan.targetSets,
+                    targetReps = plan.targetReps,
+                    targetWeightKg = plan.targetWeightKg,
+                    restSeconds = plan.restSeconds,
+                    stepDurationSeconds = plan.stepDurationSeconds,
+                    steps = exerciseNames.ifEmpty {
+                        listOf(
+                            "${plan.targetSets} sets",
+                            "${plan.targetReps} reps",
+                            "${plan.stepDurationSeconds}s per interval"
+                        )
+                    }
+                )
+            }
+
+            // Saved/custom entries take priority if IDs overlap.
+            addAll((savedPrograms + jsonPrograms).distinctBy { it.id })
         }
     }
     var selectedProgramId by remember { mutableStateOf(WorkoutStudioPrefs.loadActiveId(context)) }

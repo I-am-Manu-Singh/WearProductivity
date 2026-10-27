@@ -35,6 +35,7 @@ import com.creativeblisslabs.wearproductivity.wear.ui.habits.WearHabitsScreen
 import com.creativeblisslabs.wearproductivity.wear.ui.settings.WearSettingsScreen
 import com.creativeblisslabs.wearproductivity.wear.ui.theme.LifeOSWearTheme
 import com.creativeblisslabs.wearproductivity.wear.ui.workout.WearWorkoutScreen
+import timber.log.Timber
 
 val LocalIsAmbient = compositionLocalOf { false }
 
@@ -99,19 +100,79 @@ fun MainNavigation(
                     4 -> WearFastingScreen(state, repository)
                     5 -> WearWorkoutScreen(state, repository, exerciseRepository)
                     6 -> {
-                        var workoutFlowState by remember { mutableIntStateOf(0) }
-                        var activeRoutineIds by remember { mutableStateOf<List<String>>(emptyList()) }
+                        var workoutFlowState by remember {
+                            mutableIntStateOf(0)
+                        }
+
+                        var activeRoutineIds by remember {
+                            mutableStateOf<List<String>>(emptyList())
+                        }
+
+                        // Resolve the IDs returned by the setup screen.
+                        val resolvedRoutineIds = remember(
+                            activeRoutineIds,
+                            exerciseRepository.allExercises
+                        ) {
+                            val availableIds =
+                                exerciseRepository.allExercises.mapTo(mutableSetOf()) { it.id }
+
+                            activeRoutineIds.filter { it in availableIds }
+                        }
 
                         when (workoutFlowState) {
-                            0 -> com.creativeblisslabs.wearproductivity.wear.ui.workout.WearExerciseSetupScreen(exerciseRepository) { routineIds ->
-                                activeRoutineIds = routineIds
-                                workoutFlowState = 1
+                            0 -> com.creativeblisslabs.wearproductivity.wear.ui.workout
+                                .WearExerciseSetupScreen(exerciseRepository) { generatedIds ->
+                                    activeRoutineIds = generatedIds
+                                    workoutFlowState = 1
+
+                                    Timber.tag("WorkoutNavigation")
+                                        .d(
+                                            "Generated workout: count=${generatedIds.size}, " +
+                                                    "IDs=$generatedIds"
+                                        )
+                                }
+
+                            1 -> {
+                                com.creativeblisslabs.wearproductivity.wear.ui.workout
+                                    .WearWorkoutListScreen(
+                                        repository = exerciseRepository,
+                                        routineIds = resolvedRoutineIds
+                                    ) {
+                                        workoutFlowState = 2
+                                    }
                             }
-                            1 -> com.creativeblisslabs.wearproductivity.wear.ui.workout.WearWorkoutListScreen(exerciseRepository, activeRoutineIds) {
-                                workoutFlowState = 2
-                            }
-                            2 -> com.creativeblisslabs.wearproductivity.wear.ui.workout.WearGuidedWorkoutScreen(exerciseRepository, activeRoutineIds) {
-                                workoutFlowState = 0
+
+                            2 -> {
+                                if (resolvedRoutineIds.isEmpty()) {
+                                    androidx.compose.foundation.layout.Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(16.dp),
+                                        verticalArrangement =
+                                            androidx.compose.foundation.layout.Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        androidx.wear.compose.material3.Text(
+                                            text = "No exercises found",
+                                            color = androidx.wear.compose.material3.MaterialTheme
+                                                .colorScheme.error
+                                        )
+
+                                        androidx.wear.compose.material3.Button(
+                                            onClick = { workoutFlowState = 0 }
+                                        ) {
+                                            androidx.wear.compose.material3.Text("Back to setup")
+                                        }
+                                    }
+                                } else {
+                                    com.creativeblisslabs.wearproductivity.wear.ui.workout
+                                        .WearGuidedWorkoutScreen(
+                                            repository = exerciseRepository,
+                                            routineIds = resolvedRoutineIds
+                                        ) {
+                                            workoutFlowState = 0
+                                        }
+                                }
                             }
                         }
                     }

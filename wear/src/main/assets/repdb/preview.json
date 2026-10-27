@@ -656,8 +656,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/ab-wheel-rollout/classic-start.webp",
+          "repdb/images/exercises/ab-wheel-rollout/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/ab-wheel-rollout/flat-start.webp",
+          "repdb/images/exercises/ab-wheel-rollout/flat-peak.webp"
         ]
       },
       "synonyms": [
@@ -716,8 +720,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/barbell-reverse-lunge/classic-start.webp",
+          "repdb/images/exercises/barbell-reverse-lunge/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/barbell-reverse-lunge/flat-start.webp",
+          "repdb/images/exercises/barbell-reverse-lunge/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -765,8 +773,12 @@
       "is_bodyweight": true,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/bench-leg-pull-in/classic-start.webp",
+          "repdb/images/exercises/bench-leg-pull-in/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/bench-leg-pull-in/flat-start.webp",
+          "repdb/images/exercises/bench-leg-pull-in/flat-peak.webp"
         ]
       },
       "additional_required_equipment": [
@@ -835,8 +847,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/bent-over-db-row/classic-start.webp",
+          "repdb/images/exercises/bent-over-db-row/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/bent-over-db-row/flat-start.webp",
+          "repdb/images/exercises/bent-over-db-row/flat-peak.webp"
         ]
       },
       "equipment_alternatives": [
@@ -929,8 +945,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/bicep-curl/classic-start.webp",
+          "repdb/images/exercises/bicep-curl/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/bicep-curl/flat-start.webp",
+          "repdb/images/exercises/bicep-curl/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -987,7 +1007,10 @@
       ],
       "images": {
         "classic": [
-          "main"
+          "repdb/images/exercises/cat-cow/classic-main.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/cat-cow/flat-main.webp"
         ]
       },
       "synonyms": [
@@ -995,7 +1018,7 @@
         "cat cow stretch",
         "spinal flow"
       ],
-      "animation": true,
+      "animation": false,
       "animation_type": "motion",
       "met": 5.0
     },
@@ -1041,8 +1064,12 @@
       "is_bodyweight": false,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/decline-db-fly/classic-start.webp",
+          "repdb/images/exercises/decline-db-fly/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/decline-db-fly/flat-start.webp",
+          "repdb/images/exercises/decline-db-fly/flat-peak.webp"
         ]
       },
       "additional_required_equipment": [
@@ -1101,8 +1128,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/ez-bar-upright-row/classic-start.webp",
+          "repdb/images/exercises/ez-bar-upright-row/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/ez-bar-upright-row/flat-start.webp",
+          "repdb/images/exercises/ez-bar-upright-row/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1175,8 +1206,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/front-squat/classic-start.webp",
+          "repdb/images/exercises/front-squat/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/front-squat/flat-start.webp",
+          "repdb/images/exercises/front-squat/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1227,8 +1262,12 @@
       "is_bodyweight": false,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/incline-db-curl/classic-start.webp",
+          "repdb/images/exercises/incline-db-curl/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/incline-db-curl/flat-start.webp",
+          "repdb/images/exercises/incline-db-curl/flat-peak.webp"
         ]
       },
       "additional_required_equipment": [
@@ -1280,8 +1319,12 @@
       "is_bodyweight": false,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/kneeling-cable-row/classic-start.webp",
+          "repdb/images/exercises/kneeling-cable-row/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/kneeling-cable-row/flat-start.webp",
+          "repdb/images/exercises/kneeling-cable-row/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1346,8 +1389,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/machine-chest-fly/classic-start.webp",
+          "repdb/images/exercises/machine-chest-fly/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/machine-chest-fly/flat-start.webp",
+          "repdb/images/exercises/machine-chest-fly/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1413,8 +1460,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/mountain-climbers/classic-start.webp",
+          "repdb/images/exercises/mountain-climbers/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/mountain-climbers/flat-start.webp",
+          "repdb/images/exercises/mountain-climbers/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1474,8 +1525,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/one-arm-kettlebell-row/classic-start.webp",
+          "repdb/images/exercises/one-arm-kettlebell-row/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/one-arm-kettlebell-row/flat-start.webp",
+          "repdb/images/exercises/one-arm-kettlebell-row/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1561,8 +1616,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/pull-up/classic-start.webp",
+          "repdb/images/exercises/pull-up/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/pull-up/flat-start.webp",
+          "repdb/images/exercises/pull-up/flat-peak.webp"
         ]
       },
       "equipment_alternatives": [
@@ -1619,8 +1678,12 @@
       "is_bodyweight": false,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/reverse-grip-lat-pulldown/classic-start.webp",
+          "repdb/images/exercises/reverse-grip-lat-pulldown/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/reverse-grip-lat-pulldown/flat-start.webp",
+          "repdb/images/exercises/reverse-grip-lat-pulldown/flat-peak.webp"
         ]
       },
       "animation": true,
@@ -1701,8 +1764,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/rowing-machine/classic-start.webp",
+          "repdb/images/exercises/rowing-machine/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/rowing-machine/flat-start.webp",
+          "repdb/images/exercises/rowing-machine/flat-peak.webp"
         ]
       },
       "synonyms": [
@@ -1771,7 +1838,10 @@
       ],
       "images": {
         "classic": [
-          "main"
+          "repdb/images/exercises/running/classic-main.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/running/flat-main.webp"
         ]
       },
       "synonyms": [
@@ -1783,7 +1853,7 @@
         "outdoor running",
         "going for a run"
       ],
-      "animation": true,
+      "animation": false,
       "animation_type": "motion",
       "met": 8.0
     },
@@ -1834,8 +1904,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/side-lying-lateral-raise/classic-start.webp",
+          "repdb/images/exercises/side-lying-lateral-raise/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/side-lying-lateral-raise/flat-start.webp",
+          "repdb/images/exercises/side-lying-lateral-raise/flat-peak.webp"
         ]
       },
       "equipment_alternatives": [
@@ -1892,8 +1966,12 @@
       "is_bodyweight": false,
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/single-arm-tricep-pushdown/classic-start.webp",
+          "repdb/images/exercises/single-arm-tricep-pushdown/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/single-arm-tricep-pushdown/flat-start.webp",
+          "repdb/images/exercises/single-arm-tricep-pushdown/flat-peak.webp"
         ]
       },
       "equipment_alternatives": [
@@ -1956,8 +2034,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/smith-machine-front-squat/classic-start.webp",
+          "repdb/images/exercises/smith-machine-front-squat/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/smith-machine-front-squat/flat-start.webp",
+          "repdb/images/exercises/smith-machine-front-squat/flat-peak.webp"
         ]
       },
       "equipment_alternatives": [
@@ -2025,8 +2107,12 @@
       ],
       "images": {
         "classic": [
-          "start",
-          "peak"
+          "repdb/images/exercises/thruster/classic-start.webp",
+          "repdb/images/exercises/thruster/classic-peak.webp"
+        ],
+        "flat": [
+          "repdb/images/exercises/thruster/flat-start.webp",
+          "repdb/images/exercises/thruster/flat-peak.webp"
         ]
       },
       "animation": true,

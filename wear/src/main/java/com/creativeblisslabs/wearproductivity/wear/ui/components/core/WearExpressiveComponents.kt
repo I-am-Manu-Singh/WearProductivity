@@ -1,7 +1,8 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.components.core
 
-import android.graphics.Outline
-import android.graphics.Path
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.Path
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -45,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -92,6 +92,7 @@ import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.ConfirmationDialogDefaults
 import androidx.wear.compose.material3.confirmationDialogCurvedText
 import kotlinx.coroutines.delay
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -895,25 +896,39 @@ class ScallopedPlayButtonShape(
     private val lobes: Int,
     private val waveAmplitudeRatio: Float
 ) : Shape {
+
+    init {
+        require(lobes >= 1) { "lobes must be at least 1" }
+        require(waveAmplitudeRatio in 0f..0.5f) {
+            "waveAmplitudeRatio must be between 0 and 0.5"
+        }
+    }
+
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
         density: Density
-    ): androidx.compose.ui.graphics.Outline {
+    ): Outline {
         val path = Path()
+
         val width = size.width
         val height = size.height
         val cx = width / 2f
         val cy = height / 2f
-        val maxR = minOf(cx, cy)
+        val maxRadius = minOf(cx, cy)
         val totalSteps = 180
 
         for (i in 0..totalSteps) {
-            val fraction = i.toFloat() / totalSteps.toFloat()
-            val angle = (-Math.PI / 2.0) + (fraction * 2.0 * Math.PI)
-            val r = maxR * (1f + waveAmplitudeRatio * cos(lobes * angle).toFloat())
-            val x = cx + (r * cos(angle)).toFloat()
-            val y = cy + (r * sin(angle)).toFloat()
+            val fraction = i.toFloat() / totalSteps
+            val angle = -PI / 2.0 + fraction * 2.0 * PI
+
+            val radius = maxRadius * (
+                    1f + waveAmplitudeRatio *
+                            cos(lobes * angle).toFloat()
+                    )
+
+            val x = cx + radius * cos(angle).toFloat()
+            val y = cy + radius * sin(angle).toFloat()
 
             if (i == 0) {
                 path.moveTo(x, y)
@@ -921,8 +936,11 @@ class ScallopedPlayButtonShape(
                 path.lineTo(x, y)
             }
         }
+
         path.close()
-        return androidx.compose.ui.graphics.Outline.Generic(path as androidx.compose.ui.graphics.Path)
+
+        // Compose Path is already the correct type. No cast needed.
+        return Outline.Generic(path)
     }
 }
 @Composable
@@ -1008,16 +1026,30 @@ fun PlayerControlBar(
 
                 val currentAmp = if (isPlaying) scallopWaveAmplitude else 0f
 
-                fun buildRingPath(stepCount: Int): androidx.compose.ui.graphics.Path {
-                    val path = androidx.compose.ui.graphics.Path()
-                    for (i in 0..stepCount) {
-                        val fraction = i.toFloat() / totalSteps.toFloat()
-                        val angle = (-Math.PI / 2.0) + (fraction * 2.0 * Math.PI)
-                        val r = maxR * (1f + currentAmp * kotlin.math.cos(scallopLobes * angle).toFloat())
-                        val x = cx + (r * kotlin.math.cos(angle)).toFloat()
-                        val y = cy + (r * kotlin.math.sin(angle)).toFloat()
-                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                fun buildRingPath(stepCount: Int): Path {
+                    val path = Path()
+                    val safeStepCount = stepCount.coerceIn(1, totalSteps)
+
+                    for (i in 0..safeStepCount) {
+                        val fraction = i.toFloat() / totalSteps
+                        val angle = -Math.PI / 2.0 +
+                                fraction * 2.0 * Math.PI
+
+                        val radius = maxR * (
+                                1f + currentAmp *
+                                        kotlin.math.cos(scallopLobes * angle).toFloat()
+                                )
+
+                        val x = cx + radius * kotlin.math.cos(angle).toFloat()
+                        val y = cy + radius * kotlin.math.sin(angle).toFloat()
+
+                        if (i == 0) {
+                            path.moveTo(x, y)
+                        } else {
+                            path.lineTo(x, y)
+                        }
                     }
+
                     return path
                 }
 
