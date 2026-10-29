@@ -4,6 +4,13 @@ import android.content.Context
 import android.util.Log
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 @Serializable
 data class ExerciseDef(
@@ -38,6 +45,41 @@ data class ExerciseDef(
 }
 
 @Serializable
+data class WorkoutExercisePrescription(
+    val exerciseId: String,
+    val name: String,
+    val sets: Int = 3,
+    val reps: Int = 10,
+    val weightKg: Double = 0.0,
+    val restSeconds: Int = 60,
+    val description: String = ""
+)
+
+@Serializable
+data class TrainingDayDef(
+    val dayNumber: Int,
+    val isRestDay: Boolean,
+    val title: String,
+    val workoutId: String? = null
+)
+
+@Serializable
+data class TrainingWeekDef(
+    val weekNumber: Int,
+    val days: List<TrainingDayDef>
+)
+
+@Serializable
+data class TrainingProgramDef(
+    val id: String,
+    val name: String,
+    val discipline: String,
+    val level: String,
+    val description: String,
+    val weeks: List<TrainingWeekDef>
+)
+
+@Serializable
 data class WorkoutPlanDef(
     val id: String,
     val name: String,
@@ -48,6 +90,7 @@ data class WorkoutPlanDef(
     val targetWeightKg: Double = 0.0,
     val restSeconds: Int = 60,
     val stepDurationSeconds: Int = 60,
+    val exercisePrescriptions: List<WorkoutExercisePrescription> = emptyList(),
     val exercises: List<String> = emptyList()
 ) {
     fun toWorkoutProgramItem(): com.creativeblisslabs.wearproductivity.wear.ui.workout.WorkoutProgramItem {
@@ -55,17 +98,19 @@ data class WorkoutPlanDef(
             com.creativeblisslabs.wearproductivity.wear.ui.workout.WorkoutDiscipline.valueOf(discipline)
         }.getOrDefault(com.creativeblisslabs.wearproductivity.wear.ui.workout.WorkoutDiscipline.GYM)
 
+        val resolvedSteps = exercisePrescriptions.map { "${it.sets}x${it.reps} ${it.name} - ${it.description}" }.ifEmpty { exercises }
+
         return com.creativeblisslabs.wearproductivity.wear.ui.workout.WorkoutProgramItem(
             id = id,
             name = name,
             discipline = mappedDiscipline,
             muscleOrZone = muscleOrZone,
-            targetSets = targetSets,
-            targetReps = targetReps,
-            targetWeightKg = targetWeightKg,
-            restSeconds = restSeconds,
+            targetSets = exercisePrescriptions.firstOrNull()?.sets ?: targetSets,
+            targetReps = exercisePrescriptions.firstOrNull()?.reps ?: targetReps,
+            targetWeightKg = exercisePrescriptions.firstOrNull()?.weightKg ?: targetWeightKg,
+            restSeconds = exercisePrescriptions.firstOrNull()?.restSeconds ?: restSeconds,
             stepDurationSeconds = stepDurationSeconds,
-            steps = exercises
+            steps = resolvedSteps
         )
     }
 }
@@ -82,13 +127,34 @@ data class WorkoutPreferences(
 
 class ExerciseRepository(private val context: Context) {
     private val jsonParser = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    var allExercises: List<ExerciseDef> = emptyList()
-        private set
-    var allWorkouts: List<WorkoutPlanDef> = emptyList()
-        private set
+    private val _exercisesFlow = MutableStateFlow<List<ExerciseDef>>(emptyList())
+    val exercisesFlow: StateFlow<List<ExerciseDef>> = _exercisesFlow.asStateFlow()
 
-    init { loadDatabase() }
+    private val _workoutsFlow = MutableStateFlow<List<WorkoutPlanDef>>(emptyList())
+    val workoutsFlow: StateFlow<List<WorkoutPlanDef>> = _workoutsFlow.asStateFlow()
+
+    private val _trainingProgramsFlow = MutableStateFlow<List<TrainingProgramDef>>(emptyList())
+    val trainingProgramsFlow: StateFlow<List<TrainingProgramDef>> = _trainingProgramsFlow.asStateFlow()
+
+    var allExercises: List<ExerciseDef>
+        get() = _exercisesFlow.value
+        private set(value) { _exercisesFlow.value = value }
+
+    var allWorkouts: List<WorkoutPlanDef>
+        get() = _workoutsFlow.value
+        private set(value) { _workoutsFlow.value = value }
+
+    var allTrainingPrograms: List<TrainingProgramDef>
+        get() = _trainingProgramsFlow.value
+        private set(value) { _trainingProgramsFlow.value = value }
+
+    init {
+        scope.launch {
+            loadDatabase()
+        }
+    }
 
     private inline fun <reified T> loadJsonFile(path: String): T? = try {
         context.assets.open(path).bufferedReader(Charsets.UTF_8).use {
@@ -100,22 +166,17 @@ class ExerciseRepository(private val context: Context) {
     }
 
     private fun loadDatabase() {
-        allExercises = loadJsonFile<List<ExerciseDef>>("repdb/exercises.json").orEmpty()
-        allWorkouts = loadJsonFile<List<WorkoutPlanDef>>("repdb/workouts.json").orEmpty()
+        val loadedExercises = loadJsonFile<List<ExerciseDef>>("repdb/exercises.json") ?: emptyList()
+        val loadedWorkouts = loadJsonFile<List<WorkoutPlanDef>>("repdb/workouts.json") ?: emptyList()
+        val loadedPrograms = loadJsonFile<List<TrainingProgramDef>>("repdb/training_programs.json") ?: emptyList()
+
+        _exercisesFlow.value = loadedExercises
+        _workoutsFlow.value = loadedWorkouts
+        _trainingProgramsFlow.value = loadedPrograms
 
         Log.i(
             "WorkoutDebug",
-            "Database loaded: exercises=${allExercises.size}, workouts=${allWorkouts.size}"
-        )
-
-        Log.d(
-            "WorkoutDebug",
-            "Sample exercises=${allExercises.take(10).map { "${it.id}:${it.name}" }}"
-        )
-
-        Log.d(
-            "WorkoutDebug",
-            "Duplicate exercise IDs=${allExercises.groupingBy { it.id }.eachCount().filter { it.value > 1 }}"
+            "Database loaded asynchronously: exercises=${loadedExercises.size}, workouts=${loadedWorkouts.size}, programs=${loadedPrograms.size}"
         )
     }
     fun getExercisesByEquipment(equipmentList: List<String>): List<ExerciseDef> {
@@ -142,12 +203,12 @@ class ExerciseRepository(private val context: Context) {
     fun generatePersonalizedWorkout(preferences: WorkoutPreferences): List<ExerciseDef> {
         val targetTokens = preferences.targetMuscles
             .filterNot { normalize(it) == "full body" }
-            .map(::normalize)
-        val avoidTokens = preferences.avoidTargets.map(::normalize)
+            .map { normalize(it) }
+        val avoidTokens = preferences.avoidTargets.map { normalize(it) }
         val allowedEquipment = preferences.equipment
-            .map(::normalize)
+            .map { normalize(it) }
             .toSet()
-            .ifEmpty { setOf("bodyweight") }
+            .takeIf { it.isNotEmpty() } ?: setOf("bodyweight")
         val beginner = normalize(preferences.experience) == "beginner"
 
         Log.d(

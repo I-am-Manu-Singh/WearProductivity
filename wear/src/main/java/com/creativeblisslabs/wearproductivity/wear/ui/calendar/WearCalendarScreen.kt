@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -368,6 +369,7 @@ private object UnifiedPlannerPrefs {
 fun WearCalendarScreen(
     state: LifeState,
     repository: LifeRepository,
+    mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null,
     initialSection: UnifiedPlannerSection = UnifiedPlannerSection.SPOTLIGHT
 ) {
     val context = LocalContext.current.applicationContext
@@ -1016,6 +1018,7 @@ fun WearCalendarScreen(
                     // PAGE 2: UNIFIED DAY AGENDA, SUBTASKS CHECKLIST & LIQUID FILL CARDS
                     // =========================================================================
                     2 -> UnifiedAgendaAndSubtasksPage(
+                        
                         spec = adaptiveSpec,
                         selectedDate = selectedDate,
                         today = today,
@@ -1159,6 +1162,7 @@ fun WearCalendarScreen(
                     // PAGE 3: AUTHENTIC KANBAN BOARD & COLOR-CODED 2x2 EISENHOWER MATRIX
                     // =========================================================================
                     3 -> KanbanAndEisenhowerPage(
+                        
                         spec = adaptiveSpec,
                         boardMode = activeBoardMode,
                         selectedKanbanStage = selectedKanbanStage,
@@ -1547,30 +1551,12 @@ private fun PlannerSpotlightBoundaryPage(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f))
-                            .clickable(onClick = onJumpToMonthCalendar)
-                            .padding(horizontal = 9.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.CalendarMonth,
-                            contentDescription = null,
-                            modifier = Modifier.size(11.dp),
-                            tint = primaryAccent
-                        )
-                        Text(
-                            text = if (isRinging) "ALARM RINGING NOW"
-                            else "${spotlightMeta?.kind?.badge ?: "PLANNER"} · ${(overallDayProgress * 100).roundToInt()}% DONE",
-                            style = MaterialTheme.typography.labelSmall.compactLineHeight(),
-                            fontWeight = FontWeight.Bold,
-                            color = primaryAccent,
-                            maxLines = 1
-                        )
-                    }
+                    WearExpressiveHeader(
+                        title = if (isRinging) "ALARM RINGING NOW"
+                        else "${spotlightMeta?.kind?.badge ?: "PLANNER"} · ${(overallDayProgress * 100).roundToInt()}% DONE",
+                        icon = Icons.Rounded.CalendarMonth,
+                        onClick = onJumpToMonthCalendar
+                    )
 
                     Spacer(Modifier.height(2.dp))
 
@@ -1608,101 +1594,18 @@ private fun PlannerSpotlightBoundaryPage(
                     )
                 }
 
-                // Center Transport Cluster: Snooze | Center Wavy Complete/Dismiss | Stop/Skip
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = onOpenSnoozeModal,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Snooze Item or Alarm" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Rounded.Snooze, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("Snooze", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp))
-                        }
-                    }
 
-                    Box(
-                        modifier = Modifier.size(centerButtonSize + 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawPlannerWavyRing(
-                                progress = animatedProgress,
-                                phase = wavePhase,
-                                trackColor = primaryAccent.copy(alpha = 0.28f),
-                                activeColor = primaryAccent,
-                                strokeWidthPx = 3.5.dp.toPx(),
-                                waveAmplitudePx = if (isRinging) 2.5.dp.toPx() else 1.4.dp.toPx(),
-                                lobes = 12
-                            )
-                        }
+                    val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                    val progress = mediaViewModel.progress.collectAsState().value
+                    com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                        isPlaying = isPlaying,
+                        progress = progress,
+                        onTogglePlay = { mediaViewModel.togglePlay() },
+                        onPrevious = { mediaViewModel.skipToPrevious() },
+                        onNext = { mediaViewModel.skipToNext() }
+                    )
 
-                        Button(
-                            onClick = onPrimaryCompleteOrDismiss,
-                            modifier = Modifier.size(centerButtonSize),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (isRinging) Icons.Rounded.AlarmOff else Icons.Rounded.DoneAll,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = if (isRinging) "Dismiss" else "${(overallDayProgress * 100).roundToInt()}%",
-                                    style = MaterialTheme.typography.labelSmall.tabularNums().copy(fontSize = 9.sp),
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                        }
-                    }
-
-                    Button(
-                        onClick = onOpenStopModal,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Stop or Reschedule" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Rounded.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("Stop", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp))
-                        }
-                    }
-                }
 
                 // Bottom Slot: Month Grid | Alert Bell | Agenda & Subtasks
                 Row(
@@ -1962,7 +1865,9 @@ private fun CalendarMonthAndSyncPage(
                     onClick = onSyncGoogleCalendar
                 )
             }
-        }
+        
+
+}
     }
 }
 
@@ -2163,6 +2068,7 @@ private fun NativeWearMonthGridCard(
 // =============================================================================
 @Composable
 private fun UnifiedAgendaAndSubtasksPage(
+                        
     spec: WearAdaptiveSpec,
     selectedDate: LocalDate,
     today: LocalDate,
@@ -2507,7 +2413,9 @@ private fun UnifiedAgendaAndSubtasksPage(
                     Text("Kanban & Eisenhower Matrix")
                 }
             }
-        }
+        
+
+}
     }
 }
 
@@ -2719,6 +2627,7 @@ private fun TransformingLazyColumnItemScope.M3LiquidFillPlannerCard(
 // =============================================================================
 @Composable
 private fun KanbanAndEisenhowerPage(
+                        
     spec: WearAdaptiveSpec,
     boardMode: TaskBoardMode,
     selectedKanbanStage: KanbanColumnStage,
@@ -2919,7 +2828,9 @@ private fun KanbanAndEisenhowerPage(
                     onClick = onJumpToBirthdaysAndAlarms
                 )
             }
-        }
+        
+
+}
     }
 }
 
@@ -3226,7 +3137,9 @@ private fun BirthdaysCallsAndAlarmsPage(
                     }
                 }
             }
-        }
+        
+
+}
     }
 }
 
@@ -3322,6 +3235,21 @@ private fun PlannerSnoozeAndStopModal(
                 ) {
                     Text("Move to Tomorrow")
                 }
+            }
+        
+
+
+            item {
+                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                val progress = mediaViewModel.progress.collectAsState().value
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isPlaying,
+                    progress = progress,
+                    onTogglePlay = { mediaViewModel.togglePlay() },
+                    onPrevious = { mediaViewModel.skipToPrevious() },
+                    onNext = { mediaViewModel.skipToNext() }
+                )
             }
         }
     }

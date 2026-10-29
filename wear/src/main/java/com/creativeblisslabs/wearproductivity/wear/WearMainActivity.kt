@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.activity.viewModels
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.pager.HorizontalPager
@@ -46,14 +47,30 @@ class WearMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val permissions = arrayOf(
+                android.Manifest.permission.BODY_SENSORS,
+                android.Manifest.permission.ACTIVITY_RECOGNITION,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            val missing = permissions.any { 
+                androidx.core.content.ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED 
+            }
+            if (missing) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, permissions, 101)
+            }
+        }
+
         val repository = (application as LifeOSWearApplication).repository
         val exerciseRepository = (application as LifeOSWearApplication).exerciseRepository
+        val mediaViewModel = androidx.lifecycle.ViewModelProvider(this)[com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel::class.java]
+        
         setContent {
             CompositionLocalProvider(LocalIsAmbient provides isAmbientState.value) {
                 LifeOSWearTheme {
                     val state by repository.state.collectAsState()
                     com.creativeblisslabs.wearproductivity.wear.ui.components.core.WearBaselineViewport {
-                        MainNavigation(state, repository, exerciseRepository)
+                        MainNavigation(state, repository, exerciseRepository, mediaViewModel)
                     }
                 }
             }
@@ -80,7 +97,8 @@ fun WearAppPreview() {
 fun MainNavigation(
     state: com.creativeblisslabs.wearproductivity.shared.LifeState, 
     repository: LifeRepository,
-    exerciseRepository: com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository
+    exerciseRepository: com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository,
+    mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null
 ) {
     val pagerState = rememberPagerState(pageCount = { 11 })
     val isAmbient = LocalIsAmbient.current
@@ -94,11 +112,11 @@ fun MainNavigation(
             ) { page ->
                 when (page) {
                     0 -> WearDashboardScreen(state, repository)
-                    1 -> WearCalendarScreen(state, repository)
-                    2 -> WearHabitsScreen(state, repository)
-                    3 -> WearFocusScreen(state, repository)
-                    4 -> WearFastingScreen(state, repository)
-                    5 -> WearWorkoutScreen(state, repository, exerciseRepository)
+                    1 -> WearCalendarScreen(state, repository, mediaViewModel)
+                    2 -> WearHabitsScreen(state, repository, mediaViewModel)
+                    3 -> WearFocusScreen(state, repository, mediaViewModel)
+                    4 -> WearFastingScreen(state, repository, mediaViewModel)
+                    5 -> WearWorkoutScreen(state, repository, exerciseRepository, mediaViewModel)
                     6 -> {
                         var workoutFlowState by remember {
                             mutableIntStateOf(0)
@@ -143,40 +161,11 @@ fun MainNavigation(
                             }
 
                             2 -> {
-                                if (resolvedRoutineIds.isEmpty()) {
-                                    androidx.compose.foundation.layout.Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(16.dp),
-                                        verticalArrangement =
-                                            androidx.compose.foundation.layout.Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        androidx.wear.compose.material3.Text(
-                                            text = "No exercises found",
-                                            color = androidx.wear.compose.material3.MaterialTheme
-                                                .colorScheme.error
-                                        )
-
-                                        androidx.wear.compose.material3.Button(
-                                            onClick = { workoutFlowState = 0 }
-                                        ) {
-                                            androidx.wear.compose.material3.Text("Back to setup")
-                                        }
-                                    }
-                                } else {
-                                    com.creativeblisslabs.wearproductivity.wear.ui.workout
-                                        .WearGuidedWorkoutScreen(
-                                            repository = exerciseRepository,
-                                            routineIds = resolvedRoutineIds
-                                        ) {
-                                            workoutFlowState = 0
-                                        }
-                                }
+                                WearWorkoutScreen(state, repository, exerciseRepository, mediaViewModel)
                             }
                         }
                     }
-                    7 -> WearAudioScreen(state, repository)
+                    7 -> WearAudioScreen(state, repository, mediaViewModel)
                     8 -> WearFileExplorerScreen(state, repository)
                     9 -> WearM3CatalogScreen(state, repository)
                     10 -> WearSettingsScreen(state, repository)

@@ -33,11 +33,15 @@ import com.creativeblisslabs.wearproductivity.mobile.sync.FirebaseMobileSyncMana
 
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.FormatListBulleted
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Restaurant
 
 enum class MobileRoute(val label: String, val icon: ImageVector) {
     DASHBOARD("Dashboard", Icons.Rounded.Dashboard),
     TASKS("Tasks", Icons.Rounded.FormatListBulleted),
     CALENDAR("Calendar", Icons.Rounded.Event),
+    FOCUS("Focus", Icons.Rounded.Timer),
+    FASTING("Fasting", Icons.Rounded.Restaurant),
     HEALTH("Health", Icons.Rounded.Favorite),
     WORKOUT("Workout", Icons.Rounded.DirectionsRun),
     FILES("Files", Icons.Rounded.Folder),
@@ -51,6 +55,20 @@ class MobileMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val permissions = arrayOf(
+                android.Manifest.permission.BODY_SENSORS,
+                android.Manifest.permission.ACTIVITY_RECOGNITION,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            val missing = permissions.any { 
+                androidx.core.content.ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED 
+            }
+            if (missing) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, permissions, 102)
+            }
+        }
+
         val repository = (application as LifeOSApplication).repository
         syncManager = FirebaseMobileSyncManager(repository, (application as LifeOSApplication).applicationScope)
         syncManager.startListening()
@@ -107,9 +125,12 @@ fun MobileAppNavigation(repository: LifeRepository) {
             composable(MobileRoute.DASHBOARD.name) { com.creativeblisslabs.wearproductivity.mobile.ui.dashboard.MobileDashboardScreen(repository) }
             composable(MobileRoute.TASKS.name) { com.creativeblisslabs.wearproductivity.mobile.ui.tasks.MobileTasksScreen(repository) }
             composable(MobileRoute.CALENDAR.name) { com.creativeblisslabs.wearproductivity.mobile.ui.calendar.MobileCalendarScreen(repository) }
+            composable(MobileRoute.FOCUS.name) { com.creativeblisslabs.wearproductivity.mobile.ui.focus.MobileFocusScreen(repository) }
+            composable(MobileRoute.FASTING.name) { com.creativeblisslabs.wearproductivity.mobile.ui.fasting.MobileFastingScreen(repository) }
             composable(MobileRoute.HEALTH.name) { com.creativeblisslabs.wearproductivity.mobile.ui.dashboard.MobileHealthScreen(repository) }
             composable(MobileRoute.WORKOUT.name) { com.creativeblisslabs.wearproductivity.mobile.ui.dashboard.MobileWorkoutScreen(repository) }
             composable(MobileRoute.FILES.name) { com.creativeblisslabs.wearproductivity.mobile.ui.files.MobileFileExplorerScreen(repository) }
+            composable(MobileRoute.SETTINGS.name) { com.creativeblisslabs.wearproductivity.mobile.ui.settings.MobileSettingsScreen(repository) }
         }
     }
 }

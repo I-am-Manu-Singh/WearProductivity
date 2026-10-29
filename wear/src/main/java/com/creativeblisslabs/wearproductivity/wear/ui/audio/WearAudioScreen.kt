@@ -105,6 +105,8 @@ import java.net.URLEncoder
 import java.util.Locale
 import kotlin.math.roundToInt
 import androidx.compose.animation.core.RepeatMode as RepeatGraphics
+
+import com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel
 // =============================================================================
 // AUDIO STUDIO DOMAIN MODELS & ENUMS
 // =============================================================================
@@ -914,7 +916,11 @@ private object WearAudioMediaEngine {
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WearAudioScreen(state: LifeState, repository: LifeRepository) {
+fun WearAudioScreen(
+    state: LifeState, 
+    repository: LifeRepository,
+    mediaViewModel: SharedMediaViewModel? = null
+) {
     val context = LocalContext.current
     var audioService by remember { mutableStateOf<WearMediaLibraryService?>(null) }
 
@@ -1628,7 +1634,7 @@ fun WearAudioScreen(state: LifeState, repository: LifeRepository) {
         )
     )
 
-    val adaptiveSpec = com.creativeblisslabs.wearproductivity.wear.ui.components.core.LocalWearAdaptiveSpec.current
+    val adaptiveSpec = LocalWearAdaptiveSpec.current
 
         Box(
             modifier = Modifier
@@ -2324,9 +2330,9 @@ private fun M3ExpressiveCanvasPlayerPage(
                 PlayerControlBar(
                     isPlaying = isPlaying,
                     progress = elapsedSeconds.toFloat() / currentTrack.durationSeconds.toFloat().coerceAtLeast(1f),
-                    onTogglePlay = { },
-                    onPrevious = { },
-                    onNext = { }
+                    onTogglePlay = onTogglePlay,
+                    onPrevious = onPrevious,
+                    onNext = onNext
                 )
 
                 // =====================================================================
@@ -3711,153 +3717,6 @@ private fun M3EqualizerAndOutputStudioPage(
     }
 }
 
-// =============================================================================
-// FULL-SCREEN CURVED VOLUME CONTROLLER & OUTPUT ROUTING OVERLAY
-// =============================================================================
-@Composable
-private fun M3FullScreenCurvedVolumeAndOutputOverlay(
-    volumeLevel: Float,
-    selectedRoute: OutputRouteDevice,
-    outputRoutes: List<OutputRouteDevice>,
-    onVolumeChange: (Float) -> Unit,
-    onSelectRoute: (OutputRouteDevice) -> Unit,
-    onPairBluetoothDevice: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val animatedVol by animateFloatAsState(
-        targetValue = volumeLevel.coerceIn(0f, 1f),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "curvedVolArc"
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.96f))
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    val delta = (-dragAmount.y / size.height.coerceAtLeast(1)).coerceIn(-0.15f, 0.15f)
-                    onVolumeChange((volumeLevel + delta).coerceIn(0f, 1f))
-                }
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        val trackCol = MaterialTheme.colorScheme.surfaceContainerHigh
-        val activeCol = Color(0xFF79E2B0)
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            val strokePx = 10.dp.toPx()
-            drawArc(
-                color = trackCol,
-                startAngle = 135f,
-                sweepAngle = 270f,
-                useCenter = false,
-                style = Stroke(width = strokePx, cap = StrokeCap.Round)
-            )
-            drawArc(
-                color = activeCol,
-                startAngle = 135f,
-                sweepAngle = 270f * animatedVol,
-                useCenter = false,
-                style = Stroke(width = strokePx, cap = StrokeCap.Round)
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-
-
-            Text(
-                text = selectedRoute.name,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FilledTonalIconButton(
-                    onClick = { onVolumeChange((volumeLevel - 0.08f).coerceAtLeast(0f)) },
-                    modifier = Modifier.size(42.dp)
-                ) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "Volume Down")
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = if (volumeLevel <= 0.01f) Icons.Rounded.VolumeOff else Icons.Rounded.VolumeUp,
-                        contentDescription = null,
-                        tint = activeCol,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Text(
-                        text = "${(volumeLevel * 100f).roundToInt()}%",
-                        style = MaterialTheme.typography.displaySmall.tabularNums(),
-                        fontWeight = FontWeight.Black,
-                        color = Color.White
-                    )
-                }
-                FilledTonalIconButton(
-                    onClick = { onVolumeChange((volumeLevel + 0.08f).coerceAtMost(1f)) },
-                    modifier = Modifier.size(42.dp)
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Volume Up")
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-            ) {
-                outputRoutes.forEach { r ->
-                    val isSel = r.name.equals(selectedRoute.name, ignoreCase = true)
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .clickable { onSelectRoute(r) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = r.name.take(10),
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .clickable(onClick = onPairBluetoothDevice)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text("+BT", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), fontWeight = FontWeight.Bold)
-                }
-            }
-
-            CompactButton(
-                onClick = onDismiss,
-                icon = { Icon(Icons.Default.Check, contentDescription = "Done") }
-            ) {
-                Text("Done")
-            }
-        }
-    }
-}
 
 // =============================================================================
 // IMMERSIVE DISTRACTION-FREE FULL-SCREEN LYRICS OVERLAY

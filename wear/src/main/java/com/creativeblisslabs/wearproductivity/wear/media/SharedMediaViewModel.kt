@@ -14,18 +14,28 @@ class SharedMediaViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
+    
+    // Fake progress ticker for demonstration purposes across screens
+    init {
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(1000L)
+                if (_isPlaying.value) {
+                    _progress.value = (_progress.value + 0.01f) % 1f
+                }
+            }
+        }
+    }
 
     fun togglePlay() {
         _isPlaying.value = !_isPlaying.value
     }
 
     fun skipToPrevious() {
-        // Implementation for skipping to previous track
         _progress.value = 0f
     }
 
     fun skipToNext() {
-        // Implementation for skipping to next track
         _progress.value = 0f
     }
 

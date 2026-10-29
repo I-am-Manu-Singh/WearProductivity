@@ -512,7 +512,7 @@
     "instructions": [
       "Lie on your side with hips and knees bent to roughly 45 degrees, feet stacked.",
       "Place a loop band around both legs above the knees.",
-      "Keep the feet pressed together and the pelvis stable — do not roll back as you move.",
+      "Keep the feet pressed together and the pelvis stable \u2014 do not roll back as you move.",
       "Open the top knee upward against the band, like a clamshell opening, until you feel the glute fire.",
       "Pause briefly at the top, then lower under control to the start.",
       "Complete all reps on one side, then switch."
@@ -592,7 +592,7 @@
       "Lie on your back with the knees bent and feet flat on the floor, shoulder-width apart.",
       "Place a loop band around both legs just above the knees.",
       "Press the lower back into the floor and brace the core.",
-      "Drive through the heels and squeeze the glutes to lift the hips into a bridge — keep the band tension by pushing the knees outward.",
+      "Drive through the heels and squeeze the glutes to lift the hips into a bridge \u2014 keep the band tension by pushing the knees outward.",
       "At the top, the body forms a straight line from shoulders to knees. Pause briefly.",
       "Lower under control to the start and repeat for the recommended number of repetitions."
     ],
@@ -775,7 +775,7 @@
       "Place a loop band around the legs above the knees (or around the ankles for a harder version).",
       "Stand in a quarter-squat: feet shoulder-width, hips back, chest up, knees tracking over the toes.",
       "Step one foot directly out to the side against the band tension.",
-      "Bring the trailing foot in toward the lead — keep tension on the band the entire time, do not let the feet snap together.",
+      "Bring the trailing foot in toward the lead \u2014 keep tension on the band the entire time, do not let the feet snap together.",
       "Continue side-stepping in one direction for the prescribed reps or distance, then reverse.",
       "Stay low throughout; do not pop up between steps."
     ],
@@ -1012,7 +1012,7 @@
       "Drop into a quarter squat with feet wider than shoulder-width.",
       "Step sideways in a wide stance, keeping tension on the band.",
       "Bring the trailing foot in only partway so the band stays taut, and keep stepping for the prescribed distance before leading with the other leg.",
-      "Stay low throughout — do not stand up between steps."
+      "Stay low throughout \u2014 do not stand up between steps."
     ],
     "category": "strength",
     "images": [
@@ -1088,7 +1088,7 @@
       "Load plates of equal size on both ends of a barbell and place it on the floor.",
       "Kneel behind the bar and grip it shoulder-width, arms extended.",
       "Brace the core hard, then roll the bar forward away from your body.",
-      "Go as far as you can keep a neutral spine — stop before the hips sag.",
+      "Go as far as you can keep a neutral spine \u2014 stop before the hips sag.",
       "Pull the bar back to the starting position by contracting the abs and lats.",
       "Repeat for the recommended number of repetitions."
     ],
@@ -1617,7 +1617,7 @@
     ],
     "instructions": [
       "Sit at a lat pulldown station with thighs secured under the pad.",
-      "Grip the bar with a wide, overhand grip — wider than shoulder-width.",
+      "Grip the bar with a wide, overhand grip \u2014 wider than shoulder-width.",
       "Keep the torso upright and tuck the chin slightly forward.",
       "Pull the bar down behind the head until it touches the base of the neck.",
       "Return under control to the full overhead stretch.",
@@ -2147,7 +2147,7 @@
     ],
     "instructions": [
       "Stand with feet hip-width, holding a dumbbell in each hand at the sides, palms facing in.",
-      "Hinge at the hips with a flat back until the torso is roughly 30–45 degrees from horizontal, dumbbells hanging directly below the shoulders.",
+      "Hinge at the hips with a flat back until the torso is roughly 30\u201345 degrees from horizontal, dumbbells hanging directly below the shoulders.",
       "Brace the core and pull both dumbbells up and slightly back, driving the elbows past the ribs.",
       "Squeeze the upper back at the top, keeping the elbows tucked.",
       "Lower under control to the starting position with the arms fully extended.",
@@ -2537,7 +2537,7 @@
       "Drop into a quarter-squat and swing the arms back.",
       "Drive the arms up and explode off the floor onto the box.",
       "Land softly with both feet flat and knees bent.",
-      "Step down — do not jump down — and reset."
+      "Step down \u2014 do not jump down \u2014 and reset."
     ],
     "category": "plyometrics",
     "images": [
@@ -2916,7 +2916,7 @@
       "Keep a soft bend in the elbow and let the cable run across the front of your body.",
       "Raise the arm out to the side until parallel to the floor.",
       "Lower under control. Complete reps per side, then switch.",
-      "Maintain tension — do not let the weight rest at the bottom."
+      "Maintain tension \u2014 do not let the weight rest at the bottom."
     ],
     "category": "strength",
     "images": [
@@ -3225,29 +3225,6 @@
       "repdb/images/exercises/cat-cow/classic-main.webp",
       "repdb/images/exercises/cat-cow/flat-main.webp"
     ]
-  },
-  {
-    "id": "cat-stretch",
-    "name": "Cat Stretch",
-    "force": "static",
-    "level": "beginner",
-    "mechanic": "compound",
-    "equipment": "bodyweight",
-    "primaryMuscles": [
-      "erector_spinae"
-    ],
-    "secondaryMuscles": [
-      "rhomboids",
-      "trapezius"
-    ],
-    "instructions": [
-      "Start on all fours, hands under shoulders and knees under hips.",
-      "Round your spine up toward the ceiling.",
-      "Tuck your chin toward your chest.",
-      "Hold for 20 to 30 seconds, breathing steadily."
-    ],
-    "category": "stretching",
-    "images": []
   },
   {
     "id": "chair-pose",
@@ -4492,7 +4469,7 @@
       "Push the arm all the way up so the elbow is straight and the biceps is close to your ear.",
       "Brace your ribs down rather than letting your lower back arch to hold the weight up.",
       "Walk forward with controlled strides, keeping the dumbbell stacked over your shoulder and hip.",
-      "Keep your eyes forward — tipping your head back to watch the weight drags your posture with it.",
+      "Keep your eyes forward \u2014 tipping your head back to watch the weight drags your posture with it.",
       "Carry for the desired distance, lower under control, then repeat with the other arm."
     ],
     "category": "strength",
@@ -5299,7 +5276,7 @@
     "instructions": [
       "Clean or press a dumbbell to lockout above each shoulder.",
       "Straighten both elbows fully and keep reaching up into the weights so the shoulders stay active, without letting the dumbbells sink down onto them.",
-      "Brace hard and keep your ribs down — with both arms overhead the temptation to arch is much stronger.",
+      "Brace hard and keep your ribs down \u2014 with both arms overhead the temptation to arch is much stronger.",
       "Walk forward with short, deliberate strides, keeping both dumbbells stacked over your shoulders.",
       "Keep breathing shallowly and steadily instead of holding your breath for the whole carry.",
       "Carry for the desired distance, then lower both weights under control."
@@ -8083,7 +8060,7 @@
     ],
     "instructions": [
       "Pick a straight line on the floor and stand on it with your arms out to your sides at shoulder height.",
-      "Step forward and place your heel directly in front of — and touching — the toes of the standing foot.",
+      "Step forward and place your heel directly in front of \u2014 and touching \u2014 the toes of the standing foot.",
       "Shift your weight onto the front foot under control, pausing for a moment before the next step.",
       "Bring the back foot through and place it heel to toe again, staying on the line rather than stepping around it.",
       "Look ahead at a fixed point instead of down at your feet, and use your arms to correct any wobble.",
@@ -8466,7 +8443,7 @@
       "triceps_brachii"
     ],
     "instructions": [
-      "Set bench to 30–45 degrees. Grip the EZ-bar with hands on the angled sections.",
+      "Set bench to 30\u201345 degrees. Grip the EZ-bar with hands on the angled sections.",
       "Lower the bar to your upper chest.",
       "Press back up to full extension.",
       "Repeat."
@@ -8660,7 +8637,7 @@
       "Start the belt at a slow walking speed and step on, then raise the incline to your target gradient.",
       "Walk with a long, deliberate stride, rolling from heel to toe and pushing the belt away behind you with each step.",
       "Stand tall and lean from the ankles with the hill rather than folding forward at the waist.",
-      "Keep at least one foot on the belt at all times — walk the hill, do not break into a jog.",
+      "Keep at least one foot on the belt at all times \u2014 walk the hill, do not break into a jog.",
       "Let your arms swing naturally, or rest them lightly on the rails for balance without carrying your weight on them.",
       "Hold the gradient for the desired time, then lower the incline and walk level for a few minutes to finish."
     ],
@@ -8713,7 +8690,7 @@
     "secondaryMuscles": [],
     "instructions": [
       "Sit or stand tall. Place the palm of one hand against the side of the head, above the ear.",
-      "Press the head into the hand while resisting equally with the hand — the head does not move.",
+      "Press the head into the hand while resisting equally with the hand \u2014 the head does not move.",
       "Hold the isometric contraction for 5 to 10 seconds.",
       "Release slowly, then repeat on the same side for the set.",
       "Switch sides and repeat."
@@ -8740,7 +8717,7 @@
     "instructions": [
       "Lie face-up on the floor with arms extended overhead and legs extended straight.",
       "Simultaneously lift the torso and the straight legs off the floor.",
-      "Reach the hands up toward the feet as the feet rise — meet above the hips.",
+      "Reach the hands up toward the feet as the feet rise \u2014 meet above the hips.",
       "Lower the torso and legs back to the floor under control.",
       "Repeat for the recommended number of repetitions."
     ],
@@ -9023,7 +9000,7 @@
       "Lie on your back on the floor with knees bent, feet flat.",
       "Hold a kettlebell in each hand at the chest, bells resting on the outer forearms.",
       "Press both kettlebells straight up until the arms are fully extended.",
-      "Lower under control until the triceps touch the floor — do not bounce.",
+      "Lower under control until the triceps touch the floor \u2014 do not bounce.",
       "Repeat for the recommended number of repetitions."
     ],
     "category": "strength",
@@ -9640,7 +9617,7 @@
     ],
     "instructions": [
       "Stand and press two kettlebells together by squeezing the bells at chest height.",
-      "Hold the kettlebells horizontal — bells touching, handles outward.",
+      "Hold the kettlebells horizontal \u2014 bells touching, handles outward.",
       "Press the kettlebells forward until your arms are almost straight.",
       "Pull them back to the chest under control.",
       "Repeat for the prescribed reps."
@@ -10457,7 +10434,7 @@
     ],
     "instructions": [
       "Sit in the back extension machine with your feet flat on the foot platform and the roller pad set behind your upper back, just below the shoulder blades.",
-      "Grip the handles at your sides and let your torso come forward into a slight flexion — this is the starting position.",
+      "Grip the handles at your sides and let your torso come forward into a slight flexion \u2014 this is the starting position.",
       "Push back against the pad by extending your spine until your torso is leaning back and your lower back is fully contracted.",
       "Pause briefly at full extension, then return to the starting position under control, resisting the weight stack on the way back.",
       "Repeat for the desired number of reps."
@@ -10566,7 +10543,7 @@
     "instructions": [
       "Sit at a preacher curl machine and adjust the seat so your armpits sit at the top of the pad.",
       "Place the upper arms flat on the pad and grip the handles.",
-      "Start with the arms extended — but not locked — at the bottom.",
+      "Start with the arms extended \u2014 but not locked \u2014 at the bottom.",
       "Curl the handles up by flexing the elbows; squeeze hard at the top.",
       "Lower slowly back to the starting position and repeat."
     ],
@@ -11520,7 +11497,7 @@
       "Stand on one leg holding a dumbbell in the opposite hand.",
       "Free arm out to the side for balance, free leg hovering just off the floor.",
       "Hinge at the standing hip, pushing it back while the free leg extends behind to counterbalance.",
-      "Keep the hips square to the floor — do not open them to the side.",
+      "Keep the hips square to the floor \u2014 do not open them to the side.",
       "Lower the dumbbell toward the foot of the standing leg, feeling a deep hamstring stretch.",
       "Drive the hip forward to return to standing under control.",
       "Complete all reps on one side, then switch."
@@ -11661,7 +11638,7 @@
     "instructions": [
       "Set up for a conventional deadlift.",
       "Pull the bar off the floor and pause when it passes your knees.",
-      "Hold for 2–3 seconds, then complete the lift.",
+      "Hold for 2\u20133 seconds, then complete the lift.",
       "Lower under control.",
       "Repeat."
     ],
@@ -12443,7 +12420,7 @@
     ],
     "instructions": [
       "Stand two weight plates on their edges on the floor, pressed together with the smooth sides facing out.",
-      "Squat down and pinch both plates together between the fingers and thumb of one hand — no handles, just pinch.",
+      "Squat down and pinch both plates together between the fingers and thumb of one hand \u2014 no handles, just pinch.",
       "Stand up and hold the plates at the side for time, keeping the arm straight.",
       "Set them back down under control.",
       "Repeat on the other hand."
@@ -13545,7 +13522,7 @@
       "Pull with your arms and bring your knees up, then clamp the rope with your feet and stand up on the foot lock.",
       "Reach higher with one hand, then the other, release the feet, and clamp the rope again higher up.",
       "Repeat until you reach the top of the rope.",
-      "Descend hand-under-hand with the feet controlling the speed — never slide."
+      "Descend hand-under-hand with the feet controlling the speed \u2014 never slide."
     ],
     "category": "strength",
     "images": [
@@ -13576,7 +13553,7 @@
       "Slide forward into the catch: shins vertical, torso leaning slightly ahead of the hips, arms straight out toward the flywheel.",
       "Drive through your legs first, pushing the seat back until your knees are almost straight.",
       "Swing your torso back past vertical, then pull the handle in to your lower ribs with your elbows travelling past your sides.",
-      "Reverse the order on the recovery — arms away, torso forward, then bend the knees — and slide back to the catch for the next stroke.",
+      "Reverse the order on the recovery \u2014 arms away, torso forward, then bend the knees \u2014 and slide back to the catch for the next stroke.",
       "Continue for the desired time, distance or number of strokes."
     ],
     "category": "cardio",
@@ -15824,7 +15801,7 @@
     "instructions": [
       "Kneel in front of a stability ball and place your shins or feet on top of it.",
       "Set the hands on the floor under the shoulders in a high-plank position.",
-      "Brace the core hard — the ball will want to roll sideways.",
+      "Brace the core hard \u2014 the ball will want to roll sideways.",
       "Lower the chest to the floor by bending the elbows.",
       "Press back up to the starting position without letting the ball wobble.",
       "Repeat for the recommended number of repetitions."
@@ -17422,7 +17399,7 @@
     "instructions": [
       "Stand tall with your weight over the middle of your feet and your shoulders relaxed, not pulled back.",
       "Step forward and land on your heel, then roll through the foot and push off the ball and toes.",
-      "Keep at least one foot on the ground at all times — as soon as both leave the floor you are running, not walking.",
+      "Keep at least one foot on the ground at all times \u2014 as soon as both leave the floor you are running, not walking.",
       "Let your arms swing naturally from the shoulder, opposite arm to opposite leg, with the elbows softly bent.",
       "Look ahead rather than down at your feet, and breathe through a steady, repeatable rhythm.",
       "Continue for the desired time or distance, picking a pace at which you could still hold a conversation."

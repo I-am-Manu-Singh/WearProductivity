@@ -702,8 +702,14 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                         onOpenStatsDeck = {
                             click()
                             scope.launch { pagerState.animateScrollToPage(2) }
+                        },
+                        isEditMode = isWatchFaceEditMode,
+                        onToggleEditMode = {
+                            click()
+                            isWatchFaceEditMode = !isWatchFaceEditMode
+                            statusMessage = if (isWatchFaceEditMode) "Tap any slot to edit" else "Watch Face Locked"
                         }
-                    )
+                        )
 
                     2 -> M3DashboardStatsDeckPage(
                         spec = adaptiveSpec,
@@ -902,37 +908,13 @@ private fun M3WatchFacePage(
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Row 1: Top Complication + Quick Edit Face Toggle
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-                ) {
+
                     M3ComplicationPill(
                         metric = top,
                         isEditMode = isEditMode,
                         onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
                     )
 
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isEditMode) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            )
-                            .clickable(onClick = onToggleEditMode)
-                            .semantics { contentDescription = "Toggle Watch Face Complication Edit Mode" },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (isEditMode) Icons.Rounded.Check else Icons.Rounded.Settings,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = if (isEditMode) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
 
                 // Row 2: Upper Left & Upper Right Complication Slots
                 if (upperLeft.visible || upperRight.visible || isEditMode) {
@@ -1140,8 +1122,10 @@ private fun M3WatchFaceCustomizerPage(
     onToggleCompactRing: () -> Unit,
     onApplyPreset: (String) -> Unit,
     onBackToWatchFace: () -> Unit,
-    onOpenStatsDeck: () -> Unit
-) {
+    onOpenStatsDeck: () -> Unit,
+    isEditMode: Boolean,
+    onToggleEditMode: () -> Unit,
+    ) {
     val columnState = rememberTransformingLazyColumnState()
 
     ScreenScaffold(
@@ -1169,100 +1153,104 @@ private fun M3WatchFaceCustomizerPage(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item {
-                WearExpressiveHeader(
-                    title = "WATCH FACE",
-                    icon = Icons.Default.Watch,
-                    badgeText = "7 SLOTS"
-                )
-            }
-
-            item {
-                WearActionButtonGroup(
-                    options = listOf("Productivity", "Fitness & Bio", "Minimal"),
-                    selectedIndex = 0,
-                    onOptionSelected = { idx ->
-                        val preset = when (idx) {
-                            1 -> "Fitness & Bio"
-                            2 -> "Minimal"
-                            else -> "Productivity"
-                        }
-                        onApplyPreset(preset)
-                    }
-                )
-            }
 
             // Interactive Complication Locations List
             item {
-                CatalogM3ListHeaderSample(title = "COMPLICATION SLOTS")
-            }
-
-            items(ComplicationSlot.entries.size) { index ->
-                val slot = ComplicationSlot.entries[index]
-                val currentMetric = getSlotMetric(slot)
-
-                Card(
-                    onClick = { onSelectSlotToEdit(slot) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
                 ) {
-                    Row(
+                CatalogM3ListHeaderSample(title = "COMPLICATION SLOTS")
+
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isEditMode) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHigh
+                            )
+                            .clickable(onClick = onToggleEditMode)
+                            .semantics { contentDescription = "Toggle Watch Face Complication Edit Mode" },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clip(CircleShape)
-                                .background(currentMetric.type.accent.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = currentMetric.type.icon,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = currentMetric.type.accent
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = slot.label.uppercase(Locale.getDefault()),
-                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = "${currentMetric.type.fullName} (${currentMetric.value})",
-                                style = MaterialTheme.typography.bodySmall.compactLineHeight(),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        FilledTonalIconButton(
-                            onClick = { onCycleSlotQuick(slot) },
-                            modifier = Modifier.size(30.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Refresh,
-                                contentDescription = "Cycle Data Type",
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (isEditMode) Icons.Rounded.Check else Icons.Rounded.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = if (isEditMode) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
+
+//            items(ComplicationSlot.entries.size) { index ->
+//                val slot = ComplicationSlot.entries[index]
+//                val currentMetric = getSlotMetric(slot)
+//
+//                Card(
+//                    onClick = { onSelectSlotToEdit(slot) },
+//                    modifier = Modifier.fillMaxWidth(),
+//                    shape = RoundedCornerShape(20.dp),
+//                    colors = CardDefaults.cardColors(
+//                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+//                        contentColor = MaterialTheme.colorScheme.onSurface
+//                    )
+//                ) {
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(horizontal = 10.dp, vertical = 6.dp),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+//                    ) {
+//                        Box(
+//                            modifier = Modifier
+//                                .size(30.dp)
+//                                .clip(CircleShape)
+//                                .background(currentMetric.type.accent.copy(alpha = 0.2f)),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            Icon(
+//                                imageVector = currentMetric.type.icon,
+//                                contentDescription = null,
+//                                modifier = Modifier.size(16.dp),
+//                                tint = currentMetric.type.accent
+//                            )
+//                        }
+//
+//                        Column(modifier = Modifier.weight(1f)) {
+//                            Text(
+//                                text = slot.label.uppercase(Locale.getDefault()),
+//                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
+//                                color = MaterialTheme.colorScheme.primary,
+//                                fontWeight = FontWeight.Bold,
+//                                maxLines = 1
+//                            )
+//                            Text(
+//                                text = "${currentMetric.type.fullName} (${currentMetric.value})",
+//                                style = MaterialTheme.typography.bodySmall.compactLineHeight(),
+//                                color = MaterialTheme.colorScheme.onSurface,
+//                                fontWeight = FontWeight.SemiBold,
+//                                maxLines = 1,
+//                                overflow = TextOverflow.Ellipsis
+//                            )
+//                        }
+//
+//                        FilledTonalIconButton(
+//                            onClick = { onCycleSlotQuick(slot) },
+//                            modifier = Modifier.size(30.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Rounded.Refresh,
+//                                contentDescription = "Cycle Data Type",
+//                                modifier = Modifier.size(15.dp)
+//                            )
+//                        }
+//                    }
+//                }
+//            }
 
             // Clock & Bezel Ring Style Settings
             item {
@@ -1334,7 +1322,7 @@ private fun M3ComplicationPickerOverlay(
             item {
                 WearExpressiveHeader(
                     title = slot.label.uppercase(Locale.getDefault()),
-                    badgeText = "SELECT DATA"
+                    badgeText = "${slot.label.uppercase(Locale.getDefault())}SELECT DATA"
                 )
             }
 
@@ -1790,7 +1778,20 @@ private fun M3DashboardStatsDeckPage(
                     )
                 }
             }
-        }
+        
+            item {
+                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                val progress = mediaViewModel.progress.collectAsState().value
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isPlaying,
+                    progress = progress,
+                    onTogglePlay = { mediaViewModel.togglePlay() },
+                    onPrevious = { mediaViewModel.skipToPrevious() },
+                    onNext = { mediaViewModel.skipToNext() }
+                )
+            }
+}
     }
 }
 

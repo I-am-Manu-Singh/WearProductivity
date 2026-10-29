@@ -1,0 +1,200 @@
+[
+  {
+    "id": "program-gym-bro-split-4w",
+    "name": "Classic Bro Split Mastery",
+    "discipline": "GYM",
+    "level": "Intermediate",
+    "description": "A 4-week dedicated muscle isolation program focusing on maximum hypertrophy and recovery. Train one muscle group per day.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Chest Day", "workoutId": "gym-bro-split-chest" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Back Day", "workoutId": "gym-bro-split-back" },
+          { "dayNumber": 3, "isRestDay": true, "title": "Active Recovery", "workoutId": null },
+          { "dayNumber": 4, "isRestDay": false, "title": "Shoulders & Arms", "workoutId": "jim-wendler-531-bench" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Leg Day", "workoutId": "jim-wendler-531-squat" },
+          { "dayNumber": 6, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Heavy Chest", "workoutId": "gym-bro-split-chest" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Heavy Back", "workoutId": "gym-bro-split-back" },
+          { "dayNumber": 3, "isRestDay": true, "title": "Active Recovery", "workoutId": null },
+          { "dayNumber": 4, "isRestDay": false, "title": "Shoulders & Arms", "workoutId": "jim-wendler-531-bench" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Leg Day", "workoutId": "jim-wendler-531-squat" },
+          { "dayNumber": 6, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-gym-ppl-4w",
+    "name": "6-Day Push/Pull/Legs",
+    "discipline": "GYM",
+    "level": "Advanced",
+    "description": "High frequency, high volume 6-day split for maximum athletic performance and muscle growth.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Push Hypertrophy", "workoutId": "gym-schoenfeld-push" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Pull Hypertrophy", "workoutId": "gym-schoenfeld-pull" },
+          { "dayNumber": 3, "isRestDay": false, "title": "Legs Power", "workoutId": "gym-lower-power" },
+          { "dayNumber": 4, "isRestDay": false, "title": "Push Strength", "workoutId": "gym-upper-strength" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Pull Strength", "workoutId": "gym-schoenfeld-pull" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Legs Volume", "workoutId": "jim-wendler-531-squat" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Total Rest", "workoutId": null }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Push Hypertrophy", "workoutId": "gym-schoenfeld-push" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Pull Hypertrophy", "workoutId": "gym-schoenfeld-pull" },
+          { "dayNumber": 3, "isRestDay": false, "title": "Legs Power", "workoutId": "gym-lower-power" },
+          { "dayNumber": 4, "isRestDay": false, "title": "Push Strength", "workoutId": "gym-upper-strength" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Pull Strength", "workoutId": "gym-schoenfeld-pull" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Legs Volume", "workoutId": "jim-wendler-531-squat" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Total Rest", "workoutId": null }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-run-5k-4w",
+    "name": "Couch to 5K (C25K) Phase 1",
+    "discipline": "RUNNING",
+    "level": "Beginner",
+    "description": "The ultimate beginner running program. Alternating walking and jogging to safely build your aerobic base over 4 weeks.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Intervals (1m run/90s walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 2, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 3, "isRestDay": false, "title": "Intervals (1m run/90s walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 4, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 5, "isRestDay": false, "title": "Intervals (1m run/90s walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 6, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Intervals (90s run/2m walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 2, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 3, "isRestDay": false, "title": "Intervals (90s run/2m walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 4, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 5, "isRestDay": false, "title": "Intervals (90s run/2m walk)", "workoutId": "run-c25k-program" },
+          { "dayNumber": 6, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-run-marathon-prep-4w",
+    "name": "Advanced Marathon Speed Prep",
+    "discipline": "RUNNING",
+    "level": "Advanced",
+    "description": "Sharpen your marathon pace with intense VO2 Max intervals, Yasso 800s, and Lactate Threshold tempo runs.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 2, "isRestDay": false, "title": "VO2 Max 400s", "workoutId": "run-jack-daniels-vo2" },
+          { "dayNumber": 3, "isRestDay": false, "title": "Easy Aerobic Base", "workoutId": "run-long-slow-distance" },
+          { "dayNumber": 4, "isRestDay": false, "title": "Tempo Run", "workoutId": "run-threshold-tempo" },
+          { "dayNumber": 5, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 6, "isRestDay": false, "title": "Yasso 800s Simulator", "workoutId": "run-yasso-800s" },
+          { "dayNumber": 7, "isRestDay": false, "title": "Long Slow Distance", "workoutId": "run-long-slow-distance" }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 2, "isRestDay": false, "title": "VO2 Max 400s", "workoutId": "run-jack-daniels-vo2" },
+          { "dayNumber": 3, "isRestDay": false, "title": "Easy Aerobic Base", "workoutId": "run-long-slow-distance" },
+          { "dayNumber": 4, "isRestDay": false, "title": "Tempo Run", "workoutId": "run-threshold-tempo" },
+          { "dayNumber": 5, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 6, "isRestDay": false, "title": "Yasso 800s Simulator", "workoutId": "run-yasso-800s" },
+          { "dayNumber": 7, "isRestDay": false, "title": "Long Slow Distance", "workoutId": "run-long-slow-distance" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-swim-masters-4w",
+    "name": "US Masters Swim Camp",
+    "discipline": "SWIMMING",
+    "level": "Intermediate",
+    "description": "Improve your stroke efficiency and cardiorespiratory endurance with CSS intervals and distance pyramids.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "CSS Threshold 100s", "workoutId": "swim-css-threshold-100s" },
+          { "dayNumber": 2, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 3, "isRestDay": false, "title": "1500m Aerobic Pyramid", "workoutId": "swim-us-masters-pyramid" },
+          { "dayNumber": 4, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 5, "isRestDay": false, "title": "Technique Drill Set", "workoutId": "swim-technique-drill-set" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Continuous Endurance", "workoutId": "swim-continuous-endurance" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "CSS Threshold 100s", "workoutId": "swim-css-threshold-100s" },
+          { "dayNumber": 2, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 3, "isRestDay": false, "title": "1500m Aerobic Pyramid", "workoutId": "swim-us-masters-pyramid" },
+          { "dayNumber": 4, "isRestDay": true, "title": "Rest", "workoutId": null },
+          { "dayNumber": 5, "isRestDay": false, "title": "Technique Drill Set", "workoutId": "swim-technique-drill-set" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Sprint Power 50s", "workoutId": "swim-sprint-power-50s" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Rest", "workoutId": null }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-calisthenics-front-lever-4w",
+    "name": "Front Lever & Rings Mastery",
+    "discipline": "CALISTHENICS",
+    "level": "Advanced",
+    "description": "Progressive bodyweight training focused on achieving the front lever, muscle-up, and advanced ring pushing strength.",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Advanced Push Skills", "workoutId": "calisthenics-overcoming-gravity-push" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Front Lever Pulling", "workoutId": "calisthenics-overcoming-gravity-pull" },
+          { "dayNumber": 3, "isRestDay": true, "title": "Mobility Rest", "workoutId": null },
+          { "dayNumber": 4, "isRestDay": false, "title": "Handstand & Shoulders", "workoutId": "calisthenics-handstand-mastery" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Planche Lean Circuits", "workoutId": "calisthenics-planche-lean" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Streetlifting Core", "workoutId": "calisthenics-streetlifting-core" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Total Rest", "workoutId": null }
+        ]
+      },
+      {
+        "weekNumber": 2,
+        "days": [
+          { "dayNumber": 1, "isRestDay": false, "title": "Advanced Push Skills", "workoutId": "calisthenics-overcoming-gravity-push" },
+          { "dayNumber": 2, "isRestDay": false, "title": "Front Lever Pulling", "workoutId": "calisthenics-overcoming-gravity-pull" },
+          { "dayNumber": 3, "isRestDay": true, "title": "Mobility Rest", "workoutId": null },
+          { "dayNumber": 4, "isRestDay": false, "title": "Handstand & Shoulders", "workoutId": "calisthenics-handstand-mastery" },
+          { "dayNumber": 5, "isRestDay": false, "title": "Planche Lean Circuits", "workoutId": "calisthenics-planche-lean" },
+          { "dayNumber": 6, "isRestDay": false, "title": "Streetlifting Core", "workoutId": "calisthenics-streetlifting-core" },
+          { "dayNumber": 7, "isRestDay": true, "title": "Total Rest", "workoutId": null }
+        ]
+      }
+    ]
+  }
+]

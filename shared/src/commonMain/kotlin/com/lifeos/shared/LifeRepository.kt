@@ -461,6 +461,25 @@ class LifeRepository(
         }
     }
 
+    suspend fun updateAdvancedSensors(
+        spo2: Double? = null,
+        skinTemp: Double? = null,
+        barometer: Double? = null,
+        lux: Float? = null
+    ) {
+        updateState { s ->
+            s.copy(
+                wellness = s.wellness.copy(
+                    spo2Pct = spo2 ?: s.wellness.spo2Pct,
+                    skinTemperatureC = skinTemp ?: s.wellness.skinTemperatureC,
+                    barometerHpa = barometer ?: s.wellness.barometerHpa,
+                    ambientLux = lux ?: s.wellness.ambientLux,
+                    stamp = s.wellness.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+
     suspend fun updateWellness(mood: String? = null, energy: Int? = null, weight: Double? = null) {
         updateState { s ->
             s.copy(wellness = s.wellness.copy(

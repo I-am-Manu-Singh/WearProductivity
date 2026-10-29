@@ -481,7 +481,7 @@ private object FastingStudioPrefs {
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WearFastingScreen(state: LifeState, repository: LifeRepository) {
+fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null) {
     val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val haptic = rememberLifeOSHapticProvider()
@@ -1232,6 +1232,7 @@ private fun ActiveFastingAndWaterBoundaryPage(
     onOpenStudioPage: () -> Unit,
     onSelectSoundMode: (FastingSoundMode) -> Unit
 ) {
+    var showSoundPicker by remember { mutableStateOf(false) }
     val isWaterMode = boundaryMode == BoundaryDisplayMode.WATER
     val activeProgress = if (isWaterMode) waterProgress else fastingProgress
 
@@ -1442,111 +1443,15 @@ private fun ActiveFastingAndWaterBoundaryPage(
                     )
                 }
 
-                // Center Transport Cluster: Prev (Restart/Switch) | Center Play/Pause + Wavy Ring | Next (Fast <-> Eat Break)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Button: Restart Phase or Previous
-                    Button(
-                        onClick = onPreviousOrRestart,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Restart or Previous Phase" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipPrevious,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-
-                    // Center Play / Pause Button (or +250ml in Water Mode) with Expressive Wavy Ring
-                    Box(
-                        modifier = Modifier.size(centerButtonSize + 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawFastingWavyRing(
-                                progress = animatedProgress,
-                                phase = if (isSessionActive && !isSessionPaused) wavePhase else 0f,
-                                trackColor = primaryAccent.copy(alpha = 0.28f),
-                                activeColor = primaryAccent,
-                                strokeWidthPx = 3.5.dp.toPx(),
-                                waveAmplitudePx = if (isSessionActive && !isSessionPaused) 2.dp.toPx() else 1.dp.toPx(),
-                                lobes = 12
-                            )
-                        }
-
-                        Button(
-                            onClick = if (isWaterMode) onLogWaterQuick else onTogglePlayPause,
-                            modifier = Modifier
-                                .size(centerButtonSize)
-                                .semantics {
-                                    contentDescription = when {
-                                        isWaterMode -> "Log 250ml Water"
-                                        !isSessionActive -> "Start Fast"
-                                        isSessionPaused -> "Resume Fast"
-                                        else -> "Pause Fast"
-                                    }
-                                },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = when {
-                                        isWaterMode -> Icons.Rounded.WaterDrop
-                                        isSessionActive && !isSessionPaused -> Icons.Rounded.Pause
-                                        else -> Icons.Rounded.PlayArrow
-                                    },
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Right Button: Next (Switch between Fasting Window and Eating Break Window)
-                    Button(
-                        onClick = onNextPhaseSwitch,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Switch Fast and Eating Break Window" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                }
-                WearActionButtonGroup(
-                    options = FastingSoundMode.entries.map { it.label },
-                    selectedIndex = if (isSoundMuted) 0 else soundMode.ordinal,
-                    onOptionSelected = { idx -> onSelectSoundMode(FastingSoundMode.entries[idx]) }
+                // Universal PlayerControlBar
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isSessionActive && !isSessionPaused,
+                    progress = animatedProgress,
+                    onTogglePlay = onTogglePlayPause,
+                    onPrevious = onPreviousOrRestart,
+                    onNext = onNextPhaseSwitch
                 )
+
                 // Bottom Slot: Mute/Sound Toggle | +250ml / +1h Action | Stop or Studio Deck
                 Row(
                     modifier = Modifier
@@ -1555,35 +1460,31 @@ private fun ActiveFastingAndWaterBoundaryPage(
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Mute / Enable Ambient Sound Pill
-                    val soundActive = !isSoundMuted && soundMode != FastingSoundMode.OFF
+                    
+                    // Fasting Sound Picker Icon Pill
                     Button(
-                        onClick = onToggleMute,
+                        onClick = { showSoundPicker = true },
                         modifier = Modifier
                             .height(bottomPillHeight)
-                            .semantics { contentDescription = if (soundActive) "Mute Sound" else "Enable Sound" },
+                            .semantics { contentDescription = "Pick Fasting Sound" },
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (soundActive) MaterialTheme.colorScheme.secondaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = if (soundActive) MaterialTheme.colorScheme.onSecondaryContainer
-                            else MaterialTheme.colorScheme.onSurfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = if (soundActive) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeOff,
+                                imageVector = Icons.Rounded.QueueMusic,
                                 contentDescription = null,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
                     }
 
+                    // Mute / Enable Ambient Sound Pill
+                    val soundActive = !isSoundMuted && soundMode != FastingSoundMode.OFF
                     // Quick +250ml Water Pill (or +1h Fast when in Water Mode)
                     Button(
                         onClick = if (isWaterMode) onExtendFast else onLogWaterQuick,

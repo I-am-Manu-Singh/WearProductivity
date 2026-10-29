@@ -283,7 +283,11 @@ data class WellnessLog(
     val sleepLastNightMinutes: Int = 0,
     val focusMinutesGoal: Int = 120,
     val currentHeartRateBpm: Double = 0.0,
-    val heartRateAccuracy: String = "No Sensor"
+    val heartRateAccuracy: String = "No Sensor",
+    val spo2Pct: Double = 0.0,
+    val skinTemperatureC: Double = 0.0,
+    val barometerHpa: Double = 0.0,
+    val ambientLux: Float = 0f
 )
 
 @Serializable

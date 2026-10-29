@@ -34,6 +34,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -335,7 +337,11 @@ private fun computeDurationMinutes(start: String, end: String): Int {
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WearHabitsScreen(state: LifeState, repository: LifeRepository) {
+fun WearHabitsScreen(
+    state: LifeState,
+    repository: LifeRepository,
+    mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null
+) {
     val context = LocalContext.current.applicationContext
     val haptic = rememberLifeOSHapticProvider()
     val coroutineScope = rememberCoroutineScope()
@@ -1390,107 +1396,17 @@ private fun ActiveHabitAndTimetableBoundaryPage(
                     )
                 }
 
-                // Center Transport Row: Snooze | Center Multi-Tap Complete + Wavy Ring | Stop / Skip
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Button: Snooze (Opens Snooze Duration Picker)
-                    Button(
-                        onClick = onOpenSnoozeModal,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Snooze Habit or Timetable Item" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Rounded.Snooze, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("Snooze", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp))
-                        }
-                    }
 
-                    // Center Button: Tap to Progress % / Complete with Wavy Progress Ring
-                    Box(
-                        modifier = Modifier.size(centerButtonSize + 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawHabitWavyRing(
-                                progress = spotlightPct.coerceIn(0.05f, 1f),
-                                phase = if (isTimerRunning) wavePhase else 0f,
-                                trackColor = primaryAccent.copy(alpha = 0.28f),
-                                activeColor = primaryAccent,
-                                strokeWidthPx = 3.5.dp.toPx(),
-                                waveAmplitudePx = if (isTimerRunning) 2.dp.toPx() else 1.dp.toPx(),
-                                lobes = 12
-                            )
-                        }
-
-                        Button(
-                            onClick = onTapCompleteOrAdvanceHabit,
-                            modifier = Modifier
-                                .size(centerButtonSize)
-                                .semantics { contentDescription = "Progress or Complete Active Habit" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (spotlightPct >= 1f) Icons.Rounded.Check else Icons.Rounded.AddTask,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = "${(spotlightPct * 100).roundToInt()}%",
-                                    style = MaterialTheme.typography.labelSmall.tabularNums().copy(fontSize = 9.sp),
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                        }
-                    }
-
-                    // Right Button: Stop Today / Skip / Move to Backlog
-                    Button(
-                        onClick = onOpenStopAndRescheduleModal,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Stop for Today or Move to Backlog" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Rounded.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("Stop", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp))
-                        }
-                    }
-                }
-
+                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                val progress = mediaViewModel.progress.collectAsState().value
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isPlaying,
+                    progress = progress,
+                    onTogglePlay = { mediaViewModel.togglePlay() },
+                    onPrevious = { mediaViewModel.skipToPrevious() },
+                    onNext = { mediaViewModel.skipToNext() }
+                )
                 // Bottom Slot: Start/Pause Timer | Mood & Satisfaction | Deck Browser
                 Row(
                     modifier = Modifier
@@ -1887,7 +1803,9 @@ private fun HabitsStaggeredAndListDeckPage(
                     Text("Open Minute Timetable")
                 }
             }
-        }
+        
+
+}
     }
 }
 
@@ -2473,7 +2391,9 @@ private fun TimetableTabularSchedulePage(
                     onClick = onJumpToScorePage
                 )
             }
-        }
+        
+
+}
     }
 }
 
@@ -2789,7 +2709,9 @@ private fun HabitsMonthlySummaryAndScorePage(
                     }
                 }
             }
-        }
+        
+
+}
     }
 }
 
@@ -3004,7 +2926,22 @@ private fun M3HabitAndTimetableControlModal(
 
                 ActiveControlModal.NONE -> {}
             }
-        }
+        
+
+
+            item {
+                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                val progress = mediaViewModel.progress.collectAsState().value
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isPlaying,
+                    progress = progress,
+                    onTogglePlay = { mediaViewModel.togglePlay() },
+                    onPrevious = { mediaViewModel.skipToPrevious() },
+                    onNext = { mediaViewModel.skipToNext() }
+                )
+            }
+}
     }
 }
 

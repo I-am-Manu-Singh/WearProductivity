@@ -20,6 +20,7 @@ import androidx.wear.compose.material3.IconButton
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.SurfaceTransformation
+import kotlinx.coroutines.launch
 import androidx.wear.compose.material3.SwipeToReveal
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.rememberRevealState
@@ -40,16 +41,23 @@ fun WearSwipeableActionCard(
     content: @Composable () -> Unit
 ) {
     val revealState = rememberRevealState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     SwipeToReveal(
         revealState = revealState,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp),
-        onSwipePrimaryAction = onDeleteClick,
+        onSwipePrimaryAction = {
+            kotlinx.coroutines.CoroutineScope(scope.coroutineContext).launch { revealState.animateTo(androidx.wear.compose.material3.RevealValue.Covered) }
+            onDeleteClick()
+        },
         primaryAction = {
             IconButton(
-                onClick = onDeleteClick,
+                onClick = {
+                    kotlinx.coroutines.CoroutineScope(scope.coroutineContext).launch { revealState.animateTo(androidx.wear.compose.material3.RevealValue.Covered) }
+                    onDeleteClick()
+                },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -63,7 +71,10 @@ fun WearSwipeableActionCard(
         },
         secondaryAction = {
             IconButton(
-                onClick = onEditClick,
+                onClick = {
+                    kotlinx.coroutines.CoroutineScope(scope.coroutineContext).launch { revealState.animateTo(androidx.wear.compose.material3.RevealValue.Covered) }
+                    onEditClick()
+                },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface

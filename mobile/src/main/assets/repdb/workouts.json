@@ -1,0 +1,216 @@
+[
+  {
+    "id": "bro-split-chest",
+    "name": "Bro Split: Chest",
+    "discipline": "GYM",
+    "muscleOrZone": "Chest",
+    "targetSets": 4,
+    "targetReps": 10,
+    "targetWeightKg": 60.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "barbell-bench-press",
+      "incline-db-press",
+      "cable-crossover",
+      "push-ups"
+    ]
+  },
+  {
+    "id": "bro-split-back",
+    "name": "Bro Split: Back",
+    "discipline": "GYM",
+    "muscleOrZone": "Back",
+    "targetSets": 4,
+    "targetReps": 10,
+    "targetWeightKg": 70.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "deadlift",
+      "pull-ups",
+      "barbell-row",
+      "lat-pulldown",
+      "face-pull"
+    ]
+  },
+  {
+    "id": "bro-split-legs",
+    "name": "Bro Split: Legs",
+    "discipline": "GYM",
+    "muscleOrZone": "Legs",
+    "targetSets": 4,
+    "targetReps": 10,
+    "targetWeightKg": 90.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "squat",
+      "leg-press",
+      "romanian-deadlift",
+      "calf-raises"
+    ]
+  },
+  {
+    "id": "push-day",
+    "name": "Push Day (Hypertrophy)",
+    "discipline": "GYM",
+    "muscleOrZone": "Push",
+    "targetSets": 3,
+    "targetReps": 12,
+    "targetWeightKg": 50.0,
+    "restSeconds": 60,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "barbell-bench-press",
+      "overhead-press",
+      "incline-db-press",
+      "lateral-raises",
+      "tricep-pushdown"
+    ]
+  },
+  {
+    "id": "pull-day",
+    "name": "Pull Day (Hypertrophy)",
+    "discipline": "GYM",
+    "muscleOrZone": "Pull",
+    "targetSets": 4,
+    "targetReps": 10,
+    "targetWeightKg": 60.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "deadlift",
+      "pull-ups",
+      "barbell-row",
+      "bicep-curl",
+      "face-pull"
+    ]
+  },
+  {
+    "id": "lower-day",
+    "name": "Lower Body Power",
+    "discipline": "GYM",
+    "muscleOrZone": "Legs",
+    "targetSets": 4,
+    "targetReps": 8,
+    "targetWeightKg": 95.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "squat",
+      "leg-press",
+      "romanian-deadlift",
+      "calf-raises",
+      "leg-curl"
+    ]
+  },
+  {
+    "id": "upper-day",
+    "name": "Upper Body Strength",
+    "discipline": "GYM",
+    "muscleOrZone": "Upper",
+    "targetSets": 4,
+    "targetReps": 6,
+    "targetWeightKg": 75.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "barbell-bench-press",
+      "pull-ups",
+      "overhead-press",
+      "barbell-row"
+    ]
+  },
+  {
+    "id": "run-5k-intervals",
+    "name": "5K VO2 Max Speed Intervals",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Cardio Speed",
+    "targetSets": 6,
+    "targetReps": 1,
+    "targetWeightKg": 5.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 180,
+    "exercises": []
+  },
+  {
+    "id": "run-threshold-tempo",
+    "name": "10K Lactate Threshold Tempo",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Cardio Endurance",
+    "targetSets": 4,
+    "targetReps": 1,
+    "targetWeightKg": 8.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 600,
+    "exercises": []
+  },
+  {
+    "id": "run-hill-repeats",
+    "name": "Explosive Hill Repeats",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Cardio Power",
+    "targetSets": 8,
+    "targetReps": 1,
+    "targetWeightKg": 4.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 90,
+    "exercises": []
+  },
+  {
+    "id": "swim-pyramid-endurance",
+    "name": "Freestyle Pyramid Endurance (1500m)",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Full Body Aerobic",
+    "targetSets": 5,
+    "targetReps": 4,
+    "targetWeightKg": 0.0,
+    "restSeconds": 30,
+    "stepDurationSeconds": 180,
+    "exercises": []
+  },
+  {
+    "id": "swim-sprint-intervals",
+    "name": "Anaerobic Sprint 50m Repeats",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Power Swim",
+    "targetSets": 10,
+    "targetReps": 2,
+    "targetWeightKg": 0.0,
+    "restSeconds": 45,
+    "stepDurationSeconds": 60,
+    "exercises": []
+  },
+  {
+    "id": "calisthenics-muscle-up",
+    "name": "Muscle-Up & Explosive Pull Progression",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Upper Body Power",
+    "targetSets": 4,
+    "targetReps": 8,
+    "targetWeightKg": 0.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 60,
+    "exercises": [
+      "pull-ups",
+      "assisted-dips",
+      "push-ups"
+    ]
+  },
+  {
+    "id": "calisthenics-front-lever",
+    "name": "Front Lever & Core Compression",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Lats & Core",
+    "targetSets": 5,
+    "targetReps": 10,
+    "targetWeightKg": 0.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 45,
+    "exercises": [
+      "pull-ups",
+      "ab-wheel-rollout"
+    ]
+  }
+]

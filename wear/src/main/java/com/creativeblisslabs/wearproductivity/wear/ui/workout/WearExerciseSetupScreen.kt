@@ -1,11 +1,13 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.workout
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -28,20 +30,24 @@ fun WearExerciseSetupScreen(
     repository: ExerciseRepository,
     onWorkoutGenerated: (List<String>) -> Unit
 ) {
+    val context = LocalContext.current
+    val savedPrefs = remember { loadPreferences(context) }
+
     val state = rememberTransformingLazyColumnState()
     var step by remember { mutableIntStateOf(0) }
-    var goal by remember { mutableStateOf("General fitness") }
-    var experience by remember { mutableStateOf("Beginner") }
-    var discipline by remember { mutableStateOf("GYM") }
-    var duration by remember { mutableIntStateOf(20) }
+    var goal by remember { mutableStateOf(savedPrefs.goal) }
+    var experience by remember { mutableStateOf(savedPrefs.experience) }
+    var discipline by remember { mutableStateOf(savedPrefs.discipline) }
+    var duration by remember { mutableIntStateOf(savedPrefs.durationMinutes) }
     val muscles = listOf("Full Body", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core")
     val equipment = listOf("bodyweight", "dumbbell", "barbell", "machine", "cable", "resistance band")
     val goals = listOf("General fitness", "Build muscle", "Strength", "Weight loss", "Endurance", "Mobility")
     val experiences = listOf("Beginner", "Intermediate", "Advanced")
     val disciplines = listOf("GYM", "CALISTHENICS", "RUNNING", "SWIMMING")
-    val selectedMuscles = remember { mutableStateListOf("Full Body") }
-    val selectedEquipment = remember { mutableStateListOf("bodyweight") }
-    val avoidTargets = remember { mutableStateListOf<String>() }
+    
+    val selectedMuscles = remember { mutableStateListOf<String>().apply { addAll(savedPrefs.targetMuscles) } }
+    val selectedEquipment = remember { mutableStateListOf<String>().apply { addAll(savedPrefs.equipment) } }
+    val avoidTargets = remember { mutableStateListOf<String>().apply { addAll(savedPrefs.avoidTargets) } }
     val avoidOptions = listOf("Shoulders", "Knees", "Back", "Wrists")
     val recommendations = remember { mutableStateListOf<String>() }
 
@@ -163,6 +169,7 @@ fun WearExerciseSetupScreen(
                                     durationMinutes = duration,
                                     avoidTargets = avoidTargets.toSet()
                                 )
+                                savePreferences(context, prefs)
                                 val routine = repository.generatePersonalizedWorkout(prefs)
                                 onWorkoutGenerated(routine.map { it.id })
                             }
@@ -197,4 +204,30 @@ private fun ChoiceCard(label: String, selected: Boolean, onClick: () -> Unit) {
             Text(if (selected) "✓" else "+", style = MaterialTheme.typography.labelMedium)
         }
     }
+}
+
+private fun savePreferences(context: Context, prefs: WorkoutPreferences) {
+    val prefsFile = context.getSharedPreferences("lifeos_workout_setup_prefs", Context.MODE_PRIVATE)
+    prefsFile.edit()
+        .putString("goal", prefs.goal)
+        .putString("experience", prefs.experience)
+        .putString("discipline", prefs.discipline)
+        .putInt("duration", prefs.durationMinutes)
+        .putStringSet("targetMuscles", prefs.targetMuscles)
+        .putStringSet("equipment", prefs.equipment)
+        .putStringSet("avoidTargets", prefs.avoidTargets)
+        .apply()
+}
+
+private fun loadPreferences(context: Context): WorkoutPreferences {
+    val prefsFile = context.getSharedPreferences("lifeos_workout_setup_prefs", Context.MODE_PRIVATE)
+    return WorkoutPreferences(
+        goal = prefsFile.getString("goal", "General fitness") ?: "General fitness",
+        experience = prefsFile.getString("experience", "Beginner") ?: "Beginner",
+        discipline = prefsFile.getString("discipline", "GYM") ?: "GYM",
+        durationMinutes = prefsFile.getInt("duration", 20),
+        targetMuscles = prefsFile.getStringSet("targetMuscles", setOf("Full Body")) ?: setOf("Full Body"),
+        equipment = prefsFile.getStringSet("equipment", setOf("bodyweight")) ?: setOf("bodyweight"),
+        avoidTargets = prefsFile.getStringSet("avoidTargets", emptySet()) ?: emptySet()
+    )
 }

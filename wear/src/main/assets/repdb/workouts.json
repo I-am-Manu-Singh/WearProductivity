@@ -1,206 +1,1027 @@
 [
   {
-    "id": "bro-split-chest",
-    "name": "Bro Split: Chest",
+    "id": "gym-upper-lower-block",
+    "name": "4-Day Upper/Lower Strength & Hypertrophy",
     "discipline": "GYM",
-    "muscleOrZone": "Chest",
+    "muscleOrZone": "Full Body Periodization",
     "targetSets": 4,
-    "targetReps": 10,
-    "targetWeightKg": 60.0,
-    "restSeconds": 90,
+    "targetReps": 8,
+    "targetWeightKg": 80.0,
+    "restSeconds": 120,
     "stepDurationSeconds": 60,
-    "exercises": [
-      "barbell-bench-press",
-      "incline-db-press",
-      "cable-crossover",
-      "push-ups"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "bench-press",
+        "name": "Day 1: Upper - Barbell Bench Press",
+        "sets": 4,
+        "reps": 6,
+        "weightKg": 85.0,
+        "restSeconds": 180,
+        "description": "Primary upper body strength compound lift."
+      },
+      {
+        "exerciseId": "barbell-row",
+        "name": "Day 1: Upper - Bent-Over Barbell Row",
+        "sets": 4,
+        "reps": 8,
+        "weightKg": 75.0,
+        "restSeconds": 120,
+        "description": "Horizontal pull for back thickness."
+      },
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Day 1: Upper - Overhead Press",
+        "sets": 3,
+        "reps": 8,
+        "weightKg": 55.0,
+        "restSeconds": 120,
+        "description": "Vertical shoulder pressing."
+      },
+      {
+        "exerciseId": "pull-up",
+        "name": "Day 1: Upper - Wide Grip Pull-Ups",
+        "sets": 3,
+        "reps": 10,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Vertical pulling width."
+      },
+      {
+        "exerciseId": "squat",
+        "name": "Day 2: Lower - Barbell Back Squat",
+        "sets": 4,
+        "reps": 6,
+        "weightKg": 110.0,
+        "restSeconds": 180,
+        "description": "Primary lower body compound lift."
+      },
+      {
+        "exerciseId": "romanian-deadlift",
+        "name": "Day 2: Lower - Romanian Deadlift",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 90.0,
+        "restSeconds": 120,
+        "description": "Hamstring and glute loading."
+      },
+      {
+        "exerciseId": "leg-press",
+        "name": "Day 2: Lower - Leg Press",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 180.0,
+        "restSeconds": 90,
+        "description": "High volume quad accessory."
+      },
+      {
+        "exerciseId": "standing-calf-raise",
+        "name": "Day 2: Lower - Calf Raises",
+        "sets": 4,
+        "reps": 15,
+        "weightKg": 70.0,
+        "restSeconds": 60,
+        "description": "Ankle ROM calf development."
+      }
     ]
   },
   {
-    "id": "bro-split-back",
-    "name": "Bro Split: Back",
+    "id": "gym-ppl-hypertrophy",
+    "name": "6-Day Push / Pull / Legs (PPL) Hypertrophy",
     "discipline": "GYM",
-    "muscleOrZone": "Back",
+    "muscleOrZone": "Advanced Muscle Building",
     "targetSets": 4,
     "targetReps": 10,
     "targetWeightKg": 70.0,
     "restSeconds": 90,
     "stepDurationSeconds": 60,
-    "exercises": [
-      "deadlift",
-      "pull-ups",
-      "barbell-row",
-      "lat-pulldown",
-      "face-pull"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "bench-press",
+        "name": "Push A: Flat Bench Press",
+        "sets": 4,
+        "reps": 8,
+        "weightKg": 80.0,
+        "restSeconds": 150,
+        "description": "Heavy horizontal press."
+      },
+      {
+        "exerciseId": "incline-bench-press",
+        "name": "Push A: Incline DB Press",
+        "sets": 3,
+        "reps": 10,
+        "weightKg": 32.0,
+        "restSeconds": 90,
+        "description": "Upper pectoral focus."
+      },
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Push A: Seated DB Press",
+        "sets": 3,
+        "reps": 10,
+        "weightKg": 24.0,
+        "restSeconds": 90,
+        "description": "Deltoid mass."
+      },
+      {
+        "exerciseId": "lateral-raise",
+        "name": "Push A: Lateral Raises",
+        "sets": 4,
+        "reps": 15,
+        "weightKg": 12.0,
+        "restSeconds": 60,
+        "description": "Side delt isolation."
+      },
+      {
+        "exerciseId": "tricep-pushdown",
+        "name": "Push A: Tricep Pushdowns",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 25.0,
+        "restSeconds": 60,
+        "description": "Tricep lockout."
+      },
+      {
+        "exerciseId": "deadlift",
+        "name": "Pull A: Conventional Deadlift",
+        "sets": 3,
+        "reps": 5,
+        "weightKg": 130.0,
+        "restSeconds": 180,
+        "description": "Heavy posterior chain."
+      },
+      {
+        "exerciseId": "pull-up",
+        "name": "Pull A: Pull-Ups",
+        "sets": 3,
+        "reps": 10,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Lat width."
+      },
+      {
+        "exerciseId": "barbell-row",
+        "name": "Pull A: Barbell Row",
+        "sets": 3,
+        "reps": 10,
+        "weightKg": 70.0,
+        "restSeconds": 90,
+        "description": "Back thickness."
+      }
     ]
   },
   {
-    "id": "bro-split-legs",
-    "name": "Bro Split: Legs",
+    "id": "gym-arnold-classic-split",
+    "name": "Arnold Schwarzenegger Classic 3-Day Split",
     "discipline": "GYM",
-    "muscleOrZone": "Legs",
+    "muscleOrZone": "Chest/Back, Shoulders/Arms, Legs",
     "targetSets": 4,
     "targetReps": 10,
-    "targetWeightKg": 90.0,
-    "restSeconds": 120,
-    "stepDurationSeconds": 60,
-    "exercises": [
-      "squat",
-      "leg-press",
-      "romanian-deadlift",
-      "calf-raises"
-    ]
-  },
-  {
-    "id": "push-day",
-    "name": "Push Day",
-    "discipline": "GYM",
-    "muscleOrZone": "Push",
-    "targetSets": 3,
-    "targetReps": 12,
-    "targetWeightKg": 50.0,
-    "restSeconds": 60,
-    "stepDurationSeconds": 60,
-    "exercises": [
-      "barbell-bench-press",
-      "overhead-press",
-      "incline-db-press",
-      "lateral-raises",
-      "tricep-pushdown"
-    ]
-  },
-  {
-    "id": "pull-day",
-    "name": "Pull Day",
-    "discipline": "GYM",
-    "muscleOrZone": "Pull",
-    "targetSets": 4,
-    "targetReps": 10,
-    "targetWeightKg": 60.0,
+    "targetWeightKg": 75.0,
     "restSeconds": 90,
     "stepDurationSeconds": 60,
-    "exercises": [
-      "deadlift",
-      "pull-ups",
-      "barbell-row",
-      "bicep-curl",
-      "face-pull"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "bench-press",
+        "name": "Day 1: Chest & Back - Bench Press",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 75.0,
+        "restSeconds": 120,
+        "description": "Antagonistic superset pairing."
+      },
+      {
+        "exerciseId": "pull-up",
+        "name": "Day 1: Chest & Back - Wide Pull-Ups",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Alternated with bench press."
+      },
+      {
+        "exerciseId": "incline-bench-press",
+        "name": "Day 1: Chest & Back - Incline DB Press",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 28.0,
+        "restSeconds": 90,
+        "description": "Upper chest."
+      },
+      {
+        "exerciseId": "barbell-row",
+        "name": "Day 1: Chest & Back - Barbell Row",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 65.0,
+        "restSeconds": 90,
+        "description": "Rowing thickness."
+      },
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Day 2: Shoulders & Arms - OHP",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 50.0,
+        "restSeconds": 120,
+        "description": "Military press."
+      },
+      {
+        "exerciseId": "barbell-curl",
+        "name": "Day 2: Shoulders & Arms - Bicep Curl",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 32.0,
+        "restSeconds": 60,
+        "description": "Strict curls."
+      },
+      {
+        "exerciseId": "tricep-pushdown",
+        "name": "Day 2: Shoulders & Arms - Triceps",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 25.0,
+        "restSeconds": 60,
+        "description": "Pushdowns."
+      },
+      {
+        "exerciseId": "squat",
+        "name": "Day 3: Legs - Squat & Calves",
+        "sets": 5,
+        "reps": 10,
+        "weightKg": 100.0,
+        "restSeconds": 150,
+        "description": "Leg mass."
+      }
     ]
   },
   {
-    "id": "lower-day",
-    "name": "Lower Body",
+    "id": "gym-5-day-bro-split",
+    "name": "5-Day Dedicated Bro Split",
     "discipline": "GYM",
-    "muscleOrZone": "Legs",
+    "muscleOrZone": "Isolated Muscle Focus",
     "targetSets": 4,
     "targetReps": 10,
-    "targetWeightKg": 80.0,
-    "restSeconds": 120,
-    "stepDurationSeconds": 60,
-    "exercises": [
-      "squat",
-      "leg-press",
-      "romanian-deadlift",
-      "calf-raises",
-      "leg-curl"
-    ]
-  },
-  {
-    "id": "upper-day",
-    "name": "Upper Body",
-    "discipline": "GYM",
-    "muscleOrZone": "Upper",
-    "targetSets": 4,
-    "targetReps": 10,
-    "targetWeightKg": 60.0,
+    "targetWeightKg": 70.0,
     "restSeconds": 90,
     "stepDurationSeconds": 60,
-    "exercises": [
-      "barbell-bench-press",
-      "pull-ups",
-      "overhead-press",
-      "barbell-row"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "bench-press",
+        "name": "Day 1 (Chest): Bench & Flyes",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 75.0,
+        "restSeconds": 120,
+        "description": "Chest focus."
+      },
+      {
+        "exerciseId": "cable-fly",
+        "name": "Day 1 (Chest): Cable Flyes",
+        "sets": 3,
+        "reps": 15,
+        "weightKg": 18.0,
+        "restSeconds": 60,
+        "description": "Isolation."
+      },
+      {
+        "exerciseId": "deadlift",
+        "name": "Day 2 (Back): Deadlift & Rows",
+        "sets": 4,
+        "reps": 8,
+        "weightKg": 120.0,
+        "restSeconds": 180,
+        "description": "Back focus."
+      },
+      {
+        "exerciseId": "lat-pulldown",
+        "name": "Day 2 (Back): Lat Pulldowns",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 55.0,
+        "restSeconds": 60,
+        "description": "Width."
+      },
+      {
+        "exerciseId": "squat",
+        "name": "Day 3 (Legs): Squats & Extensions",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 100.0,
+        "restSeconds": 150,
+        "description": "Leg focus."
+      },
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Day 4 (Shoulders): OHP & Laterals",
+        "sets": 4,
+        "reps": 10,
+        "weightKg": 50.0,
+        "restSeconds": 90,
+        "description": "Shoulder focus."
+      },
+      {
+        "exerciseId": "barbell-curl",
+        "name": "Day 5 (Arms): Biceps & Triceps",
+        "sets": 4,
+        "reps": 12,
+        "weightKg": 30.0,
+        "restSeconds": 60,
+        "description": "Arm pump."
+      }
     ]
   },
   {
-    "id": "calisthenics-beginner",
-    "name": "Beginner Calisthenics",
-    "discipline": "CALISTHENICS",
-    "muscleOrZone": "Full Body",
-    "targetSets": 3,
-    "targetReps": 8,
-    "targetWeightKg": 0.0,
-    "restSeconds": 60,
+    "id": "gym-full-body-power",
+    "name": "3-Day Full Body Athletic Power",
+    "discipline": "GYM",
+    "muscleOrZone": "Explosive Strength & Conditioning",
+    "targetSets": 4,
+    "targetReps": 6,
+    "targetWeightKg": 85.0,
+    "restSeconds": 120,
     "stepDurationSeconds": 60,
-    "exercises": [
-      "push-ups",
-      "assisted-pull-ups",
-      "bodyweight-squat",
-      "plank"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "squat",
+        "name": "Back Squat",
+        "sets": 4,
+        "reps": 6,
+        "weightKg": 100.0,
+        "restSeconds": 150,
+        "description": "Squat power."
+      },
+      {
+        "exerciseId": "bench-press",
+        "name": "Bench Press",
+        "sets": 4,
+        "reps": 6,
+        "weightKg": 80.0,
+        "restSeconds": 150,
+        "description": "Press power."
+      },
+      {
+        "exerciseId": "deadlift",
+        "name": "Deadlift",
+        "sets": 3,
+        "reps": 5,
+        "weightKg": 130.0,
+        "restSeconds": 180,
+        "description": "Hinge power."
+      },
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Push Press",
+        "sets": 3,
+        "reps": 6,
+        "weightKg": 60.0,
+        "restSeconds": 120,
+        "description": "Explosive overhead."
+      },
+      {
+        "exerciseId": "pull-up",
+        "name": "Weighted Pull-Ups",
+        "sets": 3,
+        "reps": 8,
+        "weightKg": 10.0,
+        "restSeconds": 120,
+        "description": "Pull power."
+      },
+      {
+        "exerciseId": "ab-wheel-rollout",
+        "name": "Core Ab Wheel",
+        "sets": 3,
+        "reps": 12,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Core brace."
+      }
     ]
   },
   {
-    "id": "run-5k-intervals",
-    "name": "5K VO2 Max Intervals",
+    "id": "run-c25k-program",
+    "name": "C25K (Couch to 5K) 8-Week Progression",
     "discipline": "RUNNING",
-    "muscleOrZone": "Cardio",
-    "targetSets": 5,
+    "muscleOrZone": "Beginner Endurance Base",
+    "targetSets": 8,
+    "targetReps": 1,
+    "targetWeightKg": 0.0,
+    "restSeconds": 90,
+    "stepDurationSeconds": 60,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Easy Jog Warm-up",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Zone 1-2 easy conversational jogging."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Hard Interval @ 5K Pace",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 75,
+        "description": "Run at 95% VO2 max effort with high cadence."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "75s Jog Recovery",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Active slow jog between repeats."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Cool-down & Stretch",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Post-run static stretching."
+      }
+    ]
+  },
+  {
+    "id": "run-jack-daniels-vo2",
+    "name": "Jack Daniels 400m VO2 Max Intervals",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Cardiovascular Speed",
+    "targetSets": 8,
     "targetReps": 1,
     "targetWeightKg": 5.0,
-    "restSeconds": 60,
-    "stepDurationSeconds": 180,
-    "exercises": []
+    "restSeconds": 90,
+    "stepDurationSeconds": 90,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Easy Jog Warm-up",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Zone 1-2 easy conversational jogging."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Hard Interval @ 5K Pace",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 75,
+        "description": "Run at 95% VO2 max effort with high cadence."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "75s Jog Recovery",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Active slow jog between repeats."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Cool-down & Stretch",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Post-run static stretching."
+      }
+    ]
   },
   {
-    "id": "run-easy-recovery",
-    "name": "Easy Recovery Run",
+    "id": "run-threshold-tempo",
+    "name": "10K Lactate Threshold Tempo",
     "discipline": "RUNNING",
-    "muscleOrZone": "Cardio",
+    "muscleOrZone": "Stamina & Lactate Clearing",
     "targetSets": 1,
     "targetReps": 1,
     "targetWeightKg": 10.0,
     "restSeconds": 0,
-    "stepDurationSeconds": 1800,
-    "exercises": []
+    "stepDurationSeconds": 1200,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Easy Jog Warm-up",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Zone 1-2 easy conversational jogging."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Hard Interval @ 5K Pace",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 75,
+        "description": "Run at 95% VO2 max effort with high cadence."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "75s Jog Recovery",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Active slow jog between repeats."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Cool-down & Stretch",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Post-run static stretching."
+      }
+    ]
   },
   {
-    "id": "swim-10x100m",
-    "name": "10x100m Freestyle Swim",
-    "discipline": "SWIMMING",
-    "muscleOrZone": "Full Body",
+    "id": "run-yasso-800s",
+    "name": "Yasso 800s Marathon Predictor",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Speed Endurance",
     "targetSets": 10,
+    "targetReps": 1,
+    "targetWeightKg": 6.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 180,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Easy Jog Warm-up",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Zone 1-2 easy conversational jogging."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Hard Interval @ 5K Pace",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 75,
+        "description": "Run at 95% VO2 max effort with high cadence."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "75s Jog Recovery",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Active slow jog between repeats."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Cool-down & Stretch",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Post-run static stretching."
+      }
+    ]
+  },
+  {
+    "id": "run-long-slow-distance",
+    "name": "Long Slow Distance (LSD) Aerobic Run",
+    "discipline": "RUNNING",
+    "muscleOrZone": "Capillarization & Fat Oxidation",
+    "targetSets": 1,
+    "targetReps": 1,
+    "targetWeightKg": 12.0,
+    "restSeconds": 0,
+    "stepDurationSeconds": 3600,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Easy Jog Warm-up",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Zone 1-2 easy conversational jogging."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Hard Interval @ 5K Pace",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 75,
+        "description": "Run at 95% VO2 max effort with high cadence."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "75s Jog Recovery",
+        "sets": 8,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Active slow jog between repeats."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "10-Min Cool-down & Stretch",
+        "sets": 1,
+        "reps": 1,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Post-run static stretching."
+      }
+    ]
+  },
+  {
+    "id": "swim-us-masters-pyramid",
+    "name": "US Masters 1500m Aerobic Pyramid",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Cardiorespiratory Endurance",
+    "targetSets": 5,
+    "targetReps": 4,
+    "targetWeightKg": 0.0,
+    "restSeconds": 30,
+    "stepDurationSeconds": 180,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Freestyle Warmup",
+        "sets": 1,
+        "reps": 16,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Smooth bilateral breathing and long reach."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "4x50m Catch-Up Drill",
+        "sets": 4,
+        "reps": 2,
+        "weightKg": 0.0,
+        "restSeconds": 20,
+        "description": "Focus on extended glide phase."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "Pyramid Main Set (100-200-300-200-100m)",
+        "sets": 5,
+        "reps": 4,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Ascend and descend pyramid at Critical Swim Speed."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "200m Easy Cool-Down",
+        "sets": 1,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Relaxed recovery swimming."
+      }
+    ]
+  },
+  {
+    "id": "swim-css-threshold-100s",
+    "name": "Critical Swim Speed (CSS) 100m Repeats",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Threshold Pace Development",
+    "targetSets": 10,
+    "targetReps": 1,
+    "targetWeightKg": 0.0,
+    "restSeconds": 15,
+    "stepDurationSeconds": 75,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Freestyle Warmup",
+        "sets": 1,
+        "reps": 16,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Smooth bilateral breathing and long reach."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "4x50m Catch-Up Drill",
+        "sets": 4,
+        "reps": 2,
+        "weightKg": 0.0,
+        "restSeconds": 20,
+        "description": "Focus on extended glide phase."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "Pyramid Main Set (100-200-300-200-100m)",
+        "sets": 5,
+        "reps": 4,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Ascend and descend pyramid at Critical Swim Speed."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "200m Easy Cool-Down",
+        "sets": 1,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Relaxed recovery swimming."
+      }
+    ]
+  },
+  {
+    "id": "swim-sprint-power-50s",
+    "name": "Anaerobic Sprint 50m Power Set",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Sprint Power & Stroke Rate",
+    "targetSets": 8,
+    "targetReps": 2,
+    "targetWeightKg": 0.0,
+    "restSeconds": 45,
+    "stepDurationSeconds": 45,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Freestyle Warmup",
+        "sets": 1,
+        "reps": 16,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Smooth bilateral breathing and long reach."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "4x50m Catch-Up Drill",
+        "sets": 4,
+        "reps": 2,
+        "weightKg": 0.0,
+        "restSeconds": 20,
+        "description": "Focus on extended glide phase."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "Pyramid Main Set (100-200-300-200-100m)",
+        "sets": 5,
+        "reps": 4,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Ascend and descend pyramid at Critical Swim Speed."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "200m Easy Cool-Down",
+        "sets": 1,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Relaxed recovery swimming."
+      }
+    ]
+  },
+  {
+    "id": "swim-technique-drill-set",
+    "name": "Catch-up & Fingertip Drill Set",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Stroke Mechanics & Efficiency",
+    "targetSets": 4,
     "targetReps": 4,
     "targetWeightKg": 0.0,
     "restSeconds": 30,
     "stepDurationSeconds": 120,
-    "exercises": []
-  },
-  {
-    "id": "calisthenics-pullups",
-    "name": "Pull-Ups & Front Lever",
-    "discipline": "CALISTHENICS",
-    "muscleOrZone": "Back & Core",
-    "targetSets": 5,
-    "targetReps": 12,
-    "targetWeightKg": 0.0,
-    "restSeconds": 120,
-    "stepDurationSeconds": 60,
-    "exercises": [
-      "pull-ups"
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Freestyle Warmup",
+        "sets": 1,
+        "reps": 16,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Smooth bilateral breathing and long reach."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "4x50m Catch-Up Drill",
+        "sets": 4,
+        "reps": 2,
+        "weightKg": 0.0,
+        "restSeconds": 20,
+        "description": "Focus on extended glide phase."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "Pyramid Main Set (100-200-300-200-100m)",
+        "sets": 5,
+        "reps": 4,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Ascend and descend pyramid at Critical Swim Speed."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "200m Easy Cool-Down",
+        "sets": 1,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Relaxed recovery swimming."
+      }
     ]
   },
   {
-    "id": "calisthenics-dips",
-    "name": "Muscle-Ups & Dips",
+    "id": "swim-continuous-endurance",
+    "name": "2000m Continuous Aerobic Swim",
+    "discipline": "SWIMMING",
+    "muscleOrZone": "Stamina & Pacing",
+    "targetSets": 1,
+    "targetReps": 1,
+    "targetWeightKg": 0.0,
+    "restSeconds": 0,
+    "stepDurationSeconds": 2400,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "air-bike",
+        "name": "400m Freestyle Warmup",
+        "sets": 1,
+        "reps": 16,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Smooth bilateral breathing and long reach."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "4x50m Catch-Up Drill",
+        "sets": 4,
+        "reps": 2,
+        "weightKg": 0.0,
+        "restSeconds": 20,
+        "description": "Focus on extended glide phase."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "Pyramid Main Set (100-200-300-200-100m)",
+        "sets": 5,
+        "reps": 4,
+        "weightKg": 0.0,
+        "restSeconds": 30,
+        "description": "Ascend and descend pyramid at Critical Swim Speed."
+      },
+      {
+        "exerciseId": "air-bike",
+        "name": "200m Easy Cool-Down",
+        "sets": 1,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 0,
+        "description": "Relaxed recovery swimming."
+      }
+    ]
+  },
+  {
+    "id": "calisthenics-overcoming-gravity-push",
+    "name": "Overcoming Gravity: Advanced Push Skill",
     "discipline": "CALISTHENICS",
-    "muscleOrZone": "Chest & Triceps",
+    "muscleOrZone": "Chest, Shoulders & Triceps Strength",
+    "targetSets": 5,
+    "targetReps": 8,
+    "targetWeightKg": 0.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "push-up",
+        "name": "Decline Ring Push-Ups",
+        "sets": 4,
+        "reps": 12,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Elevated feet for upper pec load."
+      },
+      {
+        "exerciseId": "assisted-dips",
+        "name": "Weighted Parallel Bar Dips",
+        "sets": 4,
+        "reps": 8,
+        "weightKg": 10.0,
+        "restSeconds": 120,
+        "description": "Progressive overload dipping."
+      },
+      {
+        "exerciseId": "dips",
+        "name": "Straight Bar Dips",
+        "sets": 3,
+        "reps": 6,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Advanced transition pressing."
+      }
+    ]
+  },
+  {
+    "id": "calisthenics-overcoming-gravity-pull",
+    "name": "Overcoming Gravity: Front Lever & Pull",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Lats, Scapula & Core",
+    "targetSets": 5,
+    "targetReps": 8,
+    "targetWeightKg": 0.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "pull-up",
+        "name": "Weighted Pull-Ups",
+        "sets": 4,
+        "reps": 6,
+        "weightKg": 12.0,
+        "restSeconds": 120,
+        "description": "Weighted vertical pull."
+      },
+      {
+        "exerciseId": "ab-wheel-rollout",
+        "name": "Front Lever Tuck Raises",
+        "sets": 4,
+        "reps": 8,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Scapular depression and core strength."
+      }
+    ]
+  },
+  {
+    "id": "calisthenics-handstand-mastery",
+    "name": "Handstand Push-up & Shoulder Mastery",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Overhead Pressing & Balance",
     "targetSets": 4,
-    "targetReps": 15,
+    "targetReps": 5,
+    "targetWeightKg": 0.0,
+    "restSeconds": 120,
+    "stepDurationSeconds": 60,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "seated-barbell-overhead-press",
+        "name": "Wall Handstand Push-Ups",
+        "sets": 4,
+        "reps": 5,
+        "weightKg": 0.0,
+        "restSeconds": 120,
+        "description": "Full vertical press against wall."
+      }
+    ]
+  },
+  {
+    "id": "calisthenics-planche-lean",
+    "name": "Planche Lean & Static Hold Circuit",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Anterior Delts & Straight Arm Strength",
+    "targetSets": 5,
+    "targetReps": 5,
     "targetWeightKg": 0.0,
     "restSeconds": 90,
-    "stepDurationSeconds": 60,
-    "exercises": [
-      "assisted-dips"
+    "stepDurationSeconds": 45,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "push-up",
+        "name": "Planche Lean Holds",
+        "sets": 5,
+        "reps": 5,
+        "weightKg": 0.0,
+        "restSeconds": 90,
+        "description": "Hold lean forward with locked elbows."
+      }
+    ]
+  },
+  {
+    "id": "calisthenics-streetlifting-core",
+    "name": "Streetlifting Core & Compression",
+    "discipline": "CALISTHENICS",
+    "muscleOrZone": "Hip Flexors & Abdominals",
+    "targetSets": 4,
+    "targetReps": 12,
+    "targetWeightKg": 0.0,
+    "restSeconds": 60,
+    "stepDurationSeconds": 45,
+    "exercisePrescriptions": [
+      {
+        "exerciseId": "ab-wheel-rollout",
+        "name": "Hanging Leg Raises",
+        "sets": 4,
+        "reps": 12,
+        "weightKg": 0.0,
+        "restSeconds": 60,
+        "description": "Strict toes-to-bar raises."
+      }
     ]
   }
 ]

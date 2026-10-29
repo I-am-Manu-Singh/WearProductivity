@@ -330,7 +330,7 @@ private object FocusTopicPrefs {
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WearFocusScreen(state: LifeState, repository: LifeRepository) {
+fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null) {
     val context = LocalContext.current.applicationContext
     val coroutineScope = rememberCoroutineScope()
     val haptic = rememberLifeOSHapticProvider()
@@ -866,6 +866,8 @@ private fun ActiveFocusBoundaryCanvasPage(
     onOpenDashboard: () -> Unit,
     onSelectAmbientMode: (AmbientSoundMode) -> Unit
 ) {
+    var showSoundPicker by remember { mutableStateOf(false) }
+
     val isActive = focus.active
     val isPaused = focus.isPaused
     val isBreakActive = isActive && (focus.type == FocusType.ShortBreak || focus.type == FocusType.LongBreak)
@@ -1040,153 +1042,19 @@ private fun ActiveFocusBoundaryCanvasPage(
                     )
                 }
 
-                // Center Slot: Prev (Restart/Switch) | Center Play/Pause + Wavy Ring | Next (Focus <-> Break)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Button: Restart or Switch Phase
-                    Button(
-                        onClick = onPreviousOrRestart,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Restart or Previous Phase" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipPrevious,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-
-                    // Center Play / Pause Button with Expressive Wavy Scallop Ring
-                    Box(
-                        modifier = Modifier.size(centerButtonSize + 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawFocusWavyRing(
-                                progress = animatedProgress,
-                                phase = if (isActive && !isPaused) wavePhase else 0f,
-                                trackColor = primaryAccent.copy(alpha = 0.28f),
-                                activeColor = primaryAccent,
-                                strokeWidthPx = 3.5.dp.toPx(),
-                                waveAmplitudePx = if (isActive && !isPaused) 2.dp.toPx() else 1.dp.toPx(),
-                                lobes = 12
-                            )
-                        }
-
-                        Button(
-                            onClick = onTogglePlayPause,
-                            modifier = Modifier
-                                .size(centerButtonSize)
-                                .semantics {
-                                    contentDescription = when {
-                                        !isActive -> "Start Focus"
-                                        isPaused -> "Resume Focus"
-                                        else -> "Pause Focus"
-                                    }
-                                },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = if (isActive && !isPaused) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Right Button: Next (Switch between Focus and Break)
-                    Button(
-                        onClick = onNextFocusOrBreak,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = if (isBreakActive) "Switch to Focus" else "Switch to Break" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                }
-
-                WearActionButtonGroup(
-                    options = AmbientSoundMode.entries.map { it.label },
-                    selectedIndex = if (isSoundMuted) 0 else ambientMode.ordinal,
-                    onOptionSelected = { idx ->
-                        onSelectAmbientMode(AmbientSoundMode.entries[idx])
-                    }
-                )
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
 
 
+                    val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                    val progress = mediaViewModel.progress.collectAsState().value
+                    com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                        isPlaying = isPlaying,
+                        progress = progress,
+                        onTogglePlay = { mediaViewModel.togglePlay() },
+                        onPrevious = { mediaViewModel.skipToPrevious() },
+                        onNext = { mediaViewModel.skipToNext() }
+                    )
 
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                val newLevel = (currentLevel - 1).coerceAtLeast(0)
-                                val newVolume = newLevel / 10f
-                                currentVolume = newVolume
-                                soundEngine.setVolume(newVolume)
-                            }
-                        ) {
-                            Icon(Icons.Default.Remove, contentDescription = "Decrease")
-                        }
-
-                        Text(
-                            text = "Vol : $currentLevel",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-
-                        FilledTonalIconButton(
-                            onClick = {
-                                val newLevel = (currentLevel + 1).coerceAtMost(10)
-                                val newVolume = newLevel / 10f
-                                currentVolume = newVolume
-                                soundEngine.setVolume(newVolume)
-                            }
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Increase")
-                        }
-                    }
-                }
 
                 // Bottom Slot: Mute/Sound Toggle | +5m Extend | Stop or Deck Button
                 Row(
@@ -1196,8 +1064,33 @@ private fun ActiveFocusBoundaryCanvasPage(
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    
+                    // Ambient Sound Picker Icon Pill
+                    Button(
+                        onClick = { showSoundPicker = true },
+                        modifier = Modifier
+                            .height(bottomPillHeight)
+                            .semantics { contentDescription = "Pick Ambient Sound" },
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.QueueMusic,
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
                     // Mute / Unmute Focus Sounds Pill
                     val soundActive = !isSoundMuted && ambientMode != AmbientSoundMode.OFF
+
+
                     Button(
                         onClick = onToggleMute,
                         modifier = Modifier
@@ -1271,7 +1164,7 @@ private fun ActiveFocusBoundaryCanvasPage(
                         }
                     } else {
                         Button(
-                            onClick = onOpenDashboard,
+                            onClick = { showSoundPicker = true },
                             modifier = Modifier
                                 .height(bottomPillHeight)
                                 .semantics { contentDescription = "Open Focus Topics and Analytics" },
@@ -1292,6 +1185,38 @@ private fun ActiveFocusBoundaryCanvasPage(
                         }
                     }
                 }
+            }
+        }
+    }
+            // Ambient Sound Full Screen Picker
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showSoundPicker,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                    val listState = rememberTransformingLazyColumnState()
+                    TransformingLazyColumn(state = listState, contentPadding = PaddingValues(32.dp), modifier = Modifier.fillMaxSize()) {
+                        item { WearExpressiveHeader(title = "AMBIENT SOUND", badgeText = "SELECT") }
+                        items(AmbientSoundMode.entries.size) { idx ->
+                            val mode = AmbientSoundMode.entries[idx]
+                            Card(
+                                onClick = {
+                                    onSelectAmbientMode(mode)
+                                    showSoundPicker = false
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (!isSoundMuted && ambientMode == mode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer
+                                )
+                            ) {
+                                Text(mode.label, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.Bold, color = if (!isSoundMuted && ambientMode == mode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                            }
+                        }
+                        item {
+                            Button(onClick = { showSoundPicker = false }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                Text("CLOSE")
+                            }
+                        }
             }
         }
     }
@@ -1422,7 +1347,15 @@ private fun FocusDashboardTransformingPage(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
+            item{
+                WearActionButtonGroup(
+                    options = AmbientSoundMode.entries.map { it.label },
+                    selectedIndex = if (isSoundMuted) 0 else ambientMode.ordinal,
+                    onOptionSelected = { idx ->
+                        onSelectAmbientMode(AmbientSoundMode.entries[idx])
+                    }
+                )
+            }
 
 
             item {

@@ -33,14 +33,19 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import com.creativeblisslabs.wearproductivity.wear.sensors.RepDetectionEngine
 import com.creativeblisslabs.wearproductivity.wear.sensors.StepCounterEngine
+import com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository
+import com.creativeblisslabs.wearproductivity.wear.workout.ExerciseDef
+import com.creativeblisslabs.wearproductivity.wear.workout.WorkoutScienceEngine
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -259,6 +264,29 @@ private object WorkoutStudioPrefs {
     private const val KEY_HISTORY = "workout_session_history_v3"
     private const val KEY_TTS_MUTED = "workout_tts_muted"
     private const val KEY_MUSIC_MUTED = "workout_music_muted"
+    
+    // Active Multi-Week Program Tracker keys
+    private const val KEY_ACTIVE_TRAINING_PROGRAM_ID = "active_training_program_id"
+    private const val KEY_COMPLETED_TRAINING_DAYS = "completed_training_days_set"
+
+    fun loadActiveTrainingProgramId(context: Context): String? {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_ACTIVE_TRAINING_PROGRAM_ID, null)
+    }
+
+    fun saveActiveTrainingProgramId(context: Context, programId: String?) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_ACTIVE_TRAINING_PROGRAM_ID, programId).apply()
+    }
+
+    fun loadCompletedTrainingDays(context: Context): Set<String> {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getStringSet(KEY_COMPLETED_TRAINING_DAYS, emptySet()) ?: emptySet()
+    }
+
+    fun markTrainingDayCompleted(context: Context, programId: String, week: Int, day: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val current = prefs.getStringSet(KEY_COMPLETED_TRAINING_DAYS, emptySet()) ?: emptySet()
+        val next = current + "${programId}_W${week}_D${day}"
+        prefs.edit().putStringSet(KEY_COMPLETED_TRAINING_DAYS, next).apply()
+    }
 
     fun loadPrograms(context: Context, repoRuns: List<RunWorkout>): List<WorkoutProgramItem> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_PROGRAMS, null)
@@ -415,7 +443,9 @@ private object WorkoutStudioPrefs {
 fun WearWorkoutScreen(
     state: LifeState,
     repository: LifeRepository,
-    exerciseRepository: com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository
+    exerciseRepository: com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository,
+    mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null,
+    initialRoutineIds: List<String>? = null
 ) {
     val context = LocalContext.current.applicationContext
     val coroutineScope = rememberCoroutineScope()
@@ -428,41 +458,43 @@ fun WearWorkoutScreen(
     val hardwareReps by repDetectionEngine.repCount.collectAsState()
 
     // Custom Programs, PR Records & History State
-    val programs = remember {
+    val programs = remember(initialRoutineIds) {
         mutableStateListOf<WorkoutProgramItem>().apply {
-            val savedPrograms =
-                WorkoutStudioPrefs.loadPrograms(context, activeRuns)
-
-            val jsonPrograms = exerciseRepository.allWorkouts.map { plan ->
-                val exerciseNames = exerciseRepository.getWorkoutExercises(plan.id)
-                    .map { it.name }
-
-                WorkoutProgramItem(
-                    id = plan.id,
-                    name = plan.name,
-                    discipline = runCatching {
-                        WorkoutDiscipline.valueOf(plan.discipline.uppercase())
-                    }.getOrDefault(WorkoutDiscipline.GYM),
-                    muscleOrZone = plan.muscleOrZone,
-                    targetSets = plan.targetSets,
-                    targetReps = plan.targetReps,
-                    targetWeightKg = plan.targetWeightKg,
-                    restSeconds = plan.restSeconds,
-                    stepDurationSeconds = plan.stepDurationSeconds,
-                    steps = exerciseNames.ifEmpty {
-                        listOf(
-                            "${plan.targetSets} sets",
-                            "${plan.targetReps} reps",
-                            "${plan.stepDurationSeconds}s per interval"
+            if (!initialRoutineIds.isNullOrEmpty()) {
+                val customItems = initialRoutineIds.mapNotNull { id ->
+                    exerciseRepository.allExercises.find { it.id == id }?.let { ex ->
+                        WorkoutProgramItem(
+                            id = ex.id,
+                            name = ex.name,
+                            discipline = WorkoutDiscipline.GYM,
+                            muscleOrZone = ex.primaryMuscles.firstOrNull()?.replaceFirstChar { it.uppercase() } ?: "Custom",
+                            targetSets = 4,
+                            targetReps = 10,
+                            targetWeightKg = 50.0,
+                            restSeconds = 60,
+                            stepDurationSeconds = 60,
+                            steps = ex.instructions.ifEmpty { listOf("Working Set 1", "Working Set 2", "Working Set 3") }
                         )
                     }
-                )
+                }
+                if (customItems.isNotEmpty()) {
+                    addAll(customItems)
+                }
             }
-
-            // Saved/custom entries take priority if IDs overlap.
-            addAll((savedPrograms + jsonPrograms).distinctBy { it.id })
+            if (isEmpty()) {
+                val savedPrograms = WorkoutStudioPrefs.loadPrograms(context, activeRuns)
+                val jsonPrograms = exerciseRepository.allWorkouts.map { plan ->
+                    plan.toWorkoutProgramItem()
+                }
+                addAll((savedPrograms + jsonPrograms).distinctBy { it.id })
+            }
         }
     }
+        var activeTrainingWeek by remember { mutableStateOf<Int?>(null) }
+    var activeTrainingDay by remember { mutableStateOf<Int?>(null) }
+    var activeTrainingProgramId by remember { mutableStateOf(WorkoutStudioPrefs.loadActiveTrainingProgramId(context)) }
+    val completedTrainingDays by remember(activeTrainingProgramId) { mutableStateOf(WorkoutStudioPrefs.loadCompletedTrainingDays(context)) }
+    var showTrainingProgramsBrowser by remember { mutableStateOf(false) }
     var selectedProgramId by remember { mutableStateOf(WorkoutStudioPrefs.loadActiveId(context)) }
     val activeProgram = programs.firstOrNull { it.id == selectedProgramId }
         ?: programs.firstOrNull()
@@ -538,6 +570,7 @@ fun WearWorkoutScreen(
     var editingPrEntry by remember { mutableStateOf<PersonalRecordEntry?>(null) }
 
     var feedbackOverlay by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var completedWorkoutSummary by remember { mutableStateOf<WorkoutHistoryRecord?>(null) }
 
     // Live 1-Second Workout & Rest Break Ticker
     LaunchedEffect(isRunning, isRestingBreak, restRemainingSeconds, customStepDurationSeconds) {
@@ -782,6 +815,12 @@ fun WearWorkoutScreen(
         )
         workoutHistory.add(0, WorkoutSessionLogRecord(newRecord))
         WorkoutStudioPrefs.saveHistory(context, workoutHistory.map { it.record })
+        completedWorkoutSummary = newRecord
+
+        if (activeTrainingProgramId != null && activeTrainingWeek != null && activeTrainingDay != null) {
+            WorkoutStudioPrefs.markTrainingDayCompleted(context, activeTrainingProgramId!!, activeTrainingWeek!!, activeTrainingDay!!)
+        }
+
 
         coroutineScope.launch {
             if (activeProgram.discipline == WorkoutDiscipline.RUNNING) {
@@ -979,6 +1018,7 @@ fun WearWorkoutScreen(
                         primaryProgress = primaryRingProgress,
                         currentPrEntry = currentPrEntry,
                         isTtsMuted = isTtsMuted,
+                        exerciseRepository = exerciseRepository,
                         onCycleDisciplineOrProgram = {
                             val idx = programs.indexOfFirst { it.id == activeProgram.id }.coerceAtLeast(0)
                             selectProgram(programs[(idx + 1) % programs.size])
@@ -1113,6 +1153,25 @@ fun WearWorkoutScreen(
                     // =========================================================================
                     2 -> WorkoutProgramsAndEditorPage(
                         spec = adaptiveSpec,
+                        trainingPrograms = exerciseRepository.allTrainingPrograms,
+                        activeTrainingProgramId = activeTrainingProgramId,
+                        completedTrainingDays = completedTrainingDays,
+                        showTrainingProgramsBrowser = showTrainingProgramsBrowser,
+                        onJoinTrainingProgram = {
+                            activeTrainingProgramId = it
+                            WorkoutStudioPrefs.saveActiveTrainingProgramId(context, it)
+                            showTrainingProgramsBrowser = false
+                            haptic.click()
+                        },
+                        onQuitTrainingProgram = {
+                            activeTrainingProgramId = null
+                            WorkoutStudioPrefs.saveActiveTrainingProgramId(context, null)
+                            haptic.click()
+                        },
+                        onToggleTrainingBrowser = {
+                            showTrainingProgramsBrowser = !showTrainingProgramsBrowser
+                            haptic.click()
+                        },
                         programs = programs,
                         activeProgram = activeProgram,
                         selectedDiscipline = selectedDisciplineFilter,
@@ -1126,12 +1185,16 @@ fun WearWorkoutScreen(
                             selectedDisciplineFilter = it
                         },
                         onSelectProgram = ::selectProgram,
-                        onStartProgramNow = { prog ->
+                        onStartProgramNow = { prog, week, day ->
                             selectProgram(prog)
                             hasStarted = true
                             isRunning = true
                             isRestingBreak = false
                             elapsedWorkoutSeconds = 0
+                            
+                            activeTrainingWeek = week
+                            activeTrainingDay = day
+                            
                             audioCoach.announce("Starting ${prog.name}.", isTtsMuted, 880.0)
                             coroutineScope.launch { pagerState.animateScrollToPage(0) }
                         },
@@ -1298,6 +1361,68 @@ fun WearWorkoutScreen(
                     onDismiss = { feedbackOverlay = null }
                 )
             }
+
+            // Post-Workout Summary Celebration Card (Hevy / Strong Style)
+            completedWorkoutSummary?.let { record ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.95f))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "${record.title} 🦾",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        if (record.isNewPr) {
+                            Card(
+                                onClick = {},
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFD177))
+                            ) {
+                                Text(
+                                    text = "🏆 NEW PR!",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Time", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Text(formatDurationClock(record.durationSeconds), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Volume", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Text("${record.totalVolumeOrDist.toInt()}kg", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Sets", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Text("${record.setsCompleted}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = { completedWorkoutSummary = null },
+                            modifier = Modifier.fillMaxWidth().height(36.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        ) {
+                            Text("DONE", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -1324,6 +1449,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
     primaryProgress: Float,
     currentPrEntry: PersonalRecordEntry?,
     isTtsMuted: Boolean,
+    exerciseRepository: ExerciseRepository,
     onCycleDisciplineOrProgram: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onPreviousOrRestart: () -> Unit,
@@ -1333,6 +1459,34 @@ private fun ActiveWorkoutBoundaryCanvasPage(
     onStopAndSave: () -> Unit,
     onOpenControlsPage: () -> Unit
 ) {
+    val context = LocalContext.current
+    var showInstructions by remember { mutableStateOf(false) }
+
+    val exerciseDef = remember(activeProgram.id, activeProgram.name, exerciseRepository) {
+        exerciseRepository.allExercises.find { 
+            it.id.equals(activeProgram.id, ignoreCase = true) || 
+            it.name.equals(activeProgram.name, ignoreCase = true) 
+        }
+    }
+
+    val imageFrames = remember(exerciseDef, exerciseRepository) {
+        if (exerciseDef != null) {
+            val animFrames = exerciseRepository.getExerciseAnimationFrames(exerciseDef)
+            if (animFrames != null) {
+                listOf(animFrames.first, animFrames.second).filter(String::isNotBlank)
+            } else {
+                listOfNotNull(exerciseRepository.getExerciseImagePath(exerciseDef))
+            }
+        } else emptyList()
+    }
+
+    var currentImageIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(exerciseDef, imageFrames) {
+        while (imageFrames.size > 1) {
+            delay(1_100L)
+            currentImageIndex = (currentImageIndex + 1) % imageFrames.size
+        }
+    }
     val animatedProgress by animateFloatAsState(
         targetValue = primaryProgress.coerceIn(0f, 1f),
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -1370,7 +1524,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                 .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            // 1. FULL-SCREEN RADIAL AMBIENT CONTAINER INSIDE BOUNDARY RING
+                        // 1. FULL-SCREEN EXERCISE IMAGE (with fallback to ambient icon)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1387,12 +1541,27 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (isRestingBreak) Icons.Rounded.Timer else activeProgram.discipline.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(spec.screenWidth * 0.54f),
-                    tint = primaryAccent.copy(alpha = 0.07f)
-                )
+                if (imageFrames.isNotEmpty()) {
+                    val currentImage = imageFrames.getOrNull(currentImageIndex)
+                    if (currentImage != null) {
+                        coil.compose.AsyncImage(
+                            model = coil.request.ImageRequest.Builder(context)
+                                .data("file:///android_asset/$currentImage")
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "${activeProgram.name} demonstration",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                } else {
+                    Icon(
+                        imageVector = if (isRestingBreak) Icons.Rounded.Timer else activeProgram.discipline.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(spec.screenWidth * 0.54f),
+                        tint = primaryAccent.copy(alpha = 0.07f)
+                    )
+                }
             }
 
             // 2. FULL-SCREEN BOUNDARY CIRCULAR PROGRESS CONTAINER (OUTER + INNER SET RING)
@@ -1497,9 +1666,27 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                         modifier = Modifier.clickable(onClick = onOpenControlsPage)
                     )
 
+                    val scientificMetricText = when (activeProgram.discipline) {
+                        WorkoutDiscipline.GYM -> {
+                            val est1RM = WorkoutScienceEngine.calculateEstimated1RM(currentWeightOrDist, currentRepOrLapCount)
+                            "Est 1RM: ${est1RM.toInt()}kg · Vol: ${(currentWeightOrDist * currentRepOrLapCount).toInt()}kg"
+                        }
+                        WorkoutDiscipline.RUNNING -> {
+                            val pace = WorkoutScienceEngine.calculatePace(currentWeightOrDist.coerceAtLeast(0.1), elapsedWorkoutSeconds)
+                            "Pace: $pace · HR ${displayedHeartRate}bpm"
+                        }
+                        WorkoutDiscipline.SWIMMING -> {
+                            val swolf = WorkoutScienceEngine.calculateSwolf(currentRepOrLapCount, elapsedWorkoutSeconds.coerceAtLeast(10))
+                            "SWOLF: $swolf · Laps ${currentRepOrLapCount}"
+                        }
+                        WorkoutDiscipline.CALISTHENICS -> {
+                            "Power: ${(currentRepOrLapCount * 1.5).toInt()}W · Reps $currentRepOrLapCount"
+                        }
+                    }
+
                     val prSubText = currentPrEntry?.let {
-                        "PR ${it.currentValue.toInt()}${it.unit} (Prev ${it.previousBest.toInt()}${it.unit})"
-                    } ?: "${displayedHeartRate} BPM"
+                        "PR ${it.currentValue.toInt()}${it.unit} · $scientificMetricText"
+                    } ?: "$scientificMetricText · ${displayedHeartRate} BPM"
 
                     Text(
                         text = if (isRestingBreak) {
@@ -1514,103 +1701,14 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                     )
                 }
 
-                // Center Transport Row: Prev (Step/Set) | Center Play/Pause + Wavy Ring | Next (Work <-> Rest Break)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Button: Previous Set/Interval or Restart
-                    Button(
-                        onClick = onPreviousOrRestart,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics { contentDescription = "Previous Set or Restart Interval" },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipPrevious,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-
-                    // Center Play / Pause Button with Expressive Wavy Scallop Ring
-                    Box(
-                        modifier = Modifier.size(centerButtonSize + 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawWorkoutWavyRing(
-                                progress = animatedProgress,
-                                phase = if (isRunning) wavePhase else 0f,
-                                trackColor = primaryAccent.copy(alpha = 0.28f),
-                                activeColor = primaryAccent,
-                                strokeWidthPx = 3.5.dp.toPx(),
-                                waveAmplitudePx = if (isRunning) 2.dp.toPx() else 1.dp.toPx(),
-                                lobes = 12
-                            )
-                        }
-
-                        Button(
-                            onClick = onTogglePlayPause,
-                            modifier = Modifier
-                                .size(centerButtonSize)
-                                .semantics {
-                                    contentDescription = when {
-                                        !hasStarted -> "Start Workout"
-                                        isRunning -> "Pause Workout"
-                                        else -> "Resume Workout"
-                                    }
-                                },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = if (isRunning) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Right Button: Next (Log Set & Enter Rest Break OR Skip Rest to Next Set)
-                    Button(
-                        onClick = onNextWorkOrRestSwitch,
-                        modifier = Modifier
-                            .size(width = sideButtonWidth, height = sideButtonHeight)
-                            .semantics {
-                                contentDescription = if (isRestingBreak) "Skip Rest to Next Set" else "Log Set and Start Rest"
-                            },
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                }
+                // Universal PlayerControlBar
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isRunning,
+                    progress = animatedProgress,
+                    onTogglePlay = onTogglePlayPause,
+                    onPrevious = onPreviousOrRestart,
+                    onNext = onNextWorkOrRestSwitch
+                )
 
                 // Bottom Slot: TTS Voice Coach Mute Toggle | +Rep / +15s Rest | Stop & Save or Studio Button
                 Row(
@@ -1620,7 +1718,29 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // TTS Coach Mute / Unmute Pill
+                                        // Instruction Overlay / Info Button
+                    Button(
+                        onClick = { showInstructions = !showInstructions },
+                        modifier = Modifier
+                            .height(bottomPillHeight)
+                            .semantics { contentDescription = "Show Instructions" },
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Info, null, modifier = Modifier.size(16.dp))
+                            Text("INFO", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+// TTS Coach Mute / Unmute Pill
                     Button(
                         onClick = onToggleTtsMute,
                         modifier = Modifier
@@ -1830,6 +1950,56 @@ private fun WorkoutStepsAndLiveControlsPage(
                     badgeText = "SET $currentSetNumber/$targetSetsCount"
                 )
             }
+
+            // PROFESSIONAL SET-BY-SET LOGGING TABLE (Hevy / Strong Style - Adapted for all Disciplines)
+            item {
+                Card(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val metricHeader = when (activeProgram.discipline) {
+                            WorkoutDiscipline.GYM -> "KG × REPS"
+                            WorkoutDiscipline.RUNNING -> "KM · PACE"
+                            WorkoutDiscipline.SWIMMING -> "LAPS · TIME"
+                            WorkoutDiscipline.CALISTHENICS -> "HOLD · REPS"
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("SET", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text("DISCIPLINE", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text(metricHeader, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text("✓", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                        for (s in 1..targetSetsCount) {
+                            val isDone = s < currentSetNumber
+                            val isActive = s == currentSetNumber && isRunning
+                            val cellText = when (activeProgram.discipline) {
+                                WorkoutDiscipline.GYM -> "${currentWeightOrDist.toInt()}kg × $currentRepOrLapCount"
+                                WorkoutDiscipline.RUNNING -> "${"%.1f".format(Locale.ROOT, currentWeightOrDist)} km"
+                                WorkoutDiscipline.SWIMMING -> "${currentRepOrLapCount} Laps"
+                                WorkoutDiscipline.CALISTHENICS -> "$currentRepOrLapCount Reps"
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
+                                    .padding(vertical = 4.dp, horizontal = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(if (s == 1 && activeProgram.discipline == WorkoutDiscipline.GYM) "W" else "${s}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = if (s == 1) Color(0xFFFFD177) else MaterialTheme.colorScheme.onSurface)
+                                Text(activeProgram.discipline.shortLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(cellText, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                Icon(
+                                    imageVector = if (isDone) Icons.Default.Check else Icons.Rounded.RadioButtonUnchecked,
+                                    contentDescription = null,
+                                    tint = if (isDone) Color(0xFF79E2B0) else Color.Gray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // 4. WORKOUT INTERVALS & STEPS CHECKLIST
             item {
                 CatalogM3ListHeaderSample(title = "WORKOUT STEPS (${activeProgram.steps.size})")
@@ -1923,7 +2093,9 @@ private fun WorkoutStepsAndLiveControlsPage(
 
 
 
-        }
+        
+
+}
     }
 }
 
@@ -1933,6 +2105,13 @@ private fun WorkoutStepsAndLiveControlsPage(
 @Composable
 private fun WorkoutProgramsAndEditorPage(
     spec: WearAdaptiveSpec,
+    trainingPrograms: List<com.creativeblisslabs.wearproductivity.wear.workout.TrainingProgramDef>,
+    activeTrainingProgramId: String?,
+    completedTrainingDays: Set<String>,
+    showTrainingProgramsBrowser: Boolean,
+    onJoinTrainingProgram: (String) -> Unit,
+    onQuitTrainingProgram: () -> Unit,
+    onToggleTrainingBrowser: () -> Unit,
     programs: List<WorkoutProgramItem>,
     activeProgram: WorkoutProgramItem,
     selectedDiscipline: WorkoutDiscipline,
@@ -1943,7 +2122,7 @@ private fun WorkoutProgramsAndEditorPage(
     draftWeightAndZone: String,
     onSelectDiscipline: (WorkoutDiscipline) -> Unit,
     onSelectProgram: (WorkoutProgramItem) -> Unit,
-    onStartProgramNow: (WorkoutProgramItem) -> Unit,
+    onStartProgramNow: (WorkoutProgramItem, week: Int?, day: Int?) -> Unit,
     onOpenNewProgramEditor: () -> Unit,
     onOpenEditProgramEditor: (WorkoutProgramItem) -> Unit,
     onSaveProgram: (String, String, String) -> Unit,
@@ -2036,7 +2215,7 @@ private fun WorkoutProgramsAndEditorPage(
                     program = prog,
                     isSelected = isSelected,
                     onSelect = { onSelectProgram(prog) },
-                    onStartNow = { onStartProgramNow(prog) },
+                    onStartNow = { onStartProgramNow(prog, null, null) },
                     onEdit = { onOpenEditProgramEditor(prog) }
                 )
             }
@@ -2069,7 +2248,9 @@ private fun WorkoutProgramsAndEditorPage(
                     onClick = onOpenAnalyticsPage
                 )
             }
-        }
+        
+
+}
     }
 }
 
@@ -2193,12 +2374,7 @@ private fun WorkoutAnalyticsAndPrPage(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item {
-                WearExpressiveHeader(
-                    title = "PR LOG",
-                    badgeText = "$totalSessions  · ${totalMinutes}M"
-                )
-            }
+
 
 
             item {
@@ -2432,7 +2608,22 @@ private fun WorkoutAnalyticsAndPrPage(
                     }
                 }
             }
-        }
+        
+
+
+            item {
+                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
+                val progress = mediaViewModel.progress.collectAsState().value
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isPlaying,
+                    progress = progress,
+                    onTogglePlay = { mediaViewModel.togglePlay() },
+                    onPrevious = { mediaViewModel.skipToPrevious() },
+                    onNext = { mediaViewModel.skipToNext() }
+                )
+            }
+}
     }
 }
 

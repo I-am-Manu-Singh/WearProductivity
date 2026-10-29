@@ -23,11 +23,15 @@ class RepDetectionEngine(context: Context) : SensorEventListener {
     private var filteredX = 0f
     private var filteredY = 0f
     private var filteredZ = 0f
-    private val alpha = 0.8f // Smoothing factor
+    private val alpha = 0.85f // Increased smoothing factor for cleaner motion tracking
 
-    // Kinematic Thresholds
-    private val repMagnitudeThreshold = 3.5f // m/s^2
-    private val repDebounceMillis = 1200L // Minimum time between reps
+    // Kinematic Phase State Machine
+    private enum class Phase { REST, ECCENTRIC, CONCENTRIC }
+    private var currentPhase = Phase.REST
+
+    private val peakThreshold = 3.2f
+    private val valleyThreshold = 1.0f
+    private val repDebounceMillis = 700L // Refined debounce for faster cadence support
 
     fun startTracking() {
         if (!isTracking && linearAccelSensor != null) {
@@ -46,29 +50,43 @@ class RepDetectionEngine(context: Context) : SensorEventListener {
 
     fun reset() {
         _repCount.value = 0
+        currentPhase = Phase.REST
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null || event.sensor.type != Sensor.TYPE_LINEAR_ACCELERATION) return
 
-        // Apply Low-Pass Filter to remove high-frequency jitter
         filteredX = alpha * filteredX + (1 - alpha) * event.values[0]
         filteredY = alpha * filteredY + (1 - alpha) * event.values[1]
         filteredZ = alpha * filteredZ + (1 - alpha) * event.values[2]
 
-        // Calculate 3D Vector Magnitude
         val magnitude = sqrt((filteredX * filteredX) + (filteredY * filteredY) + (filteredZ * filteredZ))
-
         val now = System.currentTimeMillis()
-        
-        // Peak Detection Logic
-        if (magnitude > repMagnitudeThreshold && (now - lastPeakTime) > repDebounceMillis) {
-            lastPeakTime = now
-            _repCount.value += 1
+
+        // Dual-Threshold State Machine for Rep Counting
+        when (currentPhase) {
+            Phase.REST -> {
+                if (magnitude > peakThreshold && (now - lastPeakTime) > repDebounceMillis) {
+                    currentPhase = Phase.CONCENTRIC
+                }
+            }
+            Phase.CONCENTRIC -> {
+                if (magnitude < valleyThreshold) {
+                    currentPhase = Phase.ECCENTRIC
+                }
+            }
+            Phase.ECCENTRIC -> {
+                if (magnitude > peakThreshold) {
+                    // Rep completed successfully!
+                    lastPeakTime = now
+                    _repCount.value += 1
+                    currentPhase = Phase.CONCENTRIC
+                } else if (magnitude < 0.5f) {
+                    currentPhase = Phase.REST
+                }
+            }
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Not required for linear acceleration
-    }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }

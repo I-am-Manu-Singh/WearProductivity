@@ -1,24 +1,105 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ========================================================== -->
+    <!-- HARDWARE FEATURES                                          -->
+    <!-- ========================================================== -->
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-feature android:name="android.hardware.sensor.heartrate" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.barometer" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+
+
+    <!-- ========================================================== -->
+    <!-- CORE NOTIFICATIONS, SYSTEM & ALARMS                        -->
+    <!-- ========================================================== -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+
+    <!-- ========================================================== -->
+    <!-- NETWORK & CONNECTIVITY                                     -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.NFC" />
+
+
+    <!-- ========================================================== -->
+    <!-- LOCATION PERMISSIONS                                       -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+
+    <!-- ========================================================== -->
+    <!-- SENSORS & ACTIVITY PERMISSIONS                             -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+
+
+    <!-- ========================================================== -->
+    <!-- MODERN HEALTH SERVICES / HEALTH PLATFORM PERMISSIONS       -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_SPEED" />
+    <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED" />
+    <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED" />
+    <uses-permission android:name="android.permission.health.READ_SKIN_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_SWEAT" />
+
+
+    <!-- ========================================================== -->
+    <!-- COMPANION DEVICE & BACKGROUND SYNC                         -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND" />
+
+
+    <!-- ========================================================== -->
+    <!-- AUDIO & MEDIA CAPTURE                                      -->
+    <!-- ========================================================== -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+
+    <!-- ========================================================== -->
+    <!-- FOREGROUND SERVICES                                        -->
+    <!-- ========================================================== -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
-    <!-- Optional: Highly recommended to monitor network changes -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <!-- ========================================================== -->
+    <!-- STORAGE PERMISSIONS                                        -->
+    <!-- ========================================================== -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
@@ -26,19 +107,23 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
+
     <application
         android:name=".LifeOSWearApplication"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.LifeOSWear">
+
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
+
         <receiver
             android:name=".platform.WearReminderReceiver"
             android:exported="false" />
+
         <activity
             android:name=".WearMainActivity"
             android:exported="true">
@@ -49,7 +134,19 @@
         </activity>
 
         <service
-            android:name=".tiles.LifeTileService"
+            android:name=".complications.LifeOSComplicationService"
+            android:exported="true"
+            android:permission="androidx.wear.watchface.complications.datasource.permission.BIND_COMPLICATION_DATA_SOURCE">
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.complications.datasource.ACTION_COMPLICATION_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.watchface.complications.datasource.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,LONG_TEXT" />
+        </service>
+
+        <service
+            android:name=".tiles.LifeOSTileService"
             android:exported="true"
             android:label="LifeOS Summary"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
@@ -147,7 +244,7 @@
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/life_state" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/audio_transfer" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/audio_transfer|audio_transfer/" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/file_transfer" />
             </intent-filter>
             <intent-filter>
