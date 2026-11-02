@@ -4,6 +4,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode as AnimRepeatMode
 import androidx.compose.animation.core.Spring
@@ -65,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
+import androidx.datastore.preferences.protobuf.LazyStringArrayList.emptyList
 import androidx.wear.compose.foundation.CurvedLayout
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
@@ -108,7 +111,12 @@ enum class HabitCompletionMode(val label: String) {
     TIMED_SESSION("Timer"),
     MOOD_REFLECTION("Mood & Log")
 }
-
+data class HabitTimerConfig(
+    val durationSeconds: Int,
+    val remainingSeconds: Int,
+    val startedAtEpochMs: Long,
+    val isRunning: Boolean
+)
 enum class TimetableSlotStatus(val label: String, val badge: String, val color: Color) {
     PENDING("Pending", "TODO", Color(0xFF8EAEFF)),
     DOING("Doing Now", "LIVE", Color(0xFF79E2B0)),
@@ -125,7 +133,21 @@ private enum class ActiveControlModal {
     STOP_AND_RESCHEDULE,
     MOOD_SATISFACTION_LOGGER
 }
-
+data class HabitCompletionRecord(
+    val id: String,
+    val habitId: String,
+    val dateIso: String,
+    val completedValue: Double,
+    val targetValue: Double,
+    val completedAtEpochMs: Long
+)
+data class HabitReflectionRecord(
+    val id: String,
+    val habitId: String,
+    val mood: String,
+    val satisfactionStars: Int,
+    val createdAtEpochMs: Long
+)
 data class HabitExtendedMeta(
     val habitId: String,
     val tag: String = "Core",
@@ -139,7 +161,7 @@ data class HabitExtendedMeta(
     val stoppedForDateIso: String = "",
     val lastMood: String = "Focused",
     val satisfactionStars: Int = 5,
-    val historyBitmask28: Int = 0b1011101101110111011011101111
+    val historyBitmask28: Int = 0
 )
 
 data class TimetableSlotMeta(
@@ -154,9 +176,12 @@ data class TimetableSlotMeta(
     val dateIso: String = LocalDate.now().toString(),
     val categoryTag: String = "Deep Work",
     val orderIndex: Int = 0,
-    val snoozedMinutes: Int = 0
-)
+    val snoozedMinutes: Int = 0,
 
+    // New persisted timer state
+    val timerStartedAtEpochMs: Long = 0L,
+    val snoozedUntilEpochMs: Long = 0L
+)
 // =============================================================================
 // PALETTE, ICON & NOTIFICATION HELPERS
 // =============================================================================
@@ -173,7 +198,25 @@ private val habitIconKeys = listOf("flame", "water", "run", "book", "code", "med
 
 private fun resolveHabitColor(key: String): Color =
     habitColorMap[key.lowercase(Locale.ROOT)] ?: Color(0xFF79E2B0)
+private fun TimetableSlotMeta.currentElapsedSeconds(
+    now: Long = System.currentTimeMillis()
+): Int {
+    val elapsed = if (
+        isTimerRunning &&
+        timerStartedAtEpochMs > 0L
+    ) {
+        elapsedSeconds +
+                ((now - timerStartedAtEpochMs).coerceAtLeast(0L) / 1000L)
+                    .toInt()
+    } else {
+        elapsedSeconds
+    }
 
+    return elapsed.coerceIn(
+        0,
+        estimatedMinutes.coerceAtLeast(1) * 60
+    )
+}
 private fun resolveHabitIcon(key: String, habitName: String = ""): ImageVector = when {
     key == "water" || habitName.contains("water", true) -> Icons.Rounded.WaterDrop
     key == "run" || habitName.contains("walk", true) || habitName.contains("run", true) -> Icons.Rounded.DirectionsRun
@@ -221,36 +264,150 @@ private object HabitsTimetableStudioPrefs {
     private const val KEY_SAME_EVERY_DAY = "timetable_same_every_day"
 
     fun loadHabitMetaMap(context: Context): Map<String, HabitExtendedMeta> {
-        val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_HABIT_META, null)
+        val prefs = context.getSharedPreferences(
+            PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+
+        val raw = prefs.getString(KEY_HABIT_META, null)
             ?: return emptyMap()
-        return raw.split(";;").mapNotNull { entry ->
+
+        // JSON format
+        if (raw.trimStart().startsWith("[")) {
+            return runCatching {
+                val array = JSONArray(raw)
+
+                buildMap {
+                    for (i in 0 until array.length()) {
+                        val item = array.optJSONObject(i) ?: continue
+
+                        val id = item.optString("habitId")
+                        if (id.isBlank()) continue
+
+                        val meta = HabitExtendedMeta(
+                            habitId = id,
+                            tag = item.optString("tag", "Core"),
+                            iconKey = item.optString("iconKey", "flame"),
+                            colorKey = item.optString("colorKey", "mint"),
+                            mode = runCatching {
+                                HabitCompletionMode.valueOf(
+                                    item.optString("mode")
+                                )
+                            }.getOrDefault(
+                                HabitCompletionMode.MULTI_TAP_AMOUNT
+                            ),
+                            stepIncrement = item.optDouble(
+                                "stepIncrement",
+                                1.0
+                            ).takeIf { it.isFinite() && it > 0.0 } ?: 1.0,
+                            reminderTime = item.optString(
+                                "reminderTime",
+                                "08:00"
+                            ),
+                            reminderEnabled = item.optBoolean(
+                                "reminderEnabled",
+                                true
+                            ),
+                            snoozedUntilEpochMs = item.optLong(
+                                "snoozedUntilEpochMs",
+                                0L
+                            ),
+                            stoppedForDateIso = item.optString(
+                                "stoppedForDateIso",
+                                ""
+                            ),
+                            lastMood = item.optString(
+                                "lastMood",
+                                "Focused"
+                            ),
+                            satisfactionStars = item.optInt(
+                                "satisfactionStars",
+                                5
+                            ).coerceIn(1, 5),
+                            historyBitmask28 = item.optInt(
+                                "historyBitmask28",
+                                0
+                            )
+                        )
+
+                        put(id, meta)
+                    }
+                }
+            }.getOrDefault(emptyMap())
+        }
+
+        // Legacy delimiter format migration
+        val migrated = raw.split(";;").mapNotNull { entry ->
             val p = entry.split("|")
-            if (p.size >= 12) {
-                val meta = HabitExtendedMeta(
-                    habitId = p[0],
+
+            if (p.size < 12 || p[0].isBlank()) {
+                null
+            } else {
+                val id = p[0]
+
+                id to HabitExtendedMeta(
+                    habitId = id,
                     tag = p[1],
                     iconKey = p[2],
                     colorKey = p[3],
-                    mode = runCatching { HabitCompletionMode.valueOf(p[4]) }.getOrDefault(HabitCompletionMode.MULTI_TAP_AMOUNT),
-                    stepIncrement = p[5].toDoubleOrNull() ?: 1.0,
+                    mode = runCatching {
+                        HabitCompletionMode.valueOf(p[4])
+                    }.getOrDefault(
+                        HabitCompletionMode.MULTI_TAP_AMOUNT
+                    ),
+                    stepIncrement = p[5].toDoubleOrNull()
+                        ?.takeIf { it.isFinite() && it > 0.0 }
+                        ?: 1.0,
                     reminderTime = p[6],
                     reminderEnabled = p[7].toBoolean(),
                     snoozedUntilEpochMs = p[8].toLongOrNull() ?: 0L,
                     stoppedForDateIso = p[9],
                     lastMood = p[10],
-                    satisfactionStars = p[11].toIntOrNull() ?: 5,
-                    historyBitmask28 = p.getOrNull(12)?.toIntOrNull() ?: 0b1011101101110111011011101111
+                    satisfactionStars = (
+                            p[11].toIntOrNull() ?: 5
+                            ).coerceIn(1, 5),
+                    historyBitmask28 = p.getOrNull(12)
+                        ?.toIntOrNull() ?: 0
                 )
-                meta.habitId to meta
-            } else null
+            }
         }.toMap()
+
+        // Migrate immediately after successful legacy parsing.
+        saveHabitMetaMap(context, migrated)
+
+        return migrated
     }
 
-    fun saveHabitMetaMap(context: Context, map: Map<String, HabitExtendedMeta>) {
-        val encoded = map.values.joinToString(";;") {
-            "${it.habitId}|${it.tag.replace("|", "")}|${it.iconKey}|${it.colorKey}|${it.mode.name}|${it.stepIncrement}|${it.reminderTime}|${it.reminderEnabled}|${it.snoozedUntilEpochMs}|${it.stoppedForDateIso}|${it.lastMood.replace("|", "")}|${it.satisfactionStars}|${it.historyBitmask28}"
+    fun saveHabitMetaMap(
+        context: Context,
+        map: Map<String, HabitExtendedMeta>
+    ) {
+        val json = JSONArray()
+
+        map.values.forEach { meta ->
+            json.put(
+                JSONObject().apply {
+                    put("habitId", meta.habitId)
+                    put("tag", meta.tag)
+                    put("iconKey", meta.iconKey)
+                    put("colorKey", meta.colorKey)
+                    put("mode", meta.mode.name)
+                    put("stepIncrement", meta.stepIncrement)
+                    put("reminderTime", meta.reminderTime)
+                    put("reminderEnabled", meta.reminderEnabled)
+                    put("snoozedUntilEpochMs", meta.snoozedUntilEpochMs)
+                    put("stoppedForDateIso", meta.stoppedForDateIso)
+                    put("lastMood", meta.lastMood)
+                    put("satisfactionStars", meta.satisfactionStars)
+                    put("historyBitmask28", meta.historyBitmask28)
+                }
+            )
         }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_HABIT_META, encoded).apply()
+
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_HABIT_META, json.toString())
+            .apply()
     }
 
     fun loadSameEveryDay(context: Context): Boolean =
@@ -262,10 +419,19 @@ private object HabitsTimetableStudioPrefs {
 
     fun loadTimetableSlots(context: Context, repoRoutines: List<RoutineTask>): List<TimetableSlotMeta> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_TIMETABLE_SLOTS, null)
-        if (!raw.isNullOrBlank()) {
+        if (raw != null) {
+            if (raw.isBlank()) return emptyList()
+
             val parsed = raw.split(";;").mapNotNull { entry ->
                 val p = entry.split("|")
                 if (p.size >= 11) {
+                    val estimatedMinutes = p[4].toIntOrNull()
+                        ?.takeIf { it in 1..480 }
+                        ?: 30
+
+                    val elapsedSeconds = p[5].toIntOrNull()
+                        ?.coerceIn(0, estimatedMinutes * 60)
+                        ?: 0
                     TimetableSlotMeta(
                         id = p[0],
                         title = p[1],
@@ -280,7 +446,9 @@ private object HabitsTimetableStudioPrefs {
                         orderIndex = p[9].toIntOrNull() ?: 0,
                         snoozedMinutes = p[10].toIntOrNull() ?: 0
                     )
-                } else null
+                } else {
+                    null
+                }
             }
             if (parsed.isNotEmpty()) return parsed.sortedBy { it.orderIndex }
         }
@@ -316,7 +484,26 @@ private object HabitsTimetableStudioPrefs {
         val encoded = list.joinToString(";;") {
             "${it.id}|${it.title.replace("|", "")}|${it.startTime}|${it.endTime}|${it.estimatedMinutes}|${it.elapsedSeconds}|${it.status.name}|${it.dateIso}|${it.categoryTag.replace("|", "")}|${it.orderIndex}|${it.snoozedMinutes}"
         }
+
+        JSONObject().apply {
+            put("id", slot.id)
+            put("title", slot.title)
+            put("startTime", slot.startTime)
+            put("endTime", slot.endTime)
+            put("estimatedMinutes", slot.estimatedMinutes)
+            put("elapsedSeconds", slot.elapsedSeconds)
+            put("isTimerRunning", slot.isTimerRunning)
+            put("timerStartedAtEpochMs", slot.timerStartedAtEpochMs)
+            put("status", slot.status.name)
+            put("dateIso", slot.dateIso)
+            put("categoryTag", slot.categoryTag)
+            put("orderIndex", slot.orderIndex)
+            put("snoozedUntilEpochMs", slot.snoozedUntilEpochMs)
+        }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_TIMETABLE_SLOTS, encoded).apply()
+    }
+    private fun isLocalTimetableSlot(id: String): Boolean {
+        return id.startsWith("local-tt-") || id.startsWith("tt-")
     }
 }
 
@@ -354,11 +541,16 @@ fun WearHabitsScreen(
             putAll(HabitsTimetableStudioPrefs.loadHabitMetaMap(context))
         }
     }
-
     fun metaFor(habit: Habit): HabitExtendedMeta {
-        return habitMetaMap.getOrPut(habit.stamp.id) {
-            val isWater = habit.unit.equals("ml", true) || habit.name.contains("water", true)
-            val isSteps = habit.unit.equals("steps", true) || habit.name.contains("walk", true)
+        return habitMetaMap[habit.stamp.id] ?: run {
+            val isWater =
+                habit.unit.equals("ml", true) ||
+                        habit.name.contains("water", true)
+
+            val isSteps =
+                habit.unit.equals("steps", true) ||
+                        habit.name.contains("walk", true)
+
             HabitExtendedMeta(
                 habitId = habit.stamp.id,
                 tag = if (isWater || isSteps) "Health" else "Growth",
@@ -370,14 +562,20 @@ fun WearHabitsScreen(
                 },
                 colorKey = habit.colorName.ifBlank { "mint" },
                 mode = when {
-                    habit.remainingSeconds > 0 -> HabitCompletionMode.TIMED_SESSION
-                    habit.targetValue > 1.0 -> HabitCompletionMode.MULTI_TAP_AMOUNT
-                    else -> HabitCompletionMode.SINGLE_TAP
+                    habit.remainingSeconds > 0 ->
+                        HabitCompletionMode.TIMED_SESSION
+
+                    habit.targetValue > 1.0 ->
+                        HabitCompletionMode.MULTI_TAP_AMOUNT
+
+                    else ->
+                        HabitCompletionMode.SINGLE_TAP
                 },
                 stepIncrement = when {
                     isWater -> 250.0
                     isSteps -> 1000.0
-                    habit.targetValue >= 10.0 -> (habit.targetValue / 4.0).coerceAtLeast(1.0)
+                    habit.targetValue >= 10.0 ->
+                        (habit.targetValue / 4.0).coerceAtLeast(1.0)
                     else -> 1.0
                 }
             )
@@ -448,22 +646,38 @@ fun WearHabitsScreen(
                 repository.tickHabitTimer(1)
             }
             if (activeSlotTimerIds.isNotEmpty()) {
+                val now = System.currentTimeMillis()
+
                 for (i in timetableSlots.indices) {
                     val slot = timetableSlots[i]
-                    if (slot.isTimerRunning) {
-                        val nextElapsed = slot.elapsedSeconds + 1
-                        val targetSecs = (slot.estimatedMinutes.coerceAtLeast(1) * 60)
-                        if (nextElapsed >= targetSecs) {
-                            timetableSlots[i] = slot.copy(
-                                elapsedSeconds = targetSecs,
-                                isTimerRunning = false,
-                                status = TimetableSlotStatus.DONE
-                            )
-                            HabitReminderNotifier.fireReminder(context, "Timetable Block Complete", slot.title)
-                            feedbackOverlay = "${slot.title} Complete!" to false
-                        } else {
-                            timetableSlots[i] = slot.copy(elapsedSeconds = nextElapsed)
-                        }
+
+                    if (!slot.isTimerRunning) continue
+
+                    val elapsed = slot.currentElapsedSeconds(now)
+                    val target = slot.estimatedMinutes.coerceAtLeast(1) * 60
+
+                    if (elapsed >= target) {
+                        timetableSlots[i] = slot.copy(
+                            elapsedSeconds = target,
+                            isTimerRunning = false,
+                            timerStartedAtEpochMs = 0L,
+                            status = TimetableSlotStatus.DONE
+                        )
+
+                        persistTimetable()
+
+                        HabitReminderNotifier.fireReminder(
+                            context,
+                            "Timetable Block Complete",
+                            slot.title
+                        )
+
+                        feedbackOverlay = "${slot.title} Complete!" to false
+                    } else {
+                        // Update the visible value, but don't persist every second.
+                        timetableSlots[i] = slot.copy(
+                            elapsedSeconds = elapsed
+                        )
                     }
                 }
             }
@@ -589,11 +803,31 @@ fun WearHabitsScreen(
             haptic.click()
             return
         }
-        val targetVal = targetInput.filter { it.isDigit() || it == '.' }.toDoubleOrNull()?.coerceAtLeast(1.0) ?: 1.0
+        val targetVal = targetInput.trim().toDoubleOrNull()
+
+        if (targetVal == null || !targetVal.isFinite() || targetVal !in 1.0..1_000_000.0) {
+            feedbackOverlay = "Target must be between 1 and 1000000" to true
+            haptic.click()
+            return
+        }
+
         val parts = unitStepInput.split("·", "/", ",")
         val unitStr = parts.getOrNull(0)?.trim()?.ifBlank { "times" } ?: "times"
-        val stepVal = parts.getOrNull(1)?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull()?.coerceAtLeast(1.0)
-            ?: (if (targetVal >= 100) (targetVal / 4.0) else 1.0)
+
+        val stepText = parts.getOrNull(1)?.trim()?.removePrefix("+")
+        val parsedStep = stepText?.takeIf { it.isNotBlank() }?.toDoubleOrNull()
+
+        if (stepText != null &&
+            (parsedStep == null || !parsedStep.isFinite() || parsedStep <= 0.0)
+        ) {
+            feedbackOverlay = "Enter a valid tap increment" to true
+            haptic.click()
+            return
+        }
+
+        val stepVal = parsedStep ?: (
+                if (targetVal >= 100.0) targetVal / 4.0 else 1.0
+                )
 
         val targetId = editingHabitId
         coroutineScope.launch {
@@ -648,7 +882,9 @@ fun WearHabitsScreen(
             }
         }
     }
-
+    fun isLocalTimetableSlot(id: String): Boolean {
+        return id.startsWith("local-tt-") || id.startsWith("tt-")
+    }
     fun saveTimetableSlotFromEditor(titleInput: String, timeRangeInput: String, catEstInput: String) {
         val cleanTitle = titleInput.trim().take(48)
         if (cleanTitle.isBlank()) {
@@ -656,15 +892,65 @@ fun WearHabitsScreen(
             haptic.click()
             return
         }
-        val times = timeRangeInput.split("-", "–", "to").map { it.trim() }
-        val startStr = times.getOrNull(0)?.ifBlank { "09:00" } ?: "09:00"
-        val endStr = times.getOrNull(1)?.ifBlank { "10:00" } ?: "10:00"
+        val times = timeRangeInput.trim().split(Regex("\\s*[-–]\\s*"))
 
-        val catParts = catEstInput.split("·", ",")
-        val catTag = catParts.getOrNull(0)?.trim()?.ifBlank { "Focus" } ?: "Focus"
-        val estMins = catParts.getOrNull(1)?.filter { it.isDigit() }?.toIntOrNull()?.coerceIn(5, 480)
-            ?: computeDurationMinutes(startStr, endStr)
+        if (times.size != 2) {
+            feedbackOverlay = "Use HH:mm-HH:mm Format" to true
+            haptic.click()
+            return
+        }
 
+        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+        val startTime = runCatching {
+            LocalTime.parse(times[0], timeFormatter)
+        }.getOrNull()
+
+        val endTime = runCatching {
+            LocalTime.parse(times[1], timeFormatter)
+        }.getOrNull()
+
+        if (startTime == null || endTime == null || !endTime.isAfter(startTime)) {
+            feedbackOverlay = "Invalid Time Range" to true
+            haptic.click()
+            return
+        }
+
+        val startStr = startTime.format(timeFormatter)
+        val endStr = endTime.format(timeFormatter)
+
+        val catParts = catEstInput.split("·", limit = 2)
+        val catTag = catParts.firstOrNull()?.trim()?.ifBlank { "Focus" } ?: "Focus"
+
+        val durationFromRange = java.time.Duration.between(
+            startTime,
+            endTime
+        ).toMinutes().toInt()
+
+        val estText = catParts.getOrNull(1)
+            ?.trim()
+            ?.removeSuffix("m")
+            ?.trim()
+
+        val parsedEstimate = estText
+            ?.takeIf { it.isNotBlank() }
+            ?.toIntOrNull()
+
+        if (estText != null &&
+            (parsedEstimate == null || parsedEstimate !in 5..480)
+        ) {
+            feedbackOverlay = "Estimate must be 5–480 minutes" to true
+            haptic.click()
+            return
+        }
+
+        val estMins = parsedEstimate ?: durationFromRange
+
+        if (estMins !in 5..480) {
+            feedbackOverlay = "Invalid Slot Duration" to true
+            haptic.click()
+            return
+        }
         val slotId = editingSlotId
         if (slotId != null) {
             val idx = timetableSlots.indexOfFirst { it.id == slotId }
@@ -677,11 +963,15 @@ fun WearHabitsScreen(
                     categoryTag = catTag
                 )
             }
-            coroutineScope.launch { repository.rescheduleRoutine(slotId, startStr, endStr) }
+            if (!isLocalTimetableSlot(slotId)) {
+                coroutineScope.launch {
+                    repository.rescheduleRoutine(slotId, startStr, endStr)
+                }
+            }
             feedbackOverlay = "Timetable Updated" to false
         } else {
             val newSlot = TimetableSlotMeta(
-                id = "tt-${System.currentTimeMillis()}",
+                id = "local-tt-${System.currentTimeMillis()}",
                 title = cleanTitle,
                 startTime = startStr,
                 endTime = endStr,
@@ -722,7 +1012,11 @@ fun WearHabitsScreen(
                 timetableSlots[i] = timetableSlots[i].copy(orderIndex = i)
             }
             persistTimetable()
-            coroutineScope.launch { repository.moveRoutine(slotId, moveUp) }
+            if (!isLocalTimetableSlot(slotId)) {
+                coroutineScope.launch {
+                    repository.moveRoutine(slotId, moveUp)
+                }
+            }
             feedbackOverlay = if (moveUp) {
                 "Moved Up" to false
             } else {
@@ -733,12 +1027,29 @@ fun WearHabitsScreen(
 
     fun pushPendingSlotsToNextDayBacklog() {
         haptic.click()
+
+        val eligibleIds = visibleTimetableSlots
+            .filter {
+                it.status == TimetableSlotStatus.PENDING ||
+                        it.status == TimetableSlotStatus.DOING ||
+                        it.status == TimetableSlotStatus.BACKLOG
+            }
+            .map { it.id }
+            .toSet()
+
+        if (eligibleIds.isEmpty()) {
+            feedbackOverlay = "No Pending Items" to true
+            return
+        }
+
         val tomorrowIso = selectedDate.plusDays(1).toString()
         var movedCount = 0
+
         for (i in timetableSlots.indices) {
-            val s = timetableSlots[i]
-            if (s.status == TimetableSlotStatus.PENDING || s.status == TimetableSlotStatus.DOING) {
-                timetableSlots[i] = s.copy(
+            val slot = timetableSlots[i]
+
+            if (slot.id in eligibleIds) {
+                timetableSlots[i] = slot.copy(
                     status = TimetableSlotStatus.BACKLOG,
                     dateIso = tomorrowIso,
                     isTimerRunning = false
@@ -746,10 +1057,18 @@ fun WearHabitsScreen(
                 movedCount++
             }
         }
-        persistTimetable()
-        feedbackOverlay = if (movedCount > 0) "Moved $movedCount to Tomorrow Backlog" to false else "No Pending Items" to true
-    }
 
+        // A shared daily template cannot also represent date-specific backlog.
+        if (sameTimetableEveryDay) {
+            sameTimetableEveryDay = false
+            HabitsTimetableStudioPrefs.saveSameEveryDay(context, false)
+        }
+
+        persistTimetable()
+
+        feedbackOverlay =
+            "Moved $movedCount Items to Tomorrow" to false
+    }
     // 4-Page Vertical Pager:
     // Page 0 = Full-Screen Active / Upcoming Habit & Timetable Boundary Canvas (with Stop, Snooze, Backlog)
     // Page 1 = Staggered Stacked Habit Cards, Multi-Tap Liquid Fill List & GitHub Streaks
@@ -769,7 +1088,7 @@ fun WearHabitsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             VerticalPager(
                 state = pagerState,
@@ -824,14 +1143,19 @@ fun WearHabitsScreen(
                         },
                         onOpenSnoozeModal = {
                             haptic.click()
+
+                            // Page 0 displays the habit first, so target only that item.
                             modalTargetHabitId = spotlightHabit?.stamp?.id
-                            modalTargetSlotId = spotlightSlot?.id
+                            modalTargetSlotId = if (spotlightHabit == null) spotlightSlot?.id else null
+
                             activeModal = ActiveControlModal.SNOOZE_PICKER
                         },
                         onOpenStopAndRescheduleModal = {
                             haptic.click()
+
                             modalTargetHabitId = spotlightHabit?.stamp?.id
-                            modalTargetSlotId = spotlightSlot?.id
+                            modalTargetSlotId = if (spotlightHabit == null) spotlightSlot?.id else null
+
                             activeModal = ActiveControlModal.STOP_AND_RESCHEDULE
                         },
                         onOpenMoodLogger = {
@@ -998,7 +1322,11 @@ fun WearHabitsScreen(
                             haptic.click()
                             timetableSlots.removeAll { it.id == slotId }
                             persistTimetable()
-                            coroutineScope.launch { repository.deleteRoutine(slotId) }
+                            if (!isLocalTimetableSlot(slotId)) {
+                                coroutineScope.launch {
+                                    repository.deleteRoutine(slotId)
+                                }
+                            }
                             showTimetableEditor = false
                             editingSlotId = null
                             feedbackOverlay = "Slot Deleted" to false
@@ -1021,23 +1349,79 @@ fun WearHabitsScreen(
                                     isTimerRunning = (nextStatus == TimetableSlotStatus.DOING)
                                 )
                                 persistTimetable()
-                                if (nextStatus == TimetableSlotStatus.DONE) {
-                                    coroutineScope.launch { repository.toggleRoutine(slot.id) }
+                                if (nextStatus == TimetableSlotStatus.DONE &&
+                                    !isLocalTimetableSlot(slot.id)
+                                ) {
+                                    coroutineScope.launch {
+                                        repository.toggleRoutine(slot.id)
+                                    }
                                 }
                                 feedbackOverlay = "${slot.title.take(12)}: ${nextStatus.label}" to false
                             }
                         },
                         onToggleSlotTimer = { slot ->
                             haptic.click()
-                            val idx = timetableSlots.indexOfFirst { it.id == slot.id }
+
+                            val idx = timetableSlots.indexOfFirst {
+                                it.id == slot.id
+                            }
+
                             if (idx >= 0) {
-                                val nextRunning = !slot.isTimerRunning
-                                timetableSlots[idx] = slot.copy(
-                                    isTimerRunning = nextRunning,
-                                    status = if (nextRunning) TimetableSlotStatus.DOING else slot.status
+                                val current = timetableSlots[idx]
+
+                                val blocked = current.status in setOf(
+                                    TimetableSlotStatus.DONE,
+                                    TimetableSlotStatus.SKIPPED,
+                                    TimetableSlotStatus.NOT_DOING,
+                                    TimetableSlotStatus.DELEGATED
                                 )
+
+                                if (!current.isTimerRunning && blocked) {
+                                    feedbackOverlay = "This Slot Cannot Be Started" to true
+                                    return@TimetableTabularSchedulePage
+                                }
+
+                                val now = System.currentTimeMillis()
+
+                                val updated = if (current.isTimerRunning) {
+                                    // Pause: commit elapsed time.
+                                    current.copy(
+                                        elapsedSeconds = current.currentElapsedSeconds(now),
+                                        isTimerRunning = false,
+                                        timerStartedAtEpochMs = 0L
+                                    )
+                                } else {
+                                    // Resume: start a new absolute-time interval.
+                                    val elapsed = current.elapsedSeconds
+
+                                    if (
+                                        elapsed >= current.estimatedMinutes * 60
+                                    ) {
+                                        current.copy(
+                                            elapsedSeconds = 0,
+                                            isTimerRunning = true,
+                                            timerStartedAtEpochMs = now,
+                                            status = TimetableSlotStatus.DOING
+                                        )
+                                    } else {
+                                        current.copy(
+                                            isTimerRunning = true,
+                                            timerStartedAtEpochMs = now,
+                                            status = TimetableSlotStatus.DOING
+                                        )
+                                    }
+                                }
+
+                                timetableSlots[idx] = updated
                                 persistTimetable()
-                                feedbackOverlay = (if (nextRunning) "Timer Started" else "Timer Paused") to false
+
+                                feedbackOverlay = (
+                                        if (updated.isTimerRunning) {
+                                            "Timer Started"
+                                        } else {
+                                            "Timer Paused"
+                                        }
+                                        ) to false
                             }
                         },
                         onMoveSlotOrder = ::moveTimetableSlotOrder,
@@ -1256,8 +1640,8 @@ private fun ActiveHabitAndTimetableBoundaryPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background)
+                    ,contentAlignment = Alignment.Center
         ) {
             // 1. FULL-SCREEN RADIAL AMBIENT CONTAINER CROPPED INSIDE BEZEL RING
             Box(
@@ -1401,11 +1785,13 @@ private fun ActiveHabitAndTimetableBoundaryPage(
                 val isPlaying = mediaViewModel.isPlaying.collectAsState().value
                 val progress = mediaViewModel.progress.collectAsState().value
                 com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
-                    isPlaying = isPlaying,
-                    progress = progress,
-                    onTogglePlay = { mediaViewModel.togglePlay() },
-                    onPrevious = { mediaViewModel.skipToPrevious() },
-                    onNext = { mediaViewModel.skipToNext() }
+                    isPlaying = isTimerRunning,
+                    progress = spotlightPct.coerceIn(0f, 1f),
+                    onTogglePlay = onTapCompleteOrAdvanceHabit,
+                    onPrevious = onOpenSnoozeModal,
+                    onNext = onOpenStopAndRescheduleModal,
+                    previousIcon = Icons.Rounded.Snooze,
+                    nextIcon = Icons.Rounded.Stop
                 )
                 // Bottom Slot: Start/Pause Timer | Mood & Satisfaction | Deck Browser
                 Row(
@@ -1608,8 +1994,9 @@ private fun HabitsStaggeredAndListDeckPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -1687,7 +2074,7 @@ private fun HabitsStaggeredAndListDeckPage(
                             val isSelected = draftColorKey == key
                             Box(
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(32.dp)
                                     .clip(CircleShape)
                                     .background(colorVal)
                                     .border(
@@ -1850,7 +2237,7 @@ private fun StaggeredStackedHabitDeck(
                     .padding(top = topOffset, start = horizontalInset, end = horizontalInset)
                     .fillMaxWidth()
                     .height(86.dp)
-                    .clip(RoundedCornerShape(22.dp))
+                    .clip(RoundedCornerShape(32.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = cardAlpha))
                     .drawWithContent {
                         // Liquid Container Fill from Left to Right
@@ -2276,8 +2663,9 @@ private fun TimetableTabularSchedulePage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -2341,8 +2729,8 @@ private fun TimetableTabularSchedulePage(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+//                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    ,horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("TIME / EST", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
@@ -2626,7 +3014,7 @@ private fun HabitsMonthlySummaryAndScorePage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2748,7 +3136,8 @@ private fun HorizontalDateChipBar(
                         else MaterialTheme.colorScheme.surfaceContainerHigh
                     )
                     .clickable { onSelectOffset(offset) }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+//                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -2926,22 +3315,7 @@ private fun M3HabitAndTimetableControlModal(
 
                 ActiveControlModal.NONE -> {}
             }
-        
-
-
-            item {
-                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
-                val progress = mediaViewModel.progress.collectAsState().value
-                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
-                    isPlaying = isPlaying,
-                    progress = progress,
-                    onTogglePlay = { mediaViewModel.togglePlay() },
-                    onPrevious = { mediaViewModel.skipToPrevious() },
-                    onNext = { mediaViewModel.skipToNext() }
-                )
-            }
-}
+        }
     }
 }
 

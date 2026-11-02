@@ -10,6 +10,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import androidx.datastore.preferences.core.emptyPreferences
+import kotlinx.coroutines.flow.catch
+import java.io.IOException
 
 val Context.wearDataStore: DataStore<Preferences> by preferencesDataStore(name = "lifeos_wear_preferences")
 
@@ -17,7 +20,17 @@ class WearLocalPreferences(private val context: Context) {
 
     fun getBoolean(key: String, defaultValue: Boolean): Flow<Boolean> {
         val prefKey = booleanPreferencesKey(key)
-        return context.wearDataStore.data.map { prefs -> prefs[prefKey] ?: defaultValue }
+        return context.wearDataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }
+            .map { prefs ->
+                prefs[prefKey] ?: defaultValue
+            }
     }
 
     suspend fun setBoolean(key: String, value: Boolean) {
@@ -27,7 +40,17 @@ class WearLocalPreferences(private val context: Context) {
 
     fun getInt(key: String, defaultValue: Int): Flow<Int> {
         val prefKey = intPreferencesKey(key)
-        return context.wearDataStore.data.map { prefs -> prefs[prefKey] ?: defaultValue }
+        return context.wearDataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }
+            .map { prefs ->
+                prefs[prefKey] ?: defaultValue
+            }
     }
 
     suspend fun setInt(key: String, value: Int) {
@@ -37,7 +60,17 @@ class WearLocalPreferences(private val context: Context) {
 
     fun getString(key: String, defaultValue: String): Flow<String> {
         val prefKey = stringPreferencesKey(key)
-        return context.wearDataStore.data.map { prefs -> prefs[prefKey] ?: defaultValue }
+        return context.wearDataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }
+            .map { prefs ->
+                prefs[prefKey] ?: defaultValue
+            }
     }
 
     suspend fun setString(key: String, value: String) {

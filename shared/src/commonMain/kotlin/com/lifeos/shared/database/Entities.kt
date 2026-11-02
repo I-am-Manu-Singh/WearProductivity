@@ -80,6 +80,7 @@ data class FoodLogEntity(
     val proteinGrams: Double,
     val carbsGrams: Double,
     val fatGrams: Double,
+    val loggedAtEpochMs: Long = 0L,
     val loggedAtLabel: String,
     val notes: String
 )
@@ -109,7 +110,8 @@ fun FoodLogEntity.toModel() = FoodLog(
     carbsGrams = carbsGrams,
     fatGrams = fatGrams,
     loggedAtLabel = loggedAtLabel,
-    notes = notes
+    notes = notes,
+    loggedAtEpochMs = loggedAtEpochMs
 )
 
 fun LifeTask.toEntity() = TaskEntity(
@@ -235,11 +237,21 @@ data class FastSessionEntity(
     val sourceDeviceId: String,
     val deletedAt: Long?,
     val version: Long,
+
     val plan: String,
     val startedAtLabel: String,
     val endsAtLabel: String,
     val progress: Float,
-    val active: Boolean
+    val active: Boolean,
+
+    // Persistent fasting lifecycle
+    val sessionId: String = "",
+    val programId: String = "prog-16-8",
+    val phase: String = "FAST",
+    val paused: Boolean = false,
+    val phaseStartedAtEpochMs: Long = 0L,
+    val elapsedBeforePauseSeconds: Long = 0L,
+    val targetSeconds: Long = 57_600L
 )
 
 @Entity(tableName = "budgets")
@@ -289,27 +301,44 @@ fun AlarmEntity.toModel() = LifeAlarm(
     enabled = enabled,
     haptic = haptic
 )
-
 fun FastSession.toEntity() = FastSessionEntity(
     id = stamp.id,
     updatedAt = stamp.updatedAt,
     sourceDeviceId = stamp.sourceDeviceId,
     deletedAt = stamp.deletedAt,
     version = stamp.version,
+
     plan = plan,
     startedAtLabel = startedAtLabel,
     endsAtLabel = endsAtLabel,
     progress = progress,
-    active = active
+    active = active,
+
+    sessionId = sessionId,
+    programId = programId,
+    phase = phase,
+    paused = paused,
+    phaseStartedAtEpochMs = phaseStartedAtEpochMs,
+    elapsedBeforePauseSeconds = elapsedBeforePauseSeconds,
+    targetSeconds = targetSeconds
 )
 
 fun FastSessionEntity.toModel() = FastSession(
     stamp = SyncStamp(id, updatedAt, sourceDeviceId, deletedAt, version),
+
     plan = plan,
     startedAtLabel = startedAtLabel,
     endsAtLabel = endsAtLabel,
     progress = progress,
-    active = active
+    active = active,
+
+    sessionId = sessionId,
+    programId = programId,
+    phase = phase,
+    paused = paused,
+    phaseStartedAtEpochMs = phaseStartedAtEpochMs,
+    elapsedBeforePauseSeconds = elapsedBeforePauseSeconds,
+    targetSeconds = targetSeconds
 )
 
 fun Budget.toEntity() = BudgetEntity(

@@ -59,9 +59,6 @@ import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material3.*
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.wear.protolayout.expression.ProtoLayoutExperimental
 import com.creativeblisslabs.wearproductivity.shared.FocusHistory
 import com.creativeblisslabs.wearproductivity.shared.FocusSession
@@ -120,10 +117,10 @@ data class FocusTopicPreset(
 
 enum class AmbientSoundMode(val label: String) {
     OFF("Off"),
-    WHITE("White"),
+    WHITE("White Noise"),
     RAIN("Rain"),
     WAVES("Waves"),
-    BINAURAL("40Hz")
+    BINAURAL("40Hz AM")
 }
 
 private enum class DurationPickerTarget {
@@ -225,8 +222,16 @@ private class FocusAmbientSoundEngine(private val externalScope: CoroutineScope)
             } catch (_: Exception) {
             } finally {
                 runCatching {
-                    track.stop()
+                    if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                        track.stop()
+                    }
+                }
+                runCatching {
                     track.release()
+                }
+
+                if (audioTrack === track) {
+                    audioTrack = null
                 }
             }
         }
@@ -242,11 +247,17 @@ private class FocusAmbientSoundEngine(private val externalScope: CoroutineScope)
     fun stop() {
         audioJob?.cancel()
         audioJob = null
-        runCatching {
-            audioTrack?.stop()
-            audioTrack?.release()
+
+        // Interrupt playback. The coroutine owns final release.
+        audioTrack?.let { track ->
+            runCatching {
+                if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    track.pause()
+                    track.flush()
+                    track.stop()
+                }
+            }
         }
-        audioTrack = null
     }
 }
 
@@ -259,39 +270,70 @@ private object FocusTopicPrefs {
     private const val KEY_SOUND_MODE = "focus_sound_mode"
     private const val KEY_SOUND_MUTED = "focus_sound_muted"
 
-    fun loadTopics(context: Context, seedTopics: List<String>): List<FocusTopicPreset> {
+    fun loadTopics(
+        context: Context,
+        seedTopics: List<String>
+    ): List<FocusTopicPreset> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val raw = prefs.getString(KEY_TOPICS, null)
+
         if (!raw.isNullOrBlank()) {
             val parsed = raw.split(";;").mapNotNull { entry ->
                 val parts = entry.split("|")
+
                 if (parts.size >= 4) {
+                    val type = parts.getOrNull(4)
+                        ?.let { value ->
+                            runCatching { FocusType.valueOf(value) }.getOrNull()
+                        }
+                        ?: FocusType.Custom
+
                     FocusTopicPreset(
                         id = parts[0],
                         name = parts[1],
                         focusMinutes = parts[2].toIntOrNull()?.coerceIn(1, 240) ?: 25,
-                        breakMinutes = parts[3].toIntOrNull()?.coerceIn(1, 90) ?: 5
+                        breakMinutes = parts[3].toIntOrNull()?.coerceIn(1, 90) ?: 5,
+                        type = type
                     )
-                } else null
+                } else {
+                    null
+                }
             }
+
             if (parsed.isNotEmpty()) return parsed
         }
+
         val defaults = listOf(
             FocusTopicPreset("topic-coding", "Coding", 45, 10, FocusType.DeepWork),
             FocusTopicPreset("topic-deep", "Deep Work", 50, 10, FocusType.DeepWork),
             FocusTopicPreset("topic-reading", "Reading", 25, 5, FocusType.Pomodoro),
             FocusTopicPreset("topic-music", "Music Practice", 30, 5, FocusType.Custom)
         )
+
         val extraFromRepo = seedTopics
-            .filter { seed -> defaults.none { it.name.equals(seed, ignoreCase = true) } }
-            .mapIndexed { idx, name ->
-                FocusTopicPreset("topic-repo-$idx", name, 25, 5, FocusType.Pomodoro)
+            .filter { seed ->
+                defaults.none { it.name.equals(seed.trim(), ignoreCase = true) }
             }
+            .distinctBy { it.trim().lowercase(Locale.ROOT) }
+            .mapIndexed { idx, name ->
+                FocusTopicPreset(
+                    id = "topic-repo-$idx",
+                    name = name.trim(),
+                    focusMinutes = 25,
+                    breakMinutes = 5,
+                    type = FocusType.Pomodoro
+                )
+            }
+
         return defaults + extraFromRepo
     }
 
     fun saveTopics(context: Context, topics: List<FocusTopicPreset>) {
-        val serialized = topics.joinToString(";;") { "${it.id}|${it.name.replace("|", "")}|${it.focusMinutes}|${it.breakMinutes}" }
+        val serialized = topics.joinToString(";;") {
+            "${it.id}|${it.name.replace("|", "").replace(";;", "")}|" +
+                    "${it.focusMinutes}|${it.breakMinutes}|${it.type.name}"
+        }
+
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_TOPICS, serialized)
@@ -327,8 +369,6 @@ private object FocusTopicPrefs {
 // MAIN ENTRY SCREEN
 // =============================================================================
 
-@Suppress("UNUSED_PARAMETER")
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null) {
     val context = LocalContext.current.applicationContext
@@ -349,13 +389,46 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
     val activeTopic = customTopics.firstOrNull { it.id == selectedTopicId }
         ?: customTopics.firstOrNull()
         ?: FocusTopicPreset("default", "Focus", 25, 5, FocusType.Pomodoro)
+    LaunchedEffect(liveState.settings.focusTopics) {
+        val existingNames = customTopics
+            .map { it.name.trim().lowercase(Locale.ROOT) }
+            .toMutableSet()
 
+        var changed = false
+
+        liveState.settings.focusTopics
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinctBy { it.lowercase(Locale.ROOT) }
+            .forEach { seedName ->
+                val normalized = seedName.lowercase(Locale.ROOT)
+
+                if (existingNames.add(normalized)) {
+                    customTopics.add(
+                        FocusTopicPreset(
+                            id = "topic-repo-${normalized.hashCode()}",
+                            name = seedName,
+                            focusMinutes = 25,
+                            breakMinutes = 5,
+                            type = FocusType.Pomodoro
+                        )
+                    )
+                    changed = true
+                }
+            }
+
+        if (changed) {
+            FocusTopicPrefs.saveTopics(context, customTopics)
+        }
+    }
     var selectedMinutes by remember(focus.minutes) {
         mutableIntStateOf(focus.minutes.coerceIn(1, 240))
     }
     var customFocusMinutes by remember { mutableIntStateOf(activeTopic.focusMinutes) }
     var breakMinutes by remember { mutableIntStateOf(activeTopic.breakMinutes) }
-    var selectedType by remember { mutableStateOf(FocusType.Pomodoro) }
+    var selectedType by remember(activeTopic.id) {
+        mutableStateOf(activeTopic.type)
+    }
     var pickerTarget by remember { mutableStateOf(DurationPickerTarget.NONE) }
 
     // Topic / Session Universal Editor State
@@ -366,8 +439,6 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
     var draftTopicBreakMins by remember { mutableStateOf("5") }
 
     // Locally Deleted History IDs (for instant clean deletion in UI)
-    val deletedHistoryIds = remember { mutableStateListOf<String>() }
-    val localManualHistory = remember { mutableStateListOf<FocusHistory>() }
 
     // Ambient Sound Engine & Mute State
     val soundEngine = remember { FocusAmbientSoundEngine(coroutineScope) }
@@ -404,6 +475,20 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
         }
     }
 
+    val remainingSeconds = remember(
+        focus.active,
+        focus.isPaused,
+        focus.endTimeEpochMs,
+        focus.remainingSeconds
+    ) {
+        if (!focus.active) {
+            0
+        } else if (focus.isPaused) {
+            focus.remainingSeconds
+        } else {
+            ((focus.endTimeEpochMs - System.currentTimeMillis()) / 1000L).coerceAtLeast(0L).toInt()
+        }
+    }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
     val pagerFlingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
@@ -435,18 +520,43 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
         }
     }
 
-    fun startSessionWithParams(minutes: Int, type: FocusType, topicName: String) {
+    fun startSessionWithParams(
+        minutes: Int,
+        type: FocusType,
+        topicName: String
+    ) {
+        if (focus.active) {
+            sessionNotice = "Stop current session first" to true
+            haptic.click()
+            return
+        }
+
+        val maxMinutes = when (type) {
+            FocusType.ShortBreak,
+            FocusType.LongBreak -> 90
+
+            else -> 240
+        }
+
+        if (minutes !in 1..maxMinutes) {
+            sessionNotice = "Invalid session duration" to true
+            haptic.click()
+            return
+        }
+
+        val cleanTopicName = topicName.trim().ifBlank { "Focus" }
+
         haptic.click()
         sessionNotice = null
-        val safeDuration = minutes.coerceIn(1, 240)
+
         coroutineScope.launch {
-            repository.addFocusTopic(topicName)
             repository.startFocusSession(
-                minutes = safeDuration,
+                minutes = minutes,
                 type = type,
-                subject = topicName
+                subject = cleanTopicName
             )
-            sessionNotice = "Started $topicName (${safeDuration}m)" to false
+
+            sessionNotice = "Started $cleanTopicName (${minutes}m)" to false
         }
     }
 
@@ -465,64 +575,127 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
     }
 
     fun switchBetweenFocusAndBreak() {
+        if (!focus.active) return
+
         haptic.click()
+
         coroutineScope.launch {
-            val isBreakNow = focus.active && (focus.type == FocusType.ShortBreak || focus.type == FocusType.LongBreak)
+            val isBreakNow =
+                focus.type == FocusType.ShortBreak ||
+                        focus.type == FocusType.LongBreak
+
             if (isBreakNow) {
                 val workMins = customFocusMinutes.coerceIn(1, 240)
+
                 repository.startFocusSession(
                     minutes = workMins,
-                    type = FocusType.Custom,
+                    type = activeTopic.type,
                     subject = activeTopic.name
                 )
-                sessionNotice = "Focus: ${activeTopic.name} (${workMins}m)" to false
+
+                sessionNotice =
+                    "Focus: ${activeTopic.name} (${workMins}m)" to false
             } else {
                 val brkMins = breakMinutes.coerceIn(1, 90)
+
                 repository.startFocusSession(
                     minutes = brkMins,
                     type = FocusType.ShortBreak,
                     subject = "Break · ${activeTopic.name}"
                 )
-                sessionNotice = "Break Started (${brkMins}m)" to false
+
+                sessionNotice =
+                    "Break Started (${brkMins}m)" to false
             }
         }
     }
 
     fun previousOrRestartSession() {
         haptic.click()
+
+        if (!focus.active) {
+            sessionNotice = "No active session to restart" to true
+            return
+        }
+
+        val total = focus.totalSeconds
+        val remaining = focus.remainingSeconds
+
+        val isValidSession =
+            total in 60..14_400 &&
+                    remaining in 0..total
+
+        if (!isValidSession) {
+            sessionNotice = "Invalid session state" to true
+            return
+        }
+
+        val elapsed = total - remaining
+
+        if (elapsed <= 5) {
+            switchBetweenFocusAndBreak()
+            return
+        }
+
+        val repeatMinutes = ((total + 59) / 60).coerceIn(
+            1,
+            if (
+                focus.type == FocusType.ShortBreak ||
+                focus.type == FocusType.LongBreak
+            ) 90 else 240
+        )
+
+        val subject = focus.subject.ifBlank {
+            activeTopic.name
+        }
+
         coroutineScope.launch {
-            val elapsed = focus.totalSeconds - focus.remainingSeconds
-            if (focus.active && elapsed > 5) {
-                val repeatMins = (focus.totalSeconds / 60).coerceAtLeast(1)
-                repository.startFocusSession(
-                    minutes = repeatMins,
-                    type = focus.type,
-                    subject = focus.subject.ifBlank { activeTopic.name }
-                )
-                sessionNotice = "Restarted ${focus.subject.ifBlank { focus.type.label() }}" to false
-            } else {
-                switchBetweenFocusAndBreak()
-            }
+            repository.startFocusSession(
+                minutes = repeatMinutes,
+                type = focus.type,
+                subject = subject
+            )
+
+            sessionNotice = "Restarted ${focus.type.label()}" to false
+        }
+    }
+
+    var stopRequestInFlight by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(focus.active) {
+        if (!focus.active) {
+            stopRequestInFlight = false
         }
     }
 
     fun stopAndLogCurrentSession() {
+        if (!focus.active || stopRequestInFlight) return
+
         haptic.click()
-        val elapsedMinutes = ((focus.totalSeconds - focus.remainingSeconds) / 60).coerceAtLeast(1)
-        val wasFocusWork = focus.type != FocusType.ShortBreak && focus.type != FocusType.LongBreak
-        if (focus.active && wasFocusWork && elapsedMinutes >= 1) {
-            localManualHistory.add(
-                0,
-                FocusHistory(
-                    stamp = SyncStamp("focus-local-${System.currentTimeMillis()}"),
-                    subject = focus.subject.ifBlank { activeTopic.name },
-                    minutesFocused = elapsedMinutes,
-                    completed = focus.remainingSeconds <= 60
-                )
-            )
+        stopRequestInFlight = true
+
+        val elapsedSeconds = (
+                focus.totalSeconds - focus.remainingSeconds
+                ).coerceIn(0, focus.totalSeconds.coerceAtLeast(0))
+
+        val elapsedMinutes = elapsedSeconds / 60
+
+        coroutineScope.launch {
+            try {
+                repository.stopFocusSession()
+
+                sessionNotice = if (elapsedMinutes >= 1) {
+                    "Session Saved ($elapsedMinutes min)" to false
+                } else {
+                    "Session Stopped" to false
+                }
+            } catch (exception: Exception) {
+                stopRequestInFlight = false
+                sessionNotice = "Unable to stop session" to true
+            }
         }
-        sessionNotice = "Session Logged ($elapsedMinutes min)" to false
-        coroutineScope.launch { repository.stopFocusSession() }
     }
 
     fun toggleMuteSound() {
@@ -562,8 +735,14 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
             haptic.click()
             return
         }
-        val parsedFocus = focusMinsInput.trim().filter { it.isDigit() }.toIntOrNull()?.coerceIn(1, 240) ?: 25
-        val parsedBreak = breakMinsInput.trim().filter { it.isDigit() }.toIntOrNull()?.coerceIn(1, 90) ?: 5
+        val parsedFocus = focusMinsInput.trim().toIntOrNull()
+        val parsedBreak = breakMinsInput.trim().toIntOrNull()
+
+        if (parsedFocus !in 1..240 || parsedBreak !in 1..90) {
+            sessionNotice = "Focus: 1–240, Break: 1–90" to true
+            haptic.click()
+            return
+        }
         val editId = editingTopicId
 
         if (editId != null) {
@@ -571,8 +750,8 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
             if (idx >= 0) {
                 val updated = customTopics[idx].copy(
                     name = cleanName,
-                    focusMinutes = parsedFocus,
-                    breakMinutes = parsedBreak
+                    focusMinutes = parsedFocus!!,
+                    breakMinutes = parsedBreak!!
                 )
                 customTopics[idx] = updated
                 selectTopicPreset(updated)
@@ -614,11 +793,8 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
         haptic.click()
     }
 
-    val combinedHistory = remember(liveState.focusHistory, localManualHistory.size, deletedHistoryIds.size) {
-        (localManualHistory + liveState.focusHistory)
-            .distinctBy { it.stamp.id }
-            .filterNot { it.stamp.id in deletedHistoryIds }
-    }
+
+    val combinedHistory = liveState.focusHistory
 
     WearBaselineViewport {
         // 1. Retrieve the spec from CompositionLocal inside the block
@@ -636,7 +812,7 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (pickerTarget != DurationPickerTarget.NONE) {
                 DurationPicker(
@@ -759,7 +935,12 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
                             onSelectTopic = ::selectTopicPreset,
                             onStartTopicSession = { preset ->
                                 selectTopicPreset(preset)
-                                startSessionWithParams(preset.focusMinutes, FocusType.Custom, preset.name)
+
+                                startSessionWithParams(
+                                    minutes = preset.focusMinutes,
+                                    type = preset.type,
+                                    topicName = preset.name
+                                )
                             },
                             onOpenNewTopicEditor = ::openNewTopicEditor,
                             onOpenEditTopicEditor = ::openEditTopicEditor,
@@ -768,9 +949,6 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
                                 haptic.click()
                                 showTopicEditor = false
                                 editingTopicId = null
-                            },
-                            onDeleteTopic = {
-                                editingTopicId?.let { deleteTopicPreset(it) }
                             },
                             onSelectAmbientMode = { mode ->
                                 haptic.click()
@@ -805,17 +983,31 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
                                 sessionNotice = "+5m Added" to false
                             },
                             onRepeatHistoryItem = { item ->
-                                startSessionWithParams(item.minutesFocused.coerceAtLeast(5), FocusType.Custom, item.subject)
+                                startSessionWithParams(
+                                    item.minutesFocused.coerceAtLeast(5),
+                                    FocusType.Custom,
+                                    item.subject
+                                )
                             },
                             onDeleteHistoryItem = { item ->
                                 haptic.click()
-                                deletedHistoryIds.add(item.stamp.id)
+
+                                coroutineScope.launch {
+                                    repository.deleteFocusHistory(item.stamp.id)
+                                }
+
                                 sessionNotice = "History Entry Removed" to false
                             },
                             onJumpToCanvas = {
                                 haptic.click()
                                 coroutineScope.launch { pagerState.animateScrollToPage(0) }
-                            }
+                            },
+                            onDeleteTopicFromEditor = {
+                                editingTopicId?.let { id ->
+                                    deleteTopicPreset(id)
+                                }
+                            },
+                            onDeleteTopicPreset = ::deleteTopicPreset
                         )
                     }
                 }
@@ -903,27 +1095,19 @@ private fun ActiveFocusBoundaryCanvasPage(
         else -> MaterialTheme.colorScheme.primary
     }
 
-    val centerButtonSize = (spec.screenWidth * 0.32f).coerceIn(58.dp, 74.dp)
-    val sideButtonWidth = (spec.screenWidth * 0.21f).coerceIn(42.dp, 52.dp)
-    val sideButtonHeight = (spec.screenWidth * 0.25f).coerceIn(48.dp, 60.dp)
     val bottomPillHeight = (spec.screenHeight * 0.14f).coerceIn(30.dp, 36.dp)
-    val localCoroutineScope = rememberCoroutineScope()
 
-// 2. Pass that explicit variable into your Engine constructor
-    val soundEngine = remember { FocusAmbientSoundEngine(localCoroutineScope) }
-    var currentVolume by remember { mutableFloatStateOf(0.25f) }
-    val showLabel = true // Set your visibility condition here
 
 // Calculate display integer (e.g., 0.25f * 10 = 2.5 -> rounds to 3)
-    val currentLevel = (currentVolume * 10f).roundToInt()
     ScreenScaffold(
         timeText = { TimeText() }
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment =
+                Alignment.Center
         ) {
             // 1. FULL-SCREEN AMBIENT RADIAL CONTAINER CROPPED INSIDE BEZEL PROGRESS RING
             Box(
@@ -996,7 +1180,10 @@ private fun ActiveFocusBoundaryCanvasPage(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-                            .clickable(onClick = onCycleTopic)
+                            .clickable(
+                                enabled = !isActive,
+                                onClick = onCycleTopic
+                            )
                             .padding(horizontal = 10.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -1025,7 +1212,10 @@ private fun ActiveFocusBoundaryCanvasPage(
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        modifier = Modifier.clickable(onClick = onOpenCustomPicker)
+                        modifier = Modifier.clickable(
+                            enabled = !isActive,
+                            onClick = onOpenCustomPicker
+                        )
                     )
 
                     Text(
@@ -1044,16 +1234,13 @@ private fun ActiveFocusBoundaryCanvasPage(
 
 
 
-                    val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    val isPlaying = mediaViewModel.isPlaying.collectAsState().value
-                    val progress = mediaViewModel.progress.collectAsState().value
-                    com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
-                        isPlaying = isPlaying,
-                        progress = progress,
-                        onTogglePlay = { mediaViewModel.togglePlay() },
-                        onPrevious = { mediaViewModel.skipToPrevious() },
-                        onNext = { mediaViewModel.skipToNext() }
-                    )
+                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
+                    isPlaying = isActive && !isPaused,
+                    progress = animatedProgress,
+                    onTogglePlay = onTogglePlayPause,
+                    onPrevious = onPreviousOrRestart,
+                    onNext = onNextFocusOrBreak
+                )
 
 
                 // Bottom Slot: Mute/Sound Toggle | +5m Extend | Stop or Deck Button
@@ -1164,7 +1351,7 @@ private fun ActiveFocusBoundaryCanvasPage(
                         }
                     } else {
                         Button(
-                            onClick = { showSoundPicker = true },
+                            onClick = onOpenDashboard, // Fixed from { showSoundPicker = true }
                             modifier = Modifier
                                 .height(bottomPillHeight)
                                 .semantics { contentDescription = "Open Focus Topics and Analytics" },
@@ -1193,7 +1380,8 @@ private fun ActiveFocusBoundaryCanvasPage(
                 visible = showSoundPicker,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+                ) {
                     val listState = rememberTransformingLazyColumnState()
                     TransformingLazyColumn(state = listState, contentPadding = PaddingValues(32.dp), modifier = Modifier.fillMaxSize()) {
                         item { WearExpressiveHeader(title = "AMBIENT SOUND", badgeText = "SELECT") }
@@ -1204,7 +1392,8 @@ private fun ActiveFocusBoundaryCanvasPage(
                                     onSelectAmbientMode(mode)
                                     showSoundPicker = false
                                 },
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(vertical = 4.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (!isSoundMuted && ambientMode == mode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer
                                 )
@@ -1219,49 +1408,6 @@ private fun ActiveFocusBoundaryCanvasPage(
                         }
             }
         }
-    }
-}
-
-private fun DrawScope.drawFocusWavyRing(
-    progress: Float,
-    phase: Float,
-    trackColor: Color,
-    activeColor: Color,
-    strokeWidthPx: Float,
-    waveAmplitudePx: Float,
-    lobes: Int
-) {
-    val center = Offset(size.width / 2f, size.height / 2f)
-    val baseRadius = (minOf(size.width, size.height) / 2f) - waveAmplitudePx - (strokeWidthPx / 2f)
-    val totalSteps = 160
-
-    fun buildPath(maxStep: Int): Path {
-        val path = Path()
-        for (step in 0..maxStep) {
-            val fraction = step.toFloat() / totalSteps.toFloat()
-            val angleRad = (-Math.PI / 2.0) + (fraction * 2.0 * Math.PI)
-            val waveOffset = waveAmplitudePx * sin((lobes * angleRad) + phase).toFloat()
-            val r = baseRadius + waveOffset
-            val x = center.x + (r * cos(angleRad)).toFloat()
-            val y = center.y + (r * sin(angleRad)).toFloat()
-            if (step == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        return path
-    }
-
-    drawPath(
-        path = buildPath(totalSteps),
-        color = trackColor,
-        style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    )
-
-    val activeSteps = (totalSteps * progress.coerceIn(0.04f, 1f)).toInt()
-    if (activeSteps > 0) {
-        drawPath(
-            path = buildPath(activeSteps),
-            color = activeColor,
-            style = Stroke(width = strokeWidthPx * 1.15f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
     }
 }
 
@@ -1294,7 +1440,8 @@ private fun FocusDashboardTransformingPage(
     onOpenEditTopicEditor: (FocusTopicPreset) -> Unit,
     onSaveTopic: (String, String, String) -> Unit,
     onCancelTopicEditor: () -> Unit,
-    onDeleteTopic: () -> Unit,
+    onDeleteTopicFromEditor: () -> Unit,
+    onDeleteTopicPreset: (String) -> Unit,
     onSelectAmbientMode: (AmbientSoundMode) -> Unit,
     onToggleMute: () -> Unit,
     onOpenCustomFocusPicker: () -> Unit,
@@ -1313,7 +1460,11 @@ private fun FocusDashboardTransformingPage(
     val isActive = focus.active
     val isBreakActive = isActive && (focus.type == FocusType.ShortBreak || focus.type == FocusType.LongBreak)
     val totalFocusedMinutes = history.sumOf { it.minutesFocused }
+    var visibleHistoryCount by remember {
+        mutableIntStateOf(15)
+    }
 
+    val visibleHistory = history.take(visibleHistoryCount)
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
@@ -1335,8 +1486,9 @@ private fun FocusDashboardTransformingPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -1403,7 +1555,8 @@ private fun FocusDashboardTransformingPage(
                     loggedMinutes = topicHistoryMins,
                     onSelect = { onSelectTopic(preset) },
                     onStartNow = { onStartTopicSession(preset) },
-                    onEdit = { onOpenEditTopicEditor(preset) }
+                    onEdit = { onOpenEditTopicEditor(preset) },
+                    onDelete = { onDeleteTopicPreset(preset.id) }
                 )
             }
 
@@ -1436,7 +1589,15 @@ private fun FocusDashboardTransformingPage(
                     }
                 )
             }
-
+            item {
+                WearMetricCard(
+                    title = "TOTAL FOCUS TIME",
+                    value = formatHoursMins(totalFocusedMinutes),
+                    subtitle = "${history.size} recorded sessions",
+                    icon = Icons.Rounded.Timer,
+                    onClick = onJumpToCanvas
+                )
+            }
             item {
                 WearMetricCard(
                     title = "FOCUS DURATION (${activeTopic.name.uppercase()})",
@@ -1477,8 +1638,9 @@ private fun FocusDashboardTransformingPage(
                     )
                 }
             } else {
-                items(history.take(15).size) { idx ->
-                    val record = history[idx]
+
+                items(visibleHistory.size) { idx ->
+                    val record = visibleHistory[idx]
                     WearSwipeableActionCard(
                         onCardClick = { onRepeatHistoryItem(record) },
                         onEditClick = { onRepeatHistoryItem(record) },
@@ -1533,6 +1695,22 @@ private fun FocusDashboardTransformingPage(
                         }
                     }
                 }
+                if (visibleHistoryCount < history.size) {
+                    item {
+                        FilledTonalButton(
+                            onClick = {
+                                visibleHistoryCount = (
+                                        visibleHistoryCount + 15
+                                        ).coerceAtMost(history.size)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text("Load More (${history.size - visibleHistoryCount} remaining)")
+                        }
+                    }
+                }
             }
         }
     }
@@ -1545,14 +1723,15 @@ private fun TransformingLazyColumnItemScope.M3FocusTopicRow(
     loggedMinutes: Int,
     onSelect: () -> Unit,
     onStartNow: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
     WearSwipeableActionCard(
         onCardClick = onSelect,
         onEditClick = onEdit,
-        onDeleteClick = onEdit,
+        onDeleteClick = onDelete,
         modifier = Modifier.fillMaxWidth()
-    ) {
+    ){
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1631,7 +1810,7 @@ private fun ViewportConstrainedFocusConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.92f))
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

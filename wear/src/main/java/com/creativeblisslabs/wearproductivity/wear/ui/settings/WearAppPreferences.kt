@@ -38,28 +38,62 @@ object WearAppPreferences {
     const val KEY_FACE_RING_METRIC = "face_ring_metric"
 
     fun getBoolean(context: Context, key: String, defaultValue: Boolean): Boolean =
-        prefs(context).getBoolean(key, defaultValue)
+        runCatching {
+            prefs(context).getBoolean(key, defaultValue)
+        }.getOrDefault(defaultValue)
 
     fun getInt(context: Context, key: String, defaultValue: Int): Int =
-        prefs(context).getInt(key, defaultValue)
+        runCatching {
+            prefs(context).getInt(key, defaultValue)
+        }.getOrDefault(defaultValue)
 
     fun getString(context: Context, key: String, defaultValue: String): String =
-        prefs(context).getString(key, defaultValue) ?: defaultValue
+        runCatching {
+            prefs(context).getString(key, defaultValue)
+        }.getOrNull() ?: defaultValue
+
 
     fun setBoolean(context: Context, key: String, value: Boolean) {
         prefs(context).edit().putBoolean(key, value).apply()
     }
 
     fun setInt(context: Context, key: String, value: Int) {
-        prefs(context).edit().putInt(key, value).apply()
+        val safeValue = when (key) {
+            KEY_WATER_GOAL_ML -> value.coerceIn(1000, 5000)
+            KEY_FOCUS_DEFAULT_MINUTES -> value.coerceIn(5, 180)
+            KEY_TASK_DEFAULT_PRIORITY -> value.coerceIn(1, 3)
+            KEY_QUICK_ALARM_LEAD_MINUTES -> value.coerceIn(5, 30)
+            KEY_EVENT_DEFAULT_REMINDER_MINUTES -> value.coerceIn(5, 60)
+            else -> value
+        }
+
+        prefs(context).edit().putInt(key, safeValue).apply()
     }
 
     fun setString(context: Context, key: String, value: String) {
-        prefs(context).edit().putString(key, value).apply()
+        prefs(context).edit().putString(key, value.trim()).apply()
     }
 
     fun reset(context: Context) {
-        prefs(context).edit().clear().apply()
+        prefs(context).edit()
+            .remove(KEY_HAPTICS_ENABLED)
+            .remove(KEY_USE_24_HOUR_CLOCK)
+            .remove(KEY_COMPACT_DASHBOARD)
+            .remove(KEY_WATER_GOAL_ML)
+            .remove(KEY_FOCUS_DEFAULT_MINUTES)
+            .remove(KEY_TASK_DEFAULT_PRIORITY)
+            .remove(KEY_QUICK_ALARM_LEAD_MINUTES)
+            .remove(KEY_EVENT_DEFAULT_REMINDER_MINUTES)
+            .remove(KEY_SMART_WAKE_ENABLED)
+            .remove(KEY_AUDIO_SHUFFLE_DEFAULT)
+            .remove(KEY_AUDIO_REPEAT_MODE)
+            .remove(KEY_AUDIO_EQ_PRESET)
+            .remove(KEY_FACE_TOP_COMPLICATION)
+            .remove(KEY_FACE_TOP_LEFT_COMPLICATION)
+            .remove(KEY_FACE_TOP_RIGHT_COMPLICATION)
+            .remove(KEY_FACE_BOTTOM_COMPLICATION)
+            .remove(KEY_FACE_RING_METRIC)
+            .apply()
     }
 
     fun preferences(context: Context): SharedPreferences = prefs(context)

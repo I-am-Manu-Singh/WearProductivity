@@ -126,7 +126,6 @@ fun MainNavigation(
                             mutableStateOf<List<String>>(emptyList())
                         }
 
-                        // Resolve the IDs returned by the setup screen.
                         val resolvedRoutineIds = remember(
                             activeRoutineIds,
                             exerciseRepository.allExercises
@@ -145,8 +144,8 @@ fun MainNavigation(
 
                                     Timber.tag("WorkoutNavigation")
                                         .d(
-                                            "Generated workout: count=${generatedIds.size}, " +
-                                                    "IDs=$generatedIds"
+                                            "Generated workout: count=\${generatedIds.size}, " +
+                                                    "IDs=\$generatedIds"
                                         )
                                 }
 
@@ -155,13 +154,20 @@ fun MainNavigation(
                                     .WearWorkoutListScreen(
                                         repository = exerciseRepository,
                                         routineIds = resolvedRoutineIds
-                                    ) {
+                                    ) { confirmedIds ->
+                                        activeRoutineIds = confirmedIds
                                         workoutFlowState = 2
                                     }
                             }
 
                             2 -> {
-                                WearWorkoutScreen(state, repository, exerciseRepository, mediaViewModel)
+                                WearWorkoutScreen(
+                                    state = state,
+                                    repository = repository,
+                                    exerciseRepository = exerciseRepository,
+                                    mediaViewModel = mediaViewModel,
+                                    initialRoutineIds = resolvedRoutineIds
+                                )
                             }
                         }
                     }

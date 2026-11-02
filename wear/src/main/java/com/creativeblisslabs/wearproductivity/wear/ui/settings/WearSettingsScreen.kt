@@ -4,6 +4,7 @@ import android.os.Environment
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode as AnimRepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.ui.window.Dialog
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -89,7 +90,9 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
     val smartWakeEnabled = rememberWearBooleanPreference(WearAppPreferences.KEY_SMART_WAKE_ENABLED, true)
 
     var feedbackOverlay by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-
+    var showResetConfirmation by remember {
+        mutableStateOf(false)
+    }
     fun click() { if (hapticsEnabled) haptic.click() }
     fun setBoolean(key: String, value: Boolean) {
         click()
@@ -102,10 +105,23 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
         feedbackOverlay = "Setting Updated" to false
     }
 
-    val user = remember {
-        runCatching { FirebaseAuthManager.currentUser }.getOrNull()
+    val auth = remember { FirebaseAuth.getInstance() }
+
+    var user by remember(auth) {
+        mutableStateOf(auth.currentUser)
     }
 
+    DisposableEffect(auth) {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            user = firebaseAuth.currentUser
+        }
+
+        auth.addAuthStateListener(listener)
+
+        onDispose {
+            auth.removeAuthStateListener(listener)
+        }
+    }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
     val pagerFlingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
@@ -120,7 +136,7 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             VerticalPager(
                 state = pagerState,
@@ -140,11 +156,11 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
                         onToggleClock = { setBoolean(WearAppPreferences.KEY_USE_24_HOUR_CLOCK, !use24HourClock) },
                         onToggleCompact = { setBoolean(WearAppPreferences.KEY_COMPACT_DASHBOARD, !compactDashboard) },
                         onJumpGeneral = {
-                            haptic.click()
+                            click()
                             scope.launch { pagerState.animateScrollToPage(1) }
                         },
                         onJumpAudioSync = {
-                            haptic.click()
+                            click()
                             scope.launch { pagerState.animateScrollToPage(2) }
                         }
                     )
@@ -167,7 +183,19 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
                         onJumpAudioSync = {
                             click()
                             scope.launch { pagerState.animateScrollToPage(2) }
-                        }
+                        },
+                        onPriorityDecrease = {
+                            adjustInt(
+                                WearAppPreferences.KEY_TASK_DEFAULT_PRIORITY,
+                                (taskPriority - 1).coerceAtLeast(1)
+                            )
+                        },
+                        onPriorityIncrease = {
+                            adjustInt(
+                                WearAppPreferences.KEY_TASK_DEFAULT_PRIORITY,
+                                (taskPriority + 1).coerceAtMost(3)
+                            )
+                        },
                     )
 
                     else -> SettingsAudioAndSyncPage(
@@ -176,42 +204,36 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
                         eventReminderMinutes = eventReminderMinutes,
                         smartWakeEnabled = smartWakeEnabled,
                         userEmail = user?.email,
+                        isSignedIn = user != null,
                         onAlarmLeadDecrement = { adjustInt(WearAppPreferences.KEY_QUICK_ALARM_LEAD_MINUTES, (alarmLeadMinutes - 5).coerceAtLeast(5)) },
                         onAlarmLeadIncrement = { adjustInt(WearAppPreferences.KEY_QUICK_ALARM_LEAD_MINUTES, (alarmLeadMinutes + 5).coerceAtMost(30)) },
                         onEventReminderDecrement = { adjustInt(WearAppPreferences.KEY_EVENT_DEFAULT_REMINDER_MINUTES, (eventReminderMinutes - 5).coerceAtLeast(5)) },
                         onEventReminderIncrement = { adjustInt(WearAppPreferences.KEY_EVENT_DEFAULT_REMINDER_MINUTES, (eventReminderMinutes + 5).coerceAtMost(60)) },
-                        onToggleSmartWake = { setBoolean(WearAppPreferences.KEY_SMART_WAKE_ENABLED, !smartWakeEnabled) },
-                        onExportBackup = {
+                        onToggleSmartWake = { setBoolean(WearAppPreferences
+                            .KEY_SMART_WAKE_ENABLED, !smartWakeEnabled) },
+                        onSyncCloud = {
                             click()
-                            scope.launch(Dispatchers.IO) {
+
+                            if (user == null) {
+                                feedbackOverlay = "Sign In Required" to true
+                            } else {
                                 runCatching {
-                                    val backupDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                                    backupDir.mkdirs()
-                                    val backupFile = File(backupDir, "LifeOS_Backup.json")
-                                    backupFile.writeText("{ \"status\": \"backed_up\", \"timestamp\": ${System.currentTimeMillis()} }")
-                                    withContext(Dispatchers.Main) {
-                                        feedbackOverlay = "Backup Saved to Downloads" to false
-                                    }
-                                }.onFailure {
-                                    withContext(Dispatchers.Main) {
-                                        feedbackOverlay = "Backup Exported" to false
-                                    }
+                                    FirebaseSyncWorker.enqueue(context)
+                                }.onSuccess {
+                                    feedbackOverlay = "Sync Request Queued" to false
+                                }.onFailure { error ->
+                                    feedbackOverlay = (
+                                            error.message
+                                                ?.take(60)
+                                                ?.let { "Queue Failed: $it" }
+                                                ?: "Sync Could Not Be Queued"
+                                            ) to true
                                 }
                             }
                         },
-                        onSyncCloud = {
+                        onRequestReset = {
                             click()
-                            runCatching {
-//                                FirebaseSyncWorker.enqueue(context)
-                                feedbackOverlay = "Cloud Sync Requested" to false
-                            }.onFailure {
-                                feedbackOverlay = "Sync Unavailable" to true
-                            }
-                        },
-                        onResetAll = {
-                            WearAppPreferences.reset(context)
-                            click()
-                            feedbackOverlay = "Preferences Reset" to false
+                            showResetConfirmation = true
                         },
                         onJumpGeneral = {
                             click()
@@ -235,6 +257,76 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
                     isError = isError,
                     onDismiss = { feedbackOverlay = null }
                 )
+            }
+            if (showResetConfirmation) {
+                Dialog(
+                    onDismissRequest = {
+                        showResetConfirmation = false
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.RestartAlt,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(32.dp)
+                        )
+
+                        Text(
+                            text = "Reset Preferences?",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Text(
+                            text = "All saved Wear preferences will return to their defaults. Your app data is not intended to be deleted by this action.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    click()
+                                    showResetConfirmation = false
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Cancel")
+                            }
+
+                            Button(
+                                onClick = {
+                                    click()
+                                    WearAppPreferences.reset(context)
+                                    showResetConfirmation = false
+                                    feedbackOverlay = "Preferences Reset" to false
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                )
+                            ) {
+                                Text("Reset")
+                            }
+                        }
+                    }
+                }
             }
         }
     
@@ -281,8 +373,8 @@ private fun SettingsBoundaryCanvasPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
@@ -294,7 +386,7 @@ private fun SettingsBoundaryCanvasPage(
                             colors = listOf(
                                 primaryAccent.copy(alpha = 0.22f),
                                 MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.94f),
-                                Color.Black
+                                MaterialTheme.colorScheme.surfaceContainerLowest
                             )
                         )
                     ),
@@ -588,6 +680,8 @@ private fun SettingsGeneralAndGoalsPage(
     compactDashboard: Boolean,
     waterGoalMl: Int,
     focusDefaultMinutes: Int,
+    onPriorityDecrease: () -> Unit,
+    onPriorityIncrease: () -> Unit,
     taskPriority: Int,
     onToggleHaptics: () -> Unit,
     onToggleClock: () -> Unit,
@@ -621,8 +715,9 @@ private fun SettingsGeneralAndGoalsPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -691,6 +786,20 @@ private fun SettingsGeneralAndGoalsPage(
                     canIncrease = focusDefaultMinutes < 180
                 )
             }
+            item {
+                WearExpressiveHorizontalSlider(
+                    title = "Default Task Priority",
+                    valueText = when (taskPriority) {
+                        1 -> "Low"
+                        2 -> "Normal"
+                        else -> "High"
+                    },
+                    onValueDecrease = onPriorityDecrease,
+                    onValueIncrease = onPriorityIncrease,
+                    canDecrease = taskPriority > 1,
+                    canIncrease = taskPriority < 3
+                )
+            }
         }
     }
 }
@@ -701,15 +810,15 @@ private fun SettingsAudioAndSyncPage(
     alarmLeadMinutes: Int,
     eventReminderMinutes: Int,
     smartWakeEnabled: Boolean,
+    isSignedIn: Boolean,
     userEmail: String?,
     onAlarmLeadDecrement: () -> Unit,
     onAlarmLeadIncrement: () -> Unit,
     onEventReminderDecrement: () -> Unit,
     onEventReminderIncrement: () -> Unit,
     onToggleSmartWake: () -> Unit,
-    onExportBackup: () -> Unit,
     onSyncCloud: () -> Unit,
-    onResetAll: () -> Unit,
+    onRequestReset: () -> Unit,
     onJumpGeneral: () -> Unit
 ) {
     val columnState = rememberTransformingLazyColumnState()
@@ -735,8 +844,8 @@ private fun SettingsAudioAndSyncPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -772,44 +881,42 @@ private fun SettingsAudioAndSyncPage(
                 )
             }
 
-            item {
-                WearExpressiveSwitchRow(
-                    label = "Smart Wake",
-                    checked = smartWakeEnabled,
-                    onCheckedChange = { onToggleSmartWake() },
-                    icon = Icons.Rounded.Alarm,
-                    subtitle = "Optimized alarm window"
-                )
-            }
-
+            WearExpressiveSwitchRow(
+                label = "Smart Wake Preference",
+                checked = smartWakeEnabled,
+                onCheckedChange = { onToggleSmartWake() },
+                icon = Icons.Rounded.Alarm,
+                subtitle = if (smartWakeEnabled) {
+                    "Enabled · Scheduling not connected"
+                } else {
+                    "Disabled"
+                }
+            )
             item {
                 CatalogM3ListHeaderSample(title = "CLOUD & DATA BACKUP")
             }
-
             item {
                 WearMetricCard(
                     title = "GOOGLE ACCOUNT",
-                    value = userEmail ?: "Signed In via Google",
-                    subtitle = "Tap to trigger Firebase Sync",
+                    value = when {
+                        !isSignedIn -> "Not Signed In"
+                        !userEmail.isNullOrBlank() -> userEmail
+                        else -> "Signed In"
+                    },
+                    subtitle = when {
+                        !isSignedIn -> "Sign in to enable cloud sync"
+                        else -> "Tap to queue Firebase Sync"
+                    },
                     icon = Icons.Rounded.CloudSync,
                     onClick = onSyncCloud
                 )
             }
 
-            item {
-                WearMetricCard(
-                    title = "EXPORT JSON BACKUP",
-                    value = "Database Archive",
-                    subtitle = "Saves to Download/LifeOS_Backup.json",
-                    icon = Icons.Rounded.Download,
-                    onClick = onExportBackup
-                )
-            }
 
             item {
                 CatalogM3ChildButtonSample(
-                    label = "Reset All Preferences",
-                    onClick = onResetAll
+                    label = "Reset Wear Preferences",
+                    onClick = onRequestReset
                 )
             }
         }
@@ -832,7 +939,7 @@ private fun ViewportConstrainedSettingsConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.92f))
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f))
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

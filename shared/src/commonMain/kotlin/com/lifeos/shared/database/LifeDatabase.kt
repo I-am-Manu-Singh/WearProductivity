@@ -82,6 +82,8 @@ interface AlarmDao {
     @Query("SELECT * FROM alarms WHERE deletedAt IS NULL ORDER BY time ASC")
     fun getAllAlarms(): Flow<List<AlarmEntity>>
 
+    @Query("SELECT * FROM alarms ORDER BY time ASC")
+    fun getAllAlarmsIncludingDeleted(): Flow<List<AlarmEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlarm(alarm: AlarmEntity)
 }
@@ -144,6 +146,12 @@ interface FocusDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateFocus(focus: FocusSessionEntity)
+
+    @Query("SELECT * FROM focus_history ORDER BY timestamp DESC")
+    fun getAllFocusHistoryIncludingDeleted(): Flow<List<FocusHistoryEntity>>
+
+    @Query("SELECT * FROM important_dates ORDER BY dateIso ASC")
+    fun getAllImportantDatesIncludingDeleted(): Flow<List<ImportantDateEntity>>
 }
 
 @Dao
@@ -187,7 +195,7 @@ interface ImportantDateDao {
         WellnessEntity::class, FocusSessionEntity::class, ReviewEntity::class, FocusHistoryEntity::class,
         ImportantDateEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class LifeDatabase : RoomDatabase() {

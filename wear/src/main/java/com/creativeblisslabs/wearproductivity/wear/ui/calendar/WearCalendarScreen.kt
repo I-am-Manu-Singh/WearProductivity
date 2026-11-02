@@ -13,6 +13,11 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -167,7 +172,7 @@ data class PlannerItemRichMeta(
     val estimatedMinutes: Int = 30,
     val manualProgressPct: Int = 0,
     val recurrence: PlannerRecurrenceMode = PlannerRecurrenceMode.ONCE,
-    val repeatDaysMask: Int = 0b0111110, // Mon..Fri
+    val repeatDaysMask: Int = 0,
     val bulletNotes: List<String> = emptyList(),
     val subtasks: List<SubtaskChecklistEntry> = emptyList(),
     val callPlatformOrLocation: String = "Google Meet",
@@ -226,7 +231,7 @@ private object GoogleCalendarWatchBridge {
     suspend fun queryDeviceCalendarEvents(context: Context): List<SyncedGoogleCalendarEvent> =
         withContext(Dispatchers.IO) {
             val results = mutableListOf<SyncedGoogleCalendarEvent>()
-            runCatching {
+            try {
                 val nowMs = System.currentTimeMillis()
                 val endMs = nowMs + (30L * 24L * 3600L * 1000L)
                 val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
@@ -267,6 +272,8 @@ private object GoogleCalendarWatchBridge {
                         )
                     }
                 }
+            } catch (e: SecurityException) {
+                throw e
             }
             results
         }
@@ -342,8 +349,9 @@ private object UnifiedPlannerPrefs {
                     callPlatformOrLocation = p[12],
                     recurrence = runCatching { PlannerRecurrenceMode.valueOf(p[13]) }.getOrDefault(PlannerRecurrenceMode.ONCE),
                     snoozedUntilEpochMs = p.getOrNull(14)?.toLongOrNull() ?: 0L,
-                    stoppedTodayIso = p.getOrNull(15).orEmpty()
-                )
+                    stoppedTodayIso = p.getOrNull(15).orEmpty(),
+                    repeatDaysMask = currentWeekdayMask()
+                    )
                 meta.itemId to meta
             } else null
         }.toMap()
@@ -353,8 +361,7 @@ private object UnifiedPlannerPrefs {
         val encoded = map.values.joinToString(";;") { m ->
             val safeBullets = m.bulletNotes.joinToString("~") { it.replace("|", "").replace("~", "") }
             val safeSubtasks = m.subtasks.joinToString("~") { "${it.id}^${it.title.replace("^", "").replace("|", "")}^${it.done}" }
-            "${m.itemId}|${m.kind.name}|${m.colorKey}|${m.iconKey}|${m.tagLabel.replace("|", "")}|${m.listGroupName.replace("|", "")}|${m.priorityLevel}|${m.kanbanStage.name}|${m.estimatedMinutes}|${m.manualProgressPct}|$safeBullets|$safeSubtasks|${m.callPlatformOrLocation.replace("|", "")}|${m.recurrence.name}|${m.snoozedUntilEpochMs}|${m.stoppedTodayIso}"
-        }
+            "${m.itemId}|${m.kind.name}|${m.colorKey}|${m.iconKey}|${m.tagLabel.replace("|", "")}|${m.listGroupName.replace("|", "")}|${m.priorityLevel}|${m.kanbanStage.name}|${m.estimatedMinutes}|${m.manualProgressPct}|$safeBullets|$safeSubtasks|${m.callPlatformOrLocation.replace("|", "")}|${m.recurrence.name}|${m.snoozedUntilEpochMs}|${m.stoppedTodayIso}|${m.repeatDaysMask}"        }
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_META, encoded).apply()
     }
 }
@@ -401,15 +408,60 @@ fun WearCalendarScreen(
     }
 
     // Synced Google Calendar Events
-    val googleCalendarEvents = remember { mutableStateListOf<SyncedGoogleCalendarEvent>() }
-    var lastGCalSyncStatus by remember { mutableStateOf("Synced") }
+    val googleCalendarEvents = remember {
+        mutableStateListOf<SyncedGoogleCalendarEvent>()
+    }
+
+    var lastGCalSyncStatus by remember {
+        mutableStateOf("Not Synced")
+    }
+
+    fun loadGoogleCalendarEvents() {
+        scope.launch {
+            lastGCalSyncStatus = "Syncing..."
+
+            try {
+                val queried = GoogleCalendarWatchBridge
+                    .queryDeviceCalendarEvents(context)
+
+                googleCalendarEvents.clear()
+                googleCalendarEvents.addAll(queried)
+
+                lastGCalSyncStatus = if (queried.isNotEmpty()) {
+                    "${queried.size} GCal Events"
+                } else {
+                    "No Calendar Events"
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                lastGCalSyncStatus = "Calendar Sync Failed"
+            }
+        }
+    }
+
+    val calendarPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                loadGoogleCalendarEvents()
+            } else {
+                lastGCalSyncStatus = "Calendar Permission Denied"
+            }
+        }
 
     fun syncWithGoogleCalendar() {
-        scope.launch {
-            val queried = GoogleCalendarWatchBridge.queryDeviceCalendarEvents(context)
-            googleCalendarEvents.clear()
-            googleCalendarEvents.addAll(queried)
-            lastGCalSyncStatus = if (queried.isNotEmpty()) "${queried.size} GCal Events" else "GCal Active"
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            loadGoogleCalendarEvents()
+        } else {
+            calendarPermissionLauncher.launch(
+                Manifest.permission.READ_CALENDAR
+            )
         }
     }
 
@@ -422,26 +474,33 @@ fun WearCalendarScreen(
     }
 
     // Helper to resolve or seed Rich Metadata for any Task, Event, Date, or Alarm
-    fun metaForTask(task: LifeTask): PlannerItemRichMeta = metaMap.getOrPut(task.stamp.id) {
-        val prio = task.priority.coerceIn(1, 4)
-        PlannerItemRichMeta(
-            itemId = task.stamp.id,
-            kind = PlannerItemKind.TASK,
-            colorKey = when (prio) { 1 -> "coral"; 2 -> "mint"; 3 -> "cobalt"; else -> "amber" },
-            iconKey = "task",
-            tagLabel = task.project.ifBlank { "Work" },
-            priorityLevel = prio,
-            kanbanStage = if (task.complete) KanbanColumnStage.DONE else KanbanColumnStage.TODO,
-            estimatedMinutes = 45,
-            manualProgressPct = if (task.complete) 100 else 0,
-            bulletNotes = listOf("Deliver milestone cleanly", "Verify edge cases on watch"),
-            subtasks = listOf(
-                SubtaskChecklistEntry("${task.stamp.id}-s1", "Prepare spec & architecture", task.complete),
-                SubtaskChecklistEntry("${task.stamp.id}-s2", "Implement & test core flow", task.complete),
-                SubtaskChecklistEntry("${task.stamp.id}-s3", "Final review & sign-off", task.complete)
+    fun metaForTask(task: LifeTask): PlannerItemRichMeta =
+        metaMap.getOrPut(task.stamp.id) {
+            val priority = task.priority.coerceIn(1, 4)
+
+            PlannerItemRichMeta(
+                itemId = task.stamp.id,
+                kind = PlannerItemKind.TASK,
+                colorKey = when (priority) {
+                    1 -> "coral"
+                    2 -> "mint"
+                    3 -> "cobalt"
+                    else -> "amber"
+                },
+                iconKey = "task",
+                tagLabel = task.project.ifBlank { "Work" },
+                priorityLevel = priority,
+                kanbanStage = if (task.complete) {
+                    KanbanColumnStage.DONE
+                } else {
+                    KanbanColumnStage.TODO
+                },
+                estimatedMinutes = 45,
+                manualProgressPct = if (task.complete) 100 else 0,
+                bulletNotes = emptyList(),
+                subtasks = emptyList()
             )
-        )
-    }
+        }
 
     fun metaForEvent(id: String, title: String, location: String): PlannerItemRichMeta = metaMap.getOrPut(id) {
         val isVideo = title.contains("video", true) || title.contains("meet", true) || title.contains("zoom", true) || location.contains("meet", true)
@@ -459,14 +518,15 @@ fun WearCalendarScreen(
                 PlannerItemKind.AUDIO_CALL -> "cobalt"
                 else -> "cobalt"
             },
-            iconKey = if (isVideo) "video" else if (isCall) "call" else "event",
+            iconKey = when (kind) {
+                PlannerItemKind.VIDEO_CALL -> "video"
+                PlannerItemKind.AUDIO_CALL -> "call"
+                else -> "event"
+            },
             tagLabel = if (isVideo || isCall) "Call" else "Agenda",
             estimatedMinutes = 30,
-            bulletNotes = listOf("Location: ${location.ifBlank { "Google Meet" }}", "Join 2 mins early"),
-            subtasks = listOf(
-                SubtaskChecklistEntry("$id-e1", "Review agenda notes", false),
-                SubtaskChecklistEntry("$id-e2", "Complete meeting action items", false)
-            ),
+            bulletNotes = emptyList(),
+            subtasks = emptyList(),
             callPlatformOrLocation = location.ifBlank { "Google Meet" }
         )
     }
@@ -501,18 +561,30 @@ fun WearCalendarScreen(
 
     // Active Entities from Repository
     val today = clockNow.toLocalDate()
+    val currentEpochMs = clockNow
+        .atZone(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
     val allTasks = liveState.tasks.filter { it.stamp.deletedAt == null }
     val allEvents = liveState.events.filter { it.stamp.deletedAt == null }
     val allImportantDates = liveState.importantDates.filter { it.stamp.deletedAt == null }
     val allAlarms = liveState.alarms.filter { it.stamp.deletedAt == null }
 
     // Alarm Ringing Detection
-    val currentClockStr = clockNow.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
-    val ringingAlarm = allAlarms.firstOrNull { it.enabled && it.time == currentClockStr }
+    val currentClockStr = clockNow.toLocalTime()
+        .format(DateTimeFormatter.ofPattern("HH:mm"))
+
+    val ringingAlarm = allAlarms.firstOrNull {
+        it.enabled && it.time == currentClockStr
+    }
 
     LaunchedEffect(ringingAlarm?.stamp?.id) {
         if (ringingAlarm != null) {
-            GoogleCalendarWatchBridge.triggerWatchNotification(context, "Alarm Ringing", ringingAlarm.label)
+            GoogleCalendarWatchBridge.triggerWatchNotification(
+                context,
+                "Alarm Ringing",
+                ringingAlarm.label
+            )
             repeat(15) { cycle ->
                 haptic.click()
                 delay((1_000L - (cycle * 35L)).coerceAtLeast(300L))
@@ -521,10 +593,22 @@ fun WearCalendarScreen(
     }
 
     // Filtered items for Selected Date / Horizon
-    val tasksForSelectedDate = remember(allTasks, selectedDate, horizonView, metaMap.toMap()) {
+    val tasksForSelectedDate = remember(
+        allTasks,
+        selectedDate,
+        horizonView,
+        metaMap.toMap(),
+        clockNow
+    ) {
         allTasks.filter { t ->
             val meta = metaForTask(t)
-            if (meta.stoppedTodayIso == selectedDate.toString()) return@filter false
+
+            if (
+                meta.stoppedTodayIso == selectedDate.toString() ||
+                meta.snoozedUntilEpochMs > currentEpochMs
+            ) {
+                return@filter false
+            }
             when (horizonView) {
                 CalendarHorizonView.DAILY -> taskMatchesDate(t.dueLabel, meta, selectedDate, today)
                 CalendarHorizonView.WEEKLY -> {
@@ -532,22 +616,47 @@ fun WearCalendarScreen(
                     val endW = selectedDate.plusDays(3)
                     (0L..6L).any { offset -> taskMatchesDate(t.dueLabel, meta, startW.plusDays(offset), today) }
                 }
-                CalendarHorizonView.MONTHLY -> true
+                CalendarHorizonView.MONTHLY ->
+                    taskMatchesMonth(
+                        t.dueLabel,
+                        meta,
+                        YearMonth.from(selectedDate),
+                        today
+                    )
             }
         }
     }
 
-    val eventsForSelectedDate = remember(allEvents, googleCalendarEvents.toList(), selectedDate, horizonView, metaMap.toMap()) {
+    val eventsForSelectedDate = remember(
+        allEvents,
+        googleCalendarEvents.toList(),
+        selectedDate,
+        horizonView,
+        metaMap.toMap(),
+        clockNow
+    ) {
         allEvents.filter { e ->
             val meta = metaForEvent(e.stamp.id, e.title, e.location)
-            if (meta.stoppedTodayIso == selectedDate.toString()) return@filter false
+
+            if (
+                meta.stoppedTodayIso == selectedDate.toString() ||
+                meta.snoozedUntilEpochMs > currentEpochMs
+            ) {
+                return@filter false
+            }
             when (horizonView) {
                 CalendarHorizonView.DAILY -> eventMatchesDate(e.timeRange, meta, selectedDate, today)
                 CalendarHorizonView.WEEKLY -> {
                     val startW = selectedDate.minusDays(3)
                     (0L..6L).any { offset -> eventMatchesDate(e.timeRange, meta, startW.plusDays(offset), today) }
                 }
-                CalendarHorizonView.MONTHLY -> true
+                CalendarHorizonView.MONTHLY ->
+                    eventMatchesMonth(
+                        e.timeRange,
+                        meta,
+                        YearMonth.from(selectedDate),
+                        today
+                    )
             }
         }
     }
@@ -558,7 +667,27 @@ fun WearCalendarScreen(
             eventsForSelectedDate.sumOf { itemFillProgress(it.stamp.id, false).toDouble() }
     val overallDayProgress = (totalCompletedScore.toFloat() / totalActionable.toFloat()).coerceIn(0f, 1f)
 
-    val nextEnabledAlarm = allAlarms.filter { it.enabled }.minByOrNull { it.time }
+    val currentLocalTime = clockNow.toLocalTime()
+
+    val nextEnabledAlarm = allAlarms
+        .filter { it.enabled }
+        .mapNotNull { alarm ->
+            val alarmTime = runCatching {
+                LocalTime.parse(alarm.time)
+            }.getOrNull() ?: return@mapNotNull null
+
+            val alarmDate = if (alarmTime.isAfter(currentLocalTime)) {
+                today
+            } else {
+                today.plusDays(1)
+            }
+
+            val nextDateTime = LocalDateTime.of(alarmDate, alarmTime)
+
+            alarm to nextDateTime
+        }
+        .minByOrNull { it.second }
+        ?.first
     val spotlightTask = tasksForSelectedDate.firstOrNull { !it.complete } ?: tasksForSelectedDate.firstOrNull()
     val spotlightEvent = eventsForSelectedDate.firstOrNull()
 
@@ -638,6 +767,15 @@ fun WearCalendarScreen(
             PlannerItemKind.ALARM -> "Daily · Hydrate • Stretch"
             PlannerItemKind.EVENT -> "Studio · 60m · Key agenda"
         }
+        draftRecurrence = when (kind) {
+            PlannerItemKind.BIRTHDAY -> PlannerRecurrenceMode.YEARLY
+            PlannerItemKind.ALARM -> PlannerRecurrenceMode.DAILY
+            else -> PlannerRecurrenceMode.ONCE
+        }
+
+        draftPriority = 1
+
+        draftWeekdays = weekdays
         showUniversalEditor = true
     }
 
@@ -681,9 +819,18 @@ fun WearCalendarScreen(
                                 scheduledTime = timeOrDateInput.take(5)
                             )
                         }
-                        val targetTask = repository.current().tasks.firstOrNull {
-                            it.stamp.id == existingId || it.title.equals(cleanTitle, true)
+                        val currentTasks = repository.current().tasks
+                        val idsBeforeSave = repository.current().tasks
+                            .mapTo(mutableSetOf()) { it.stamp.id }
+                        val targetTask = if (existingId != null) {
+                            currentTasks.firstOrNull { it.stamp.id == existingId }
+                        } else {
+                            currentTasks.firstOrNull {
+                                it.stamp.id !in idsBeforeSave &&
+                                        it.title.equals(cleanTitle, ignoreCase = true)
+                            }
                         }
+
                         if (targetTask != null) {
                             val subList = if (parsedSubtasks.isNotEmpty()) {
                                 parsedSubtasks.mapIndexed { idx, s ->
@@ -817,34 +964,57 @@ fun WearCalendarScreen(
         }
     }
 
-    fun toggleSubtaskCheck(parentId: String, subtaskId: String, isTaskEntity: Boolean) {
+    fun toggleSubtaskCheck(
+        parentId: String,
+        subtaskId: String,
+        isTaskEntity: Boolean
+    ) {
         haptic.click()
-        val currentMeta = metaMap[parentId] ?: return
-        val updatedSubs = currentMeta.subtasks.map { st ->
-            if (st.id == subtaskId) st.copy(done = !st.done) else st
-        }
-        val doneRatio = if (updatedSubs.isNotEmpty()) {
-            ((updatedSubs.count { it.done }.toFloat() / updatedSubs.size) * 100).roundToInt()
-        } else currentMeta.manualProgressPct
 
-        val allSubtasksDone = updatedSubs.isNotEmpty() && updatedSubs.all { it.done }
-        metaMap[parentId] = currentMeta.copy(
+        val currentMeta = metaMap[parentId] ?: return
+
+        val updatedSubs = currentMeta.subtasks.map { subtask ->
+            if (subtask.id == subtaskId) {
+                subtask.copy(done = !subtask.done)
+            } else {
+                subtask
+            }
+        }
+
+        val doneCount = updatedSubs.count { it.done }
+        val totalCount = updatedSubs.size
+
+        val doneRatio = if (totalCount > 0) {
+            ((doneCount.toFloat() / totalCount) * 100f).roundToInt()
+        } else {
+            currentMeta.manualProgressPct
+        }
+
+        val allDone = totalCount > 0 && doneCount == totalCount
+
+        val updatedMeta = currentMeta.copy(
             subtasks = updatedSubs,
             manualProgressPct = doneRatio,
             kanbanStage = when {
-                allSubtasksDone -> KanbanColumnStage.DONE
-                doneRatio > 0 -> KanbanColumnStage.IN_PROGRESS
-                else -> currentMeta.kanbanStage
+                allDone -> KanbanColumnStage.DONE
+                doneCount > 0 -> KanbanColumnStage.IN_PROGRESS
+                else -> KanbanColumnStage.TODO
             }
         )
+
+        metaMap[parentId] = updatedMeta
         persistMeta()
 
-        if (isTaskEntity && allSubtasksDone) {
-            val taskObj = allTasks.firstOrNull { it.stamp.id == parentId }
-            if (taskObj != null && !taskObj.complete) {
-                scope.launch { repository.completeTask(parentId) }
+        if (isTaskEntity) {
+            val task = allTasks.firstOrNull { it.stamp.id == parentId }
+
+            if (task != null && task.complete != allDone) {
+                scope.launch {
+                    repository.completeTask(parentId)
+                }
             }
         }
+
         feedbackOverlay = "Progress: $doneRatio%" to false
     }
 
@@ -859,7 +1029,26 @@ fun WearCalendarScreen(
             }
         }
         if (isTask) {
-            scope.launch { repository.completeTask(itemId) }
+            val task = allTasks.firstOrNull { it.stamp.id == itemId }
+
+            if (task != null) {
+                val nextComplete = !task.complete
+
+                val meta = metaMap[itemId] ?: PlannerItemRichMeta(itemId = itemId)
+
+                metaMap[itemId] = meta.copy(
+                    kanbanStage = if (nextComplete) {
+                        KanbanColumnStage.DONE
+                    } else {
+                        KanbanColumnStage.TODO
+                    },
+                    manualProgressPct = if (nextComplete) 100 else 0
+                )
+
+                persistMeta()
+                scope.launch { repository.completeTask(itemId) }
+            }
+
             feedbackOverlay = "Task Toggled" to false
         } else if (currentMeta != null) {
             val nextPct = if (currentMeta.manualProgressPct >= 100) 0 else (currentMeta.manualProgressPct + 25).coerceAtMost(100)
@@ -885,13 +1074,16 @@ fun WearCalendarScreen(
             stiffness = Spring.StiffnessMediumLow
         )
     )
-
+    fun currentWeekdayMask(): Int =
+        draftWeekdays.fold(0) { mask, day ->
+            mask or (1 shl day.value)
+        }
     val adaptiveSpec = com.creativeblisslabs.wearproductivity.wear.ui.components.core.LocalWearAdaptiveSpec.current
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             VerticalPager(
                 state = pagerState,
@@ -1005,7 +1197,7 @@ fun WearCalendarScreen(
                         onSyncGoogleCalendar = {
                             haptic.click()
                             syncWithGoogleCalendar()
-                            feedbackOverlay = "Google Calendar Synced" to false
+                            feedbackOverlay = "Calendar Sync Requested" to false
                         },
                         onOpenCreator = ::openCreator,
                         onJumpToAgenda = {
@@ -1026,7 +1218,19 @@ fun WearCalendarScreen(
                         activeFilterKind = activeFilterKind,
                         tasks = tasksForSelectedDate,
                         events = eventsForSelectedDate,
-                        gCalEvents = googleCalendarEvents.filter { it.startDate == selectedDate },
+                        gCalEvents = googleCalendarEvents.filter { event ->
+                            when (horizonView) {
+                                CalendarHorizonView.DAILY ->
+                                    event.startDate == selectedDate
+
+                                CalendarHorizonView.WEEKLY ->
+                                    !event.startDate.isBefore(selectedDate.minusDays(3)) &&
+                                            !event.startDate.isAfter(selectedDate.plusDays(3))
+
+                                CalendarHorizonView.MONTHLY ->
+                                    YearMonth.from(event.startDate) == YearMonth.from(selectedDate)
+                            }
+                        },
                         importantDates = allImportantDates,
                         alarms = allAlarms.filter { alarmRepeatOccursOn(it.repeat, selectedDate, today) },
                         expandedItemId = expandedItemId,
@@ -1048,6 +1252,7 @@ fun WearCalendarScreen(
                         onSelectDate = {
                             haptic.click()
                             selectedDate = it
+                            displayedYearMonth = YearMonth.from(it)
                         },
                         onSelectFilterKind = {
                             haptic.click()
@@ -1122,6 +1327,9 @@ fun WearCalendarScreen(
                             draftIconKey = m.iconKey
                             draftPriority = m.priorityLevel
                             draftRecurrence = m.recurrence
+                            draftWeekdays = DayOfWeek.entries.filter { day ->
+                                (m.repeatDaysMask and (1 shl day.value)) != 0
+                            }.toSet()
                             showUniversalEditor = true
                             haptic.click()
                         },
@@ -1140,6 +1348,9 @@ fun WearCalendarScreen(
                             draftColorKey = m.colorKey
                             draftIconKey = m.iconKey
                             draftRecurrence = m.recurrence
+                            draftWeekdays = DayOfWeek.entries.filter { day ->
+                                (m.repeatDaysMask and (1 shl day.value)) != 0
+                            }.toSet()
                             showUniversalEditor = true
                             haptic.click()
                         },
@@ -1188,7 +1399,13 @@ fun WearCalendarScreen(
                             }
                             metaMap[task.stamp.id] = curMeta.copy(
                                 kanbanStage = nextStage,
-                                manualProgressPct = if (nextStage == KanbanColumnStage.DONE) 100 else curMeta.manualProgressPct
+                                manualProgressPct = when (nextStage) {
+                                    KanbanColumnStage.DONE -> 100
+                                    KanbanColumnStage.TODO -> 0
+                                    KanbanColumnStage.BACKLOG -> 0
+                                    KanbanColumnStage.IN_PROGRESS ->
+                                        curMeta.manualProgressPct.coerceIn(1, 99)
+                                }
                             )
                             persistMeta()
                             if (nextStage == KanbanColumnStage.DONE && !task.complete) {
@@ -1269,8 +1486,9 @@ fun WearCalendarScreen(
                             }
                             selectedCountdownList = cleanList
                             if (personTitle.isNotBlank()) {
-                                val validIso = runCatching { LocalDate.parse(dateIsoStr.trim()).toString() }
-                                    .getOrDefault(today.plusDays(14).toString())
+                                val validIso =
+                                    runCatching { LocalDate.parse(dateIsoStr.trim()).toString() }
+                                        .getOrDefault(today.plusDays(14).toString())
                                 scope.launch {
                                     repository.addImportantDate(
                                         personName = cleanList,
@@ -1301,24 +1519,43 @@ fun WearCalendarScreen(
                         },
                         onShiftAlarmTime = { deltaMins ->
                             haptic.click()
-                            val total = (alarmDraftHour * 60 + alarmDraftMinute + deltaMins + 1440) % 1440
+                            val total =
+                                (alarmDraftHour * 60 + alarmDraftMinute + deltaMins + 1440) % 1440
                             alarmDraftHour = total / 60
                             alarmDraftMinute = total % 60
                         },
                         onSaveQuickAlarm = { title, timeStr, bulletRepeat ->
                             val cleanLabel = title.trim().ifBlank { "Wake Alarm" }
-                            val validTime = timeStr.take(5).ifBlank { String.format(Locale.ROOT, "%02d:%02d", alarmDraftHour, alarmDraftMinute) }
-                            val bullets = bulletRepeat.split("•", ",", ";").map { it.trim() }.filter { it.isNotBlank() }
+                            val validTime = timeStr.take(5).ifBlank {
+                                String.format(
+                                    Locale.ROOT,
+                                    "%02d:%02d",
+                                    alarmDraftHour,
+                                    alarmDraftMinute
+                                )
+                            }
+                            val bullets = bulletRepeat.split("•", ",", ";").map { it.trim() }
+                                .filter { it.isNotBlank() }
                             scope.launch {
                                 repository.quickAlarm(validTime, cleanLabel, "Daily")
-                                val created = repository.current().alarms.firstOrNull { it.label.equals(cleanLabel, true) }
+                                val created = repository.current().alarms.firstOrNull {
+                                    it.label.equals(
+                                        cleanLabel,
+                                        true
+                                    )
+                                }
                                 if (created != null) {
                                     metaMap[created.stamp.id] = PlannerItemRichMeta(
                                         itemId = created.stamp.id,
                                         kind = PlannerItemKind.ALARM,
                                         colorKey = "amber",
                                         iconKey = "alarm",
-                                        bulletNotes = bullets.ifEmpty { listOf("Morning Routine", "Check Day Agenda") }
+                                        bulletNotes = bullets.ifEmpty {
+                                            listOf(
+                                                "Morning Routine",
+                                                "Check Day Agenda"
+                                            )
+                                        }
                                     )
                                     persistMeta()
                                 }
@@ -1339,6 +1576,57 @@ fun WearCalendarScreen(
                         onJumpToTop = {
                             haptic.click()
                             scope.launch { pagerState.animateScrollToPage(0) }
+                        },
+                        onEditImportantDate = { date ->
+                            val meta = metaForImportantDate(date)
+
+                            editorKind = if (date.category == DateCategory.Birthday) {
+                                PlannerItemKind.BIRTHDAY
+                            } else {
+                                PlannerItemKind.IMPORTANT_DATE
+                            }
+
+                            editingEntityId = date.stamp.id
+                            draftTitle = date.title
+                            draftTimeOrDate = date.dateIso
+                            draftSubtitleAndMeta = "${date.personName} · ${date.notes}"
+                            draftColorKey = meta.colorKey
+                            draftIconKey = meta.iconKey
+                            draftRecurrence = meta.recurrence
+
+                            showUniversalEditor = true
+
+                            scope.launch {
+                                pagerState.animateScrollToPage(2)
+                            }
+
+                            haptic.click()
+                        },
+                        onEditAlarm = { alarm ->
+                            val meta = metaMap[alarm.stamp.id]
+
+                            editorKind = PlannerItemKind.ALARM
+                            editingEntityId = alarm.stamp.id
+                            draftTitle = alarm.label
+                            draftTimeOrDate = alarm.time
+                            draftSubtitleAndMeta = meta?.bulletNotes?.joinToString(" • ").orEmpty()
+
+                            draftRecurrence =
+                                PlannerRecurrenceMode.entries.firstOrNull {
+                                    it.label.equals(alarm.repeat, ignoreCase = true)
+                                } ?: PlannerRecurrenceMode.ONCE
+
+                            draftWeekdays = DayOfWeek.entries.filter { day ->
+                                (meta?.repeatDaysMask ?: 0) and (1 shl day.value) != 0
+                            }.toSet()
+
+                            showUniversalEditor = true
+
+                            scope.launch {
+                                pagerState.animateScrollToPage(2)
+                            }
+
+                            haptic.click()
                         }
                     )
                 }
@@ -1356,11 +1644,25 @@ fun WearCalendarScreen(
                     },
                     onConfirmSnooze = { mins ->
                         haptic.click()
-                        val cur = metaMap[targetId] ?: PlannerItemRichMeta(itemId = targetId)
-                        metaMap[targetId] = cur.copy(snoozedUntilEpochMs = System.currentTimeMillis() + mins * 60_000L)
-                        persistMeta()
+
+                        val isAlarm = allAlarms.any { it.stamp.id == targetId }
+
+                        if (isAlarm) {
+                            feedbackOverlay = "Alarm snooze scheduler unavailable" to true
+                        } else {
+                            val cur = metaMap[targetId]
+                                ?: PlannerItemRichMeta(itemId = targetId)
+
+                            metaMap[targetId] = cur.copy(
+                                snoozedUntilEpochMs =
+                                    System.currentTimeMillis() + mins * 60_000L
+                            )
+
+                            persistMeta()
+                            feedbackOverlay = "Snoozed for ${mins}m" to false
+                        }
+
                         showSnoozeStopModalForId = null
-                        feedbackOverlay = "Snoozed for ${mins}m" to false
                     },
                     onStopForTodayOnly = {
                         haptic.click()
@@ -1375,16 +1677,20 @@ fun WearCalendarScreen(
                         val tomorrowStr = selectedDate.plusDays(1).toString()
                         val task = allTasks.firstOrNull { it.stamp.id == targetId }
                         if (task != null) {
-                            scope.launch {
-                                repository.editTask(
-                                    id = task.stamp.id,
-                                    newTitle = task.title,
-                                    newProject = task.project,
-                                    newDue = tomorrowStr,
-                                    newPriority = task.priority,
-                                    newScheduledTime = task.scheduledTime,
-                                    newHaptic = task.hapticEnabled
-                                )
+                            if (task == null) {
+                                feedbackOverlay = "Reschedule currently supports tasks only" to true
+                            } else {
+                                scope.launch {
+                                    repository.editTask(
+                                        id = task.stamp.id,
+                                        newTitle = task.title,
+                                        newProject = task.project,
+                                        newDue = tomorrowStr,
+                                        newPriority = task.priority,
+                                        newScheduledTime = task.scheduledTime,
+                                        newHaptic = task.hapticEnabled
+                                    )
+                                }
                             }
                         }
                         showSnoozeStopModalForId = null
@@ -1470,8 +1776,7 @@ private fun PlannerSpotlightBoundaryPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // 1. FULL-SCREEN RADIAL AMBIENT BACKDROP
             Box(
@@ -1595,15 +1900,14 @@ private fun PlannerSpotlightBoundaryPage(
                 }
 
 
-                    val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    val isPlaying = mediaViewModel.isPlaying.collectAsState().value
-                    val progress = mediaViewModel.progress.collectAsState().value
                     com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
-                        isPlaying = isPlaying,
-                        progress = progress,
-                        onTogglePlay = { mediaViewModel.togglePlay() },
-                        onPrevious = { mediaViewModel.skipToPrevious() },
-                        onNext = { mediaViewModel.skipToNext() }
+                        isPlaying = isRinging,
+                        progress = animatedProgress,
+                        onTogglePlay = onPrimaryCompleteOrDismiss,
+                        onPrevious = onOpenSnoozeModal,
+                        onNext = onOpenStopModal,
+                        previousIcon = Icons.Rounded.Snooze,
+                        nextIcon = Icons.Rounded.Stop
                     )
 
 
@@ -1764,7 +2068,7 @@ private fun CalendarMonthAndSyncPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1833,8 +2137,8 @@ private fun CalendarMonthAndSyncPage(
                                     if (isSelected) kind.defaultColor
                                     else MaterialTheme.colorScheme.surfaceContainerHigh
                                 )
-                                .clickable { onSelectFilterKind(kind) }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .clickable { onSelectFilterKind(kind) },
+//                                .padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
@@ -2153,8 +2457,9 @@ private fun UnifiedAgendaAndSubtasksPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -2189,7 +2494,7 @@ private fun UnifiedAgendaAndSubtasksPage(
                                     .clip(CircleShape)
                                     .background(if (selected) kind.defaultColor else MaterialTheme.colorScheme.surfaceContainerHigh)
                                     .clickable { onSelectEditorKind(kind) }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+//                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = kind.label,
@@ -2664,7 +2969,7 @@ private fun KanbanAndEisenhowerPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2896,7 +3201,9 @@ private fun BirthdaysCallsAndAlarmsPage(
     onSaveQuickAlarm: (String, String, String) -> Unit,
     onToggleAlarm: (String) -> Unit,
     onDeleteAlarm: (String) -> Unit,
-    onJumpToTop: () -> Unit
+    onJumpToTop: () -> Unit,
+    onEditImportantDate: (ImportantDate) -> Unit,
+    onEditAlarm: (LifeAlarm) -> Unit
 ) {
     val columnState = rememberTransformingLazyColumnState()
 
@@ -2928,7 +3235,7 @@ private fun BirthdaysCallsAndAlarmsPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2961,7 +3268,8 @@ private fun BirthdaysCallsAndAlarmsPage(
                                 .clip(CircleShape)
                                 .background(if (isSel) Color(0xFFFF9A7A) else MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .clickable { onSelectCountdownList(listName) }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+//                                .padding(horizontal = 8.dp, vertical = 4.dp)
+
                         ) {
                             Text(
                                 text = listName,
@@ -3003,7 +3311,9 @@ private fun BirthdaysCallsAndAlarmsPage(
 
                 WearSwipeableActionCard(
                     onCardClick = {},
-                    onEditClick = { onOpenAddBirthdayOrCall(PlannerItemKind.BIRTHDAY) },
+                    onEditClick = {
+                        onEditImportantDate(d)
+                    },
                     onDeleteClick = { onDeleteImportantDate(d.stamp.id) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -3106,8 +3416,8 @@ private fun BirthdaysCallsAndAlarmsPage(
                 val alarm = alarms[idx]
                 val meta = metaMap[alarm.stamp.id]
                 WearSwipeableActionCard(
-                    onCardClick = { onToggleAlarm(alarm.stamp.id) },
-                    onEditClick = { onToggleAlarm(alarm.stamp.id) },
+                    onCardClick = {  },
+                    onEditClick = { onEditAlarm(alarm) },
                     onDeleteClick = { onDeleteAlarm(alarm.stamp.id) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -3178,7 +3488,9 @@ private fun PlannerSnoozeAndStopModal(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.96f)),
+                .background(
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+                ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -3236,36 +3548,29 @@ private fun PlannerSnoozeAndStopModal(
                     Text("Move to Tomorrow")
                 }
             }
-        
-
-
-            item {
-                val mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                val isPlaying = mediaViewModel.isPlaying.collectAsState().value
-                val progress = mediaViewModel.progress.collectAsState().value
-                com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
-                    isPlaying = isPlaying,
-                    progress = progress,
-                    onTogglePlay = { mediaViewModel.togglePlay() },
-                    onPrevious = { mediaViewModel.skipToPrevious() },
-                    onNext = { mediaViewModel.skipToNext() }
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun SmallCircleIconBtn(icon: ImageVector, onClick: () -> Unit) {
+private fun SmallCircleIconBtn(
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier
-            .size(22.dp)
+            .size(40.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(13.dp), tint = MaterialTheme.colorScheme.onSurface)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(17.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 
@@ -3306,35 +3611,125 @@ private fun ViewportConstrainedCalendarConfirmation(
 // =============================================================================
 // DATE & RECURRENCE MATCHING UTILITIES
 // =============================================================================
-private fun taskMatchesDate(label: String, meta: PlannerItemRichMeta, date: LocalDate, today: LocalDate): Boolean {
-    when (meta.recurrence) {
-        PlannerRecurrenceMode.DAILY -> return true
-        PlannerRecurrenceMode.WEEKDAYS -> return date.dayOfWeek in weekdays
-        PlannerRecurrenceMode.MONTHLY -> return date.dayOfMonth == today.dayOfMonth
-        PlannerRecurrenceMode.YEARLY -> return date.month == today.month && date.dayOfMonth == today.dayOfMonth
-        else -> {}
+private fun parsePlannerDate(
+    value: String,
+    today: LocalDate
+): LocalDate? {
+    val normalized = value.trim()
+
+    return when {
+        normalized.equals("Today", ignoreCase = true) -> today
+        normalized.equals("Tomorrow", ignoreCase = true) -> today.plusDays(1)
+        else -> runCatching { LocalDate.parse(normalized) }.getOrNull()
     }
-    if (label.isBlank() || label.equals("Today", true)) return date == today
-    if (label.equals("Tomorrow", true)) return date == today.plusDays(1)
-    val parsedIso = runCatching { LocalDate.parse(label.trim()) }.getOrNull()
-    if (parsedIso != null) return parsedIso == date
-    return date == today
 }
 
-private fun eventMatchesDate(timeRange: String, meta: PlannerItemRichMeta, date: LocalDate, today: LocalDate): Boolean {
-    when (meta.recurrence) {
-        PlannerRecurrenceMode.DAILY -> return true
-        PlannerRecurrenceMode.WEEKDAYS -> return date.dayOfWeek in weekdays
-        PlannerRecurrenceMode.MONTHLY -> return date.dayOfMonth == today.dayOfMonth
-        PlannerRecurrenceMode.YEARLY -> return date.month == today.month && date.dayOfMonth == today.dayOfMonth
-        else -> {}
+private fun recurrenceMatchesDate(
+    anchorDate: LocalDate,
+    recurrence: PlannerRecurrenceMode,
+    repeatDaysMask: Int,
+    date: LocalDate
+): Boolean {
+    if (date.isBefore(anchorDate)) return false
+
+    return when (recurrence) {
+        PlannerRecurrenceMode.ONCE ->
+            date == anchorDate
+
+        PlannerRecurrenceMode.DAILY ->
+            true
+
+        PlannerRecurrenceMode.WEEKDAYS -> {
+            val mask = repeatDaysMask
+            (mask and (1 shl date.dayOfWeek.value)) != 0
+        }
+
+        PlannerRecurrenceMode.WEEKLY ->
+            date.dayOfWeek == anchorDate.dayOfWeek
+
+        PlannerRecurrenceMode.MONTHLY ->
+            date.dayOfMonth == anchorDate.dayOfMonth
+
+        PlannerRecurrenceMode.YEARLY ->
+            date.month == anchorDate.month &&
+                    date.dayOfMonth == anchorDate.dayOfMonth
     }
-    val iso = Regex("""\b\d{4}-\d{2}-\d{2}\b""").find(timeRange)?.value
-    if (iso != null) {
-        val parsed = runCatching { LocalDate.parse(iso) }.getOrNull()
-        if (parsed != null) return parsed == date
+}
+private fun taskMatchesMonth(
+    dueLabel: String,
+    meta: PlannerItemRichMeta,
+    month: YearMonth,
+    today: LocalDate
+): Boolean {
+    val anchorDate = parsePlannerDate(dueLabel, today) ?: return false
+
+    return (1..month.lengthOfMonth()).any { day ->
+        recurrenceMatchesDate(
+            anchorDate = anchorDate,
+            recurrence = meta.recurrence,
+            repeatDaysMask = meta.repeatDaysMask,
+            date = month.atDay(day)
+        )
     }
-    return date == today
+}
+
+private fun eventMatchesMonth(
+    timeRange: String,
+    meta: PlannerItemRichMeta,
+    month: YearMonth,
+    today: LocalDate
+): Boolean {
+    val anchorDate = Regex("""\b\d{4}-\d{2}-\d{2}\b""")
+        .find(timeRange)
+        ?.value
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        ?: return false
+
+    return (1..month.lengthOfMonth()).any { day ->
+        recurrenceMatchesDate(
+            anchorDate = anchorDate,
+            recurrence = meta.recurrence,
+            repeatDaysMask = meta.repeatDaysMask,
+            date = month.atDay(day)
+        )
+    }
+}
+private fun taskMatchesDate(
+    label: String,
+    meta: PlannerItemRichMeta,
+    date: LocalDate,
+    today: LocalDate
+): Boolean {
+    val anchorDate = parsePlannerDate(label, today) ?: return false
+
+    return recurrenceMatchesDate(
+        anchorDate = anchorDate,
+        recurrence = draftRecurrence,
+        repeatDaysMask = currentWeekdayMask(),
+        date = date
+    )
+}
+
+private fun eventMatchesDate(
+    timeRange: String,
+    meta: PlannerItemRichMeta,
+    date: LocalDate,
+    today: LocalDate
+): Boolean {
+    val isoDate = Regex("""\b\d{4}-\d{2}-\d{2}\b""")
+        .find(timeRange)
+        ?.value
+
+    val anchorDate = isoDate?.let {
+        runCatching { LocalDate.parse(it) }.getOrNull()
+    } ?: today
+
+    return recurrenceMatchesDate(
+        anchorDate = anchorDate,
+        recurrence = draftRecurrence,
+        repeatDaysMask = currentWeekdayMask(),
+        date = date
+    )
 }
 
 private fun extractClockTime(value: String): String? =
@@ -3343,12 +3738,33 @@ private fun extractClockTime(value: String): String? =
 private fun displayEventTime(value: String): String =
     value.trim().ifEmpty { "All Day" }
 
-private fun nextImportantDate(dateIso: String, category: String): LocalDate? {
-    val original = runCatching { LocalDate.parse(dateIso.trim()) }.getOrNull() ?: return null
+private fun nextImportantDate(
+    dateIso: String,
+    category: String
+): LocalDate? {
+    val original = runCatching {
+        LocalDate.parse(dateIso.trim())
+    }.getOrNull() ?: return null
+
     val today = LocalDate.now()
-    var next = runCatching { original.withYear(today.year) }.getOrElse { return original }
-    if (next.isBefore(today)) next = runCatching { next.withYear(today.year + 1) }.getOrElse { next }
-    return next
+
+    // Milestones are one-time dates, not annual events.
+    if (!category.equals(DateCategory.Birthday.name, ignoreCase = true)) {
+        return original
+    }
+
+    // Birthdays recur annually, including leap-day birthdays.
+    for (year in today.year..today.year + 8) {
+        val candidate = runCatching {
+            original.withYear(year)
+        }.getOrNull() ?: continue
+
+        if (!candidate.isBefore(today)) {
+            return candidate
+        }
+    }
+
+    return null
 }
 
 private fun countdownLabel(target: LocalDate, today: LocalDate): String {

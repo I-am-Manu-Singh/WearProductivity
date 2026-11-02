@@ -24,6 +24,7 @@ class LifeOSTileService : TileService() {
 
         val tile = TileBuilders.Tile.Builder()
             .setResourcesVersion("1.0")
+            .setFreshnessIntervalMillis(15 * 60 * 1000L)
             .setTileTimeline(
                 TimelineBuilders.Timeline.Builder()
                     .addTimelineEntry(

@@ -96,7 +96,6 @@ data class Habit(
     val isTimerActive: Boolean = false,
     val remainingSeconds: Int = 0
 )
-
 @Serializable
 data class FastSession(
     val stamp: SyncStamp,
@@ -104,8 +103,56 @@ data class FastSession(
     val startedAtLabel: String,
     val endsAtLabel: String,
     val progress: Float,
-    val active: Boolean
-)
+    val active: Boolean,
+
+    // Persisted lifecycle information
+    val sessionId: String = "",
+    val programId: String = "prog-16-8",
+    val phase: String = "FAST",
+    val paused: Boolean = false,
+    val phaseStartedAtEpochMs: Long = 0L,
+    val elapsedBeforePauseSeconds: Long = 0L,
+    val targetSeconds: Long = 57_600L,
+    val sessionStartedAtEpochMs: Long = 0L,
+    val sessionElapsedBeforePauseSeconds: Long = 0L,
+    val sessionRunStartedAtEpochMs: Long = 0L
+) {
+    val hasSession: Boolean
+        get() = sessionId.isNotBlank()
+
+    val isEatingWindow: Boolean
+        get() = phase == "EAT"
+    fun totalSessionElapsedSeconds(nowEpochMs: Long): Long {
+        val runningSeconds =
+            if (
+                hasSession &&
+                !paused &&
+                sessionRunStartedAtEpochMs > 0L
+            ) {
+                ((nowEpochMs - sessionRunStartedAtEpochMs) / 1_000L)
+                    .coerceAtLeast(0L)
+            } else {
+                0L
+            }
+
+        return (
+                sessionElapsedBeforePauseSeconds + runningSeconds
+                ).coerceAtLeast(0L)
+    }
+
+    fun elapsedSeconds(nowEpochMs: Long): Long {
+        val runningSeconds =
+            if (hasSession && !paused && phaseStartedAtEpochMs > 0L) {
+                ((nowEpochMs - phaseStartedAtEpochMs) / 1_000L)
+                    .coerceAtLeast(0L)
+            } else {
+                0L
+            }
+
+        return (elapsedBeforePauseSeconds + runningSeconds)
+            .coerceIn(0L, targetSeconds.coerceAtLeast(1L))
+    }
+}
 
 @Serializable
 enum class MealType(val displayName: String, val iconName: String) {
@@ -127,6 +174,7 @@ data class FoodLog(
     val carbsGrams: Double,
     val fatGrams: Double,
     val loggedAtLabel: String,
+    val loggedAtEpochMs: Long = 0L,
     val notes: String = ""
 )
 
@@ -146,8 +194,13 @@ data class LifeAlarm(
     val label: String,
     val repeat: String,
     val enabled: Boolean,
-    val haptic: Boolean = true
+    val haptic: Boolean = true,
+    val anchorDateIso: String = "",
+    val repeatDaysMask: Int = 0,
+    val snoozedUntilEpochMs: Long = 0L,
+    val lastFiredOccurrence: String? = null
 )
+
 @Serializable
 data class Expense(
     val stamp: SyncStamp,
@@ -155,9 +208,9 @@ data class Expense(
     val currency: String,
     val category: String,
     val note: String,
-    val dateLabel: String
+    val dateLabel: String,
+    val occurredAtEpochMs: Long = stamp.updatedAt
 )
-
 @Serializable
 data class Budget(
     val stamp: SyncStamp,
@@ -173,7 +226,8 @@ data class CalendarEvent(
     val title: String,
     val timeRange: String,
     val location: String,
-    val reminder: String
+    val reminder: String,
+    val scheduledAtEpochMs: Long? = null
 ) {
     constructor(
         stamp: SyncStamp,
@@ -287,7 +341,10 @@ data class WellnessLog(
     val spo2Pct: Double = 0.0,
     val skinTemperatureC: Double = 0.0,
     val barometerHpa: Double = 0.0,
-    val ambientLux: Float = 0f
+    val ambientLux: Float = 0f,
+    val heartRateMeasuredAtEpochMs: Long? = null,
+    val sleepRecordedAtEpochMs: Long? = null,
+    val sleepSource: String = "Unknown"
 )
 
 @Serializable

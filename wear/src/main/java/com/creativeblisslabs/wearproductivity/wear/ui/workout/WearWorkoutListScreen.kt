@@ -68,12 +68,33 @@ fun WearWorkoutListScreen(
                 bottom = padding.calculateBottomPadding() + 12.dp,
                 start = 12.dp, end = 12.dp
             ),
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                WearExpressiveHeader(title = "YOUR WORKOUT", badgeText = "${exercises.size} EXERCISES")
+                WearExpressiveHeader(title = "YOUR WORKOUT", badgeText = "${exercises.size} exercises · rough time estimate")
+
+            }
+            val missingCount = routineIds.size - exercises.size
+
+            if (missingCount > 0) {
+                item {
+                    Card(
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            "$missingCount exercise(s) could not be loaded.",
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
             item {
                 Text(
@@ -111,8 +132,20 @@ fun WearWorkoutListScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                Box(Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                    contentAlignment = Alignment.Center) { Text("FIT", style = MaterialTheme.typography.labelSmall) }
+                                Box(
+                                    modifier = Modifier
+                                        .size(52.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "EX",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
                             }
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(ex.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
@@ -153,7 +186,16 @@ fun WearWorkoutListScreen(
                 }
             }
             item {
-                Button(onClick = { onStartWorkout(routineIds) }, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        val validIds = exercises.map { it.id }
+                        if (validIds.isNotEmpty()) {
+                            onStartWorkout(validIds)
+                        }
+                    },
+                    enabled = exercises.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text("START WORKOUT", fontWeight = FontWeight.Bold)
                 }
             }
@@ -169,6 +211,7 @@ private fun DetailLine(label: String, value: String) {
     }
 }
 
-private fun estimateMinutes(count: Int) = (count * 3).coerceAtLeast(5)
+private fun estimateMinutes(count: Int) =
+    (count * 3).coerceAtLeast(5)
 private fun String.humanize() = replace('_', ' ').replace('-', ' ')
     .replace(Regex("\\s+"), " ").trim().replaceFirstChar { it.uppercase() }

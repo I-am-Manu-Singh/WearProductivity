@@ -173,7 +173,7 @@ fun WearExpressiveUniversalEditorCard(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -350,7 +350,7 @@ private fun NativeFullScreenTimePicker(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -441,7 +441,7 @@ private fun NativeFullScreenDatePicker(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {

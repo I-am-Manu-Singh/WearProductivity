@@ -22,12 +22,20 @@ class LifeOSComplicationService : SuspendingComplicationDataSourceService() {
         }
     }
 
-    override fun getPreviewData(type: ComplicationType): ComplicationData? {
+    override fun getPreviewData(
+        type: ComplicationType
+    ): ComplicationData? {
+        if (type != ComplicationType.SHORT_TEXT) return null
+
         return ShortTextComplicationData.Builder(
             text = PlainComplicationText.Builder("LifeOS").build(),
-            contentDescription = PlainComplicationText.Builder("Preview").build()
+            contentDescription = PlainComplicationText.Builder(
+                "LifeOS complication preview"
+            ).build()
         )
-            .setTitle(PlainComplicationText.Builder("Ready").build())
+            .setTitle(
+                PlainComplicationText.Builder("Ready").build()
+            )
             .build()
     }
 }

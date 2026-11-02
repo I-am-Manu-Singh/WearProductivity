@@ -3,6 +3,7 @@ package com.creativeblisslabs.wearproductivity.shared
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import com.creativeblisslabs.wearproductivity.shared.FocusType
@@ -13,12 +14,14 @@ import com.creativeblisslabs.wearproductivity.shared.LifeState
 import com.creativeblisslabs.wearproductivity.shared.UserSettings
 import com.creativeblisslabs.wearproductivity.shared.SyncPacket
 import com.creativeblisslabs.wearproductivity.shared.SyncPaths
+import kotlinx.datetime.Clock
 
 class LifeRepository(
     private val store: LifeStore,
     val transport: CompanionSyncTransport = LoopbackCompanionSyncTransport(),
     private val deviceId: String = "phone"
 ) {
+    private val stateMutex = kotlinx.coroutines.sync.Mutex()
     private val _state = MutableStateFlow(LifeSeed.state())
     val state: StateFlow<LifeState> = _state.asStateFlow()
 
@@ -27,18 +30,50 @@ class LifeRepository(
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
+    suspend fun recordHabitCompletion(
+        habitId: String,
+        dateIso: String,
+        completedValue: Double,
+        targetValue: Double
+    )
+
+    suspend fun getHabitHistory(
+        habitId: String,
+        fromDate: String,
+        toDate: String
+    ): List<HabitCompletionRecord>
+
+    suspend fun recordHabitReflection(
+        record: HabitReflectionRecord
+    )
+
+    suspend fun getHabitReflections(
+        habitId: String,
+        fromEpochMs: Long,
+        toEpochMs: Long
+    ): List<HabitReflectionRecord>
+
 
     suspend fun load() {
-        _state.value = store.load()
+        stateMutex.withLock {
+            _state.value = store.load()
+        }
+    }
+    suspend fun persist() {
+        stateMutex.withLock {
+            store.save(_state.value)
+        }
     }
 
     fun current(): LifeState = _state.value
 
     suspend fun syncWithRemote(remote: LifeState) {
-        val result = LifeSyncEngine.merge(_state.value, remote)
-        if (result.acceptedRemoteChanges > 0) {
-            _state.value = result.mergedState
-            persist()
+        stateMutex.withLock {
+            val result = LifeSyncEngine.merge(_state.value, remote)
+            if (result.acceptedRemoteChanges > 0) {
+                _state.value = result.mergedState
+                persist()
+            }
         }
     }
 
@@ -46,9 +81,25 @@ class LifeRepository(
         syncWithRemote(packet.state)
     }
 
-    private suspend fun updateState(block: (LifeState) -> LifeState) {
-        _state.value = block(_state.value)
-        persist()
+    private suspend fun updateState(
+        block: (LifeState) -> LifeState
+    ) {
+        stateMutex.withLock {
+            val oldState = _state.value
+            val newState = block(oldState)
+
+            if (newState == oldState) return
+
+            // Save first. Only publish the new state after persistence succeeds.
+            store.save(newState)
+            _state.value = newState
+
+            runCatching {
+                transport.publish(
+                    SyncPacket(deviceId = deviceId, state = newState)
+                )
+            }
+        }
     }
 
     suspend fun quickTask(
@@ -148,26 +199,213 @@ class LifeRepository(
         }
     }
 
-    suspend fun toggleFast() {
+
+    private fun nowMs(): Long =
+        Clock.System.now().toEpochMilliseconds()
+
+    suspend fun startFast(
+        programId: String,
+        targetSeconds: Long
+    ) {
+        val now = nowMs()
+
         updateState { s ->
+            // Prevent double taps from creating/restarting a session.
+            if (s.fast.hasSession) return@updateState s
+
             s.copy(
                 fast = s.fast.copy(
-                    active = !s.fast.active,
-                    progress = if (s.fast.active) 1f else 0f,
-                    stamp = s.fast.stamp.bump(deviceId)
+                    sessionId = "fast-${ClockId.next()}",
+                    programId = programId,
+                    phase = "FAST",
+                    paused = false,
+                    phaseStartedAtEpochMs = now,
+                    elapsedBeforePauseSeconds = 0L,
+                    targetSeconds = targetSeconds.coerceIn(60L, 72L * 3600L),
+                    active = true,
+                    progress = 0f,
+                    stamp = s.fast.stamp.bump(deviceId),
+                    sessionStartedAtEpochMs = now,
+                    sessionElapsedBeforePauseSeconds = 0L,
+                    sessionRunStartedAtEpochMs = now
+                )
+            )
+        }
+    }
+    suspend fun pauseFast() {
+        val now = nowMs()
+
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession || fast.paused) return@updateState s
+
+            val elapsed = fast.elapsedSeconds(now)
+            val sessionElapsed = fast.totalSessionElapsedSeconds(now)
+            s.copy(
+                fast = fast.copy(
+                    paused = true,
+                    sessionElapsedBeforePauseSeconds = sessionElapsed,
+                    sessionRunStartedAtEpochMs = 0L,
+                    phaseStartedAtEpochMs = 0L,
+                    elapsedBeforePauseSeconds = elapsed,
+                    progress = (elapsed.toFloat() /
+                            fast.targetSeconds.coerceAtLeast(1L)).coerceIn(0f, 1f),
+                    stamp = fast.stamp.bump(deviceId)
                 )
             )
         }
     }
 
-    suspend fun extendFast(minutes: Int) {
+    suspend fun resumeFast() {
+        val now = nowMs()
+
         updateState { s ->
-            if (!s.fast.active) return@updateState s
-            // Logic to extend fasting time (e.g. by adjusting endsAtLabel or internal state)
-            // For now, we'll just bump the stamp to trigger UI updates if needed
+            val fast = s.fast
+
+            if (!fast.hasSession || !fast.paused) return@updateState s
+
             s.copy(
-                fast = s.fast.copy(
-                    stamp = s.fast.stamp.bump(deviceId)
+                fast = fast.copy(
+                    paused = false,
+                    sessionRunStartedAtEpochMs = now,
+                    phaseStartedAtEpochMs = now,
+                    stamp = fast.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+    suspend fun switchFastPhase(
+        eatingWindow: Boolean,
+        targetSeconds: Long
+    ) {
+        val now = nowMs()
+
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession) return@updateState s
+
+            val nextTarget = targetSeconds.coerceIn(60L, 72L * 3600L)
+
+            s.copy(
+                fast = fast.copy(
+                    phase = if (eatingWindow) "EAT" else "FAST",
+                    active = !eatingWindow,
+                    sessionRunStartedAtEpochMs =
+                        if (fast.paused || fast.sessionRunStartedAtEpochMs <= 0L) {
+                            now
+                        } else {
+                            fast.sessionRunStartedAtEpochMs
+                        },
+                    paused = false,
+                    phaseStartedAtEpochMs = now,
+                    elapsedBeforePauseSeconds = 0L,
+                    targetSeconds = nextTarget,
+                    progress = 0f,
+                    stamp = fast.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+
+    suspend fun restartFastPhase() {
+        val now = nowMs()
+
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession) return@updateState s
+
+            s.copy(
+                fast = fast.copy(
+                    paused = false,
+                    phaseStartedAtEpochMs = now,
+                    elapsedBeforePauseSeconds = 0L,
+                    progress = 0f,
+                    stamp = fast.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+
+    suspend fun stopFast() {
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession && !fast.active) return@updateState s
+
+            s.copy(
+                fast = fast.copy(
+                    sessionId = "",
+                    phase = "FAST",
+                    sessionStartedAtEpochMs = 0L,
+                    sessionElapsedBeforePauseSeconds = 0L,
+                    sessionRunStartedAtEpochMs = 0L,
+                    paused = false,
+                    phaseStartedAtEpochMs = 0L,
+                    elapsedBeforePauseSeconds = 0L,
+                    targetSeconds = 16L * 3600L,
+                    active = false,
+                    progress = 0f,
+                    stamp = fast.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+
+    suspend fun restoreFastSession() {
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession) return@updateState s
+
+            // Repair an invalid running timestamp instead of toggling active.
+            if (!fast.paused && fast.phaseStartedAtEpochMs <= 0L) {
+                s.copy(
+                    fast = fast.copy(
+                        paused = true,
+                        phaseStartedAtEpochMs = 0L,
+                        stamp = fast.stamp.bump(deviceId)
+                    )
+                )
+            } else {
+                // Keep active consistent with the stored phase.
+                val shouldBeActive = fast.phase == "FAST"
+
+                if (fast.active == shouldBeActive) s
+                else s.copy(
+                    fast = fast.copy(
+                        active = shouldBeActive,
+                        stamp = fast.stamp.bump(deviceId)
+                    )
+                )
+            }
+        }
+    }
+    suspend fun extendFast(minutes: Int) {
+        if (minutes <= 0) return
+
+        val extraSeconds = minutes.coerceIn(1, 180) * 60L
+
+        updateState { s ->
+            val fast = s.fast
+
+            if (!fast.hasSession || fast.phase != "FAST") {
+                return@updateState s
+            }
+
+            val newTarget = (fast.targetSeconds + extraSeconds)
+                .coerceAtMost(72L * 3600L)
+
+            if (newTarget == fast.targetSeconds) {
+                return@updateState s
+            }
+
+            s.copy(
+                fast = fast.copy(
+                    targetSeconds = newTarget,
+                    stamp = fast.stamp.bump(deviceId)
                 )
             )
         }
@@ -226,18 +464,26 @@ class LifeRepository(
             s.copy(events = (listOf(event) + s.events).distinctBy { it.stamp.id })
         }
     }
-
     suspend fun completeNextRun() {
         updateState { s ->
-            val next = s.runs.firstOrNull { !it.completed }
-            if (next != null) {
-                s.copy(runs = s.runs.map { run ->
-                    if (run.stamp.id == next.stamp.id) run.copy(completed = true, distanceKm = run.distanceKm ?: 2.4, stamp = run.stamp.bump(deviceId)) else run
-                })
-            } else s
+            val next = s.runs.firstOrNull {
+                !it.completed && it.stamp.deletedAt == null
+            } ?: return@updateState s
+
+            s.copy(
+                runs = s.runs.map { run ->
+                    if (run.stamp.id == next.stamp.id) {
+                        run.copy(
+                            completed = true,
+                            stamp = run.stamp.bump(deviceId)
+                        )
+                    } else {
+                        run
+                    }
+                }
+            )
         }
     }
-
     /** Completes a specific planned run without inventing distance or sensor measurements. */
     suspend fun completeRunWorkout(id: String) {
         updateState { s ->
@@ -299,6 +545,7 @@ class LifeRepository(
     suspend fun tickFocus(minutes: Int = 1) {
         tickFocusSecond(minutes * 60)
     }
+
 
     suspend fun startFocusSession(minutes: Int, type: FocusType, subject: String) {
         updateState { s ->
@@ -387,7 +634,21 @@ class LifeRepository(
             else s.copy(focusTopics = s.focusTopics + topic)
         }
     }
+    suspend fun deleteFocusHistory(id: String) {
+        if (id.isBlank()) return
 
+        updateState { s ->
+            s.copy(
+                focusHistory = s.focusHistory.map { item ->
+                    if (item.stamp.id == id) {
+                        item.copy(stamp = item.stamp.delete(deviceId))
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
     suspend fun addWater(amountMl: Int = 250) {
         updateState { s ->
             s.copy(
@@ -411,7 +672,8 @@ class LifeRepository(
         proteinGrams: Double,
         carbsGrams: Double = 0.0,
         fatGrams: Double = 0.0,
-        notes: String = ""
+        notes: String = "",
+
     ) {
         updateState { s ->
             val entry = FoodLog(
@@ -423,6 +685,7 @@ class LifeRepository(
                 carbsGrams = carbsGrams,
                 fatGrams = fatGrams,
                 loggedAtLabel = "Today",
+                loggedAtEpochMs = nowMs(),
                 notes = notes
             )
             s.copy(foodLogs = (listOf(entry) + s.foodLogs).distinctBy { it.stamp.id })
@@ -759,7 +1022,25 @@ class LifeRepository(
             )
         }
     }
-
+    suspend fun dismissAlarm(id: String) {
+        updateState { s ->
+            s.copy(
+                alarms = s.alarms.map { alarm ->
+                    if (alarm.stamp.id == id && alarm.enabled) {
+                        alarm.copy(
+                            enabled = !alarm.repeat.equals(
+                                "Once",
+                                ignoreCase = true
+                            ),
+                            stamp = alarm.stamp.bump(deviceId)
+                        )
+                    } else {
+                        alarm
+                    }
+                }
+            )
+        }
+    }
     suspend fun snoozeActiveAlarm() {
         updateState { s ->
             // Optional: Implement snooze logic or simply bump state to refresh UI
@@ -921,7 +1202,15 @@ class LifeRepository(
 
     suspend fun deleteRunWorkout(id: String) {
         updateState { s ->
-            s.copy(runs = s.runs.filterNot { it.stamp.id == id })
+            s.copy(
+                runs = s.runs.map { run ->
+                    if (run.stamp.id == id) {
+                        run.copy(stamp = run.stamp.delete(deviceId))
+                    } else {
+                        run
+                    }
+                }
+            )
         }
     }
 
@@ -978,10 +1267,6 @@ class LifeRepository(
         updateState { s -> s.copy(settings = block(s.settings)) }
     }
 
-    private suspend fun persist() {
-        store.save(_state.value)
-        transport.publish(SyncPacket(deviceId = deviceId, state = _state.value))
-    }
 }
 
 private fun SyncStamp.bump(deviceId: String): SyncStamp =

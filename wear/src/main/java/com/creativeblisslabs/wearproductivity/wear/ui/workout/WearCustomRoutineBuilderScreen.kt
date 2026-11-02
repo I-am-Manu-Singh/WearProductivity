@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -91,7 +92,16 @@ fun WearCustomRoutineBuilderScreen(
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     var selectedDayIndex by remember { mutableIntStateOf(0) }
     var muscleFocus by remember { mutableStateOf("Chest & Triceps") }
-
+    val muscleFocusOptions = listOf(
+        "General",
+        "Chest & Triceps",
+        "Back & Biceps",
+        "Shoulders",
+        "Arms",
+        "Legs",
+        "Core",
+        "Full Body"
+    )
     // Temporary storage for building days
     val routineDays = remember {
         mutableStateMapOf<String, CustomRoutineDay>().apply {
@@ -114,7 +124,7 @@ fun WearCustomRoutineBuilderScreen(
         TransformingLazyColumn(
             state = columnState,
             contentPadding = PaddingValues(top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding(), start = 12.dp, end = 12.dp),
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -172,13 +182,31 @@ fun WearCustomRoutineBuilderScreen(
                         )
                     }
                     item {
-                        Card(onClick = {}, modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Muscle Focus", style = MaterialTheme.typography.labelSmall)
-                                Text(dayData.muscleFocus, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("Assigned Exercises: ${dayData.exercises.size}", style = MaterialTheme.typography.bodySmall)
-                            }
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "MUSCLE FOCUS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            WearActionButtonGroup(
+                                options = muscleFocusOptions,
+                                selectedIndex = muscleFocusOptions.indexOf(dayData.muscleFocus)
+                                    .coerceAtLeast(0),
+                                onOptionSelected = { index ->
+                                    routineDays[currentDay] = dayData.copy(
+                                        muscleFocus = muscleFocusOptions[index]
+                                    )
+                                }
+                            )
+
+                            Text(
+                                "${dayData.exercises.size} exercises assigned",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                     item {
@@ -213,14 +241,81 @@ fun WearCustomRoutineBuilderScreen(
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(ex.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                     Text("Sets: $draftSets · Reps: $draftReps · Weight: ${draftWeight}kg", style = MaterialTheme.typography.bodySmall)
-                                    
-                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                                        Button(onClick = { if (draftSets > 1) draftSets-- }, modifier = Modifier.weight(1f)) { Text("Sets-") }
-                                        Button(onClick = { draftSets++ }, modifier = Modifier.weight(1f)) { Text("Sets+") }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { draftSets = (draftSets - 1).coerceAtLeast(1) },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftSets > 1
+                                        ) {
+                                            Text("SET -")
+                                        }
+
+                                        Button(
+                                            onClick = { draftSets = (draftSets + 1).coerceAtMost(30) },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftSets < 30
+                                        ) {
+                                            Text("SET +")
+                                        }
                                     }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                                        Button(onClick = { if (draftReps > 1) draftReps-- }, modifier = Modifier.weight(1f)) { Text("Reps-") }
-                                        Button(onClick = { draftReps++ }, modifier = Modifier.weight(1f)) { Text("Reps+") }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { draftReps = (draftReps - 1).coerceAtLeast(1) },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftReps > 1
+                                        ) {
+                                            Text("REP -")
+                                        }
+
+                                        Button(
+                                            onClick = { draftReps = (draftReps + 1).coerceAtMost(200) },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftReps < 200
+                                        ) {
+                                            Text("REP +")
+                                        }
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                draftWeight = (draftWeight - 2.5).coerceAtLeast(0.0)
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftWeight > 0.0
+                                        ) {
+                                            Text("-2.5")
+                                        }
+
+                                        Text(
+                                            "${"%.1f".format(draftWeight)} kg",
+                                            modifier = Modifier.weight(1.5f),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+
+                                        Button(
+                                            onClick = {
+                                                draftWeight = (draftWeight + 2.5).coerceAtMost(500.0)
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            enabled = draftWeight < 500.0
+                                        ) {
+                                            Text("+2.5")
+                                        }
                                     }
                                     Button(
                                         onClick = {
@@ -247,8 +342,14 @@ fun WearCustomRoutineBuilderScreen(
                         items(repository.allExercises.size) { idx ->
                             val ex = repository.allExercises[idx]
                             Card(
-                                onClick = { selectedExerciseForConfig = ex },
-                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    selectedExerciseForConfig = ex
+                                    draftSets = 4
+                                    draftReps = 10
+                                    draftWeight = 50.0
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                             ) {
                                 Row(modifier = Modifier.padding(10.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -288,12 +389,26 @@ fun WearCustomRoutineBuilderScreen(
                     item {
                         Button(
                             onClick = {
+                                val cleanName = routineName.trim()
+                                val savedDays = daysOfWeek.mapNotNull { day ->
+                                    routineDays[day]?.takeIf { it.exercises.isNotEmpty() }
+                                }
+
+                                if (cleanName.isBlank()) {
+                                    return@Button
+                                }
+
+                                if (savedDays.isEmpty()) {
+                                    return@Button
+                                }
+
                                 val routine = CustomWorkoutRoutine(
                                     id = "custom-${System.currentTimeMillis()}",
-                                    name = routineName,
+                                    name = cleanName,
                                     splitType = splitType,
-                                    days = routineDays.values.toList()
+                                    days = savedDays
                                 )
+
                                 val existing = CustomRoutinePrefs.loadRoutines(context)
                                 CustomRoutinePrefs.saveRoutines(context, existing + routine)
                                 onRoutineSaved(routine)

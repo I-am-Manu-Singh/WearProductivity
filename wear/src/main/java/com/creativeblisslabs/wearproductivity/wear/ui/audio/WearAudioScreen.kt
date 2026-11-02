@@ -1,6 +1,7 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.audio
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -107,6 +108,9 @@ import kotlin.math.roundToInt
 import androidx.compose.animation.core.RepeatMode as RepeatGraphics
 
 import com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel
+import kotlin.div
+import kotlin.text.toInt
+
 // =============================================================================
 // AUDIO STUDIO DOMAIN MODELS & ENUMS
 // =============================================================================
@@ -178,6 +182,7 @@ private enum class AudioModalOverlay {
     ADD_TO_PLAYLIST_PICKER,
     FOLDER_SCAN_MANAGER
 }
+
 
 private val eqBandFrequencies = listOf("60Hz", "230Hz", "910Hz", "3.6k", "14k")
 
@@ -516,6 +521,15 @@ private object WearAudioStudioPrefs {
     fun loadBurnedLyricsCache(context: Context, trackId: String): String? =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString("$KEY_BURNED_LYRICS_PREFIX$trackId", null)
+    fun clearPlaybackState(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_LAST_TRACK_ID)
+            .remove(KEY_LAST_TRACK_JSON)
+            .remove(KEY_LAST_ELAPSED_SECS)
+            .remove(KEY_LAST_QUEUE_IDS)
+            .apply()
+    }
 }
 
 // =============================================================================
@@ -530,7 +544,30 @@ private object WearAudioMediaEngine {
             ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
     }
+    private fun readDurationSeconds(file: File): Int {
+        val retriever = MediaMetadataRetriever()
 
+        return try {
+            retriever.setDataSource(file.absolutePath)
+
+            val durationMs = retriever
+                .extractMetadata(
+                    MediaMetadataRetriever.METADATA_KEY_DURATION
+                )
+                ?.toLongOrNull()
+                ?: 0L
+
+            (durationMs / 1000L)
+                .coerceAtLeast(0L)
+                .toInt()
+        } catch (_: Exception) {
+            0
+        } finally {
+            runCatching {
+                retriever.release()
+            }
+        }
+    }
     fun hasBluetoothPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
@@ -553,17 +590,40 @@ private object WearAudioMediaEngine {
         val audioExts = setOf("mp3", "wav", "m4a", "flac", "ogg", "aac", "opus", "amr")
         val likedIds = WearAudioStudioPrefs.loadLikedTrackIds(context)
 
-        fun normalizePath(p: String): String =
-            p.replaceFirst("^/sdcard".toRegex(), Environment.getExternalStorageDirectory()?.absolutePath ?: "/storage/emulated/0")
+        fun normalizePath(path: String): String {
+            val expanded = path.replace(
+                "^/sdcard".toRegex(),
+                Environment.getExternalStorageDirectory()?.absolutePath
+                    ?: "/storage/emulated/0"
+            )
+
+            return runCatching {
+                File(expanded).canonicalPath.trimEnd(File.separatorChar)
+            }.getOrElse {
+                File(expanded).absolutePath.trimEnd(File.separatorChar)
+            }
+        }
 
         val normalizedExcluded = excludedFolders.map { normalizePath(it.trim()) }.filter { it.isNotBlank() }
         val normalizedIncluded = includedFolders.map { normalizePath(it.trim()) }.filter { it.isNotBlank() }
 
-        fun isExcluded(path: String): Boolean {
-            val norm = normalizePath(path)
-            return normalizedExcluded.any { excl -> norm.startsWith(excl, ignoreCase = true) }
+        fun isInsideFolder(path: String, folder: String): Boolean {
+            val normalizedPath = normalizePath(path)
+            val normalizedFolder = normalizePath(folder)
+
+            return normalizedPath.equals(normalizedFolder, ignoreCase = true) ||
+                    normalizedPath.startsWith(
+                        normalizedFolder + File.separator,
+                        ignoreCase = true
+                    )
         }
 
+        fun isExcluded(path: String): Boolean =
+            normalizedExcluded.any { isInsideFolder(path, it) }
+
+        fun isIncluded(path: String): Boolean =
+            normalizedIncluded.isEmpty() ||
+                    normalizedIncluded.any { isInsideFolder(path, it) }
         // 1. Query MediaStore.Audio.Media for indexed files
         runCatching {
             val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -601,15 +661,20 @@ private object WearAudioMediaEngine {
                     val rootDir = Environment.getExternalStorageDirectory()?.absolutePath ?: "/storage/emulated/0"
                     val effectivePath = if (rawPath.isNotBlank()) rawPath else "$rootDir/${relPath.trim('/')}/$displayName"
 
-                    if (isExcluded(effectivePath)) continue
-
+                    if (isExcluded(effectivePath) || !isIncluded(effectivePath)) {
+                        continue
+                    }
                     val contentUri = ContentUris.withAppendedId(uri, id.toLongOrNull() ?: 0L)
                     val fileObj = File(effectivePath)
                     val parentFolder = fileObj.parentFile
                     val rawTitle = (if (titleCol >= 0) cursor.getString(titleCol) else null).orEmpty()
                     val rawArtist = (if (artistCol >= 0) cursor.getString(artistCol) else null).orEmpty()
                     val rawAlbum = (if (albumCol >= 0) cursor.getString(albumCol) else null).orEmpty()
-                    val durMs = (if (durCol >= 0) cursor.getLong(durCol) else 0L).coerceAtLeast(1000L)
+                    val durMs = if (durCol >= 0) {
+                        cursor.getLong(durCol).coerceAtLeast(0L)
+                    } else {
+                        0L
+                    }
                     val ext = fileObj.extension.ifBlank { displayName.substringAfterLast('.', "MP3") }.uppercase(Locale.ROOT)
 
                     val burnedOrSidecar = readBurnedOrSidecarLyrics(context, id, effectivePath, null)
@@ -619,7 +684,7 @@ private object WearAudioMediaEngine {
                         title = rawTitle.ifBlank { displayName.substringBeforeLast('.') }.ifBlank { "Audio Track" },
                         artist = rawArtist.takeIf { it.isNotBlank() && it != "<unknown>" } ?: "Local Artist",
                         album = rawAlbum.takeIf { it.isNotBlank() && it != "<unknown>" } ?: (parentFolder?.name ?: "Watch Audio"),
-                        durationSeconds = (durMs / 1000L).toInt().coerceAtLeast(1),
+                        durationSeconds = (durMs / 1000L).toInt(),
                         folderName = parentFolder?.name ?: "Music",
                         folderPath = parentFolder?.absolutePath ?: "$rootDir/Music",
                         filePath = effectivePath,
@@ -648,7 +713,11 @@ private object WearAudioMediaEngine {
                     dir.walkTopDown().maxDepth(4).forEach { f ->
                         if (f.isFile && f.extension.lowercase(Locale.ROOT) in audioExts && !isExcluded(f.absolutePath)) {
                             if (!discovered.containsKey(f.absolutePath)) {
-                                val trackId = "file-${f.absolutePath.hashCode()}"
+                                val trackId = "file-${
+                                    java.util.UUID.nameUUIDFromBytes(
+                                        f.canonicalPath.toByteArray(Charsets.UTF_8)
+                                    )
+                                }"
                                 val burnedOrSidecar = readBurnedOrSidecarLyrics(context, trackId, f.absolutePath, null)
                                 val ext = f.extension.uppercase(Locale.ROOT).ifBlank { "MP3" }
                                 discovered[f.absolutePath] = WearTrack(
@@ -656,7 +725,7 @@ private object WearAudioMediaEngine {
                                     title = f.nameWithoutExtension,
                                     artist = "Local Watch Track",
                                     album = f.parentFile?.name ?: "Folder",
-                                    durationSeconds = 180,
+                                    durationSeconds = readDurationSeconds(f),
                                     folderName = f.parentFile?.name ?: "Music",
                                     folderPath = f.parentFile?.absolutePath ?: folderPath,
                                     filePath = f.absolutePath,
@@ -891,10 +960,13 @@ private object WearAudioMediaEngine {
     fun switchHardwareAudioOutput(context: Context, route: OutputRouteDevice): Boolean {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return false
         return runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && route.deviceInfo != null) {
+            if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                route.deviceInfo != null
+            ) {
                 audioManager.setCommunicationDevice(route.deviceInfo)
             } else {
-                audioManager.isSpeakerphoneOn = !route.isBluetooth
+                false
             }
             true
         }.getOrDefault(false)
@@ -913,6 +985,7 @@ private object WearAudioMediaEngine {
 // =============================================================================
 // MAIN COMPOSABLE: 3-PAGE WEAR OS AUDIO, LIBRARY, LYRICS & DSP EQUALIZER STUDIO
 // =============================================================================
+@SuppressLint("SuspiciousIndentation")
 @Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -996,6 +1069,9 @@ fun WearAudioScreen(
     var elapsedSeconds by remember { mutableIntStateOf(initialPersistedPlayback.second) }
     var currentTrackAlbumBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     val albumArtCache = remember { mutableStateMapOf<String, ImageBitmap>() }
+    var equalizerSessionId by remember {
+        mutableIntStateOf(0)
+    }
     val equalizerRef = remember { mutableStateOf<Equalizer?>(null) }
 
     var repeatMode by remember { mutableStateOf(RepeatMode.OFF) }
@@ -1093,35 +1169,68 @@ fun WearAudioScreen(
     }
 
     fun triggerLibraryRescan() {
+
         if (isRescanningLibrary) return
         isRescanningLibrary = true
         scanProgressFraction = 0.12f
         scanStatusMessage = "Querying MediaStore..."
 
         scope.launch {
-            hasAudioPerm = WearAudioMediaEngine.hasAudioPermission(context)
+            try {
+                hasAudioPerm = WearAudioMediaEngine.hasAudioPermission(context)
 
-            scanProgressFraction = 0.45f
-            scanStatusMessage = "Scanning audio folders..."
+                scanProgressFraction = 0.45f
+                scanStatusMessage = "Scanning audio folders..."
 
-            val scanned = WearAudioMediaEngine.scanAudioLibrary(context, includedFolders, excludedFolders)
+                val scanned =
+                    WearAudioMediaEngine.scanAudioLibrary(context, includedFolders, excludedFolders)
 
-            scanProgressFraction = 0.82f
-            scanStatusMessage = "Restoring queue & tags..."
+                scanProgressFraction = 0.82f
+                scanStatusMessage = "Restoring queue & tags..."
 
-            if (scanned.isNotEmpty()) {
-                allTracks.clear()
-                allTracks.addAll(scanned)
-                reconcileRestoredState(scanned)
+                if (scanned.isNotEmpty()) {
+                    allTracks.clear()
+                    allTracks.addAll(scanned)
+                    reconcileRestoredState(scanned)
+                }
+
+                outputRoutes.clear()
+                outputRoutes.addAll(WearAudioMediaEngine.getRealOutputRoutes(context))
+
+                scanProgressFraction = 1.0f
+                scanStatusMessage = "Ready (${allTracks.size} tracks)"
+                delay(350L)
             }
 
-            outputRoutes.clear()
-            outputRoutes.addAll(WearAudioMediaEngine.getRealOutputRoutes(context))
+            catch (cancel: kotlinx.coroutines.CancellationException) {
+                throw cancel
+            } catch (error: Exception) {
+                feedbackOverlay =
+                    (error.message ?: "Library scan failed") to true
+            } finally {
+                isRescanningLibrary = false
+            }        }
+    }
+    val bluetoothPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasBtPerm = granted || WearAudioMediaEngine.hasBluetoothPermission(context)
 
-            scanProgressFraction = 1.0f
-            scanStatusMessage = "Ready (${allTracks.size} tracks)"
-            delay(350L)
-            isRescanningLibrary = false
+        if (hasBtPerm) {
+            WearAudioMediaEngine.openBluetoothPairingSettings(context)
+        } else {
+            feedbackOverlay = "Bluetooth Permission Denied" to true
+        }
+    }
+    fun requestBluetoothPairing() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            !WearAudioMediaEngine.hasBluetoothPermission(context)
+        ) {
+            bluetoothPermissionLauncher.launch(
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+        } else {
+            WearAudioMediaEngine.openBluetoothPairingSettings(context)
         }
     }
 
@@ -1270,8 +1379,29 @@ fun WearAudioScreen(
         }
         runCatching {
             val sessionId = audioService?.getAudioSessionId() ?: 0
-            if (equalizerRef.value == null && sessionId > 0) {
-                equalizerRef.value = Equalizer(0, sessionId).apply { enabled = true }
+
+            if (sessionId <= 0) return
+
+            if (equalizerSessionId != sessionId) {
+                runCatching {
+                    equalizerRef.value?.release()
+                }
+
+                equalizerRef.value = null
+                equalizerSessionId = 0
+            }
+
+            if (equalizerRef.value == null) {
+                val newEqualizer = runCatching {
+                    Equalizer(0, sessionId).apply {
+                        enabled = true
+                    }
+                }.getOrNull()
+
+                if (newEqualizer != null) {
+                    equalizerRef.value = newEqualizer
+                    equalizerSessionId = sessionId
+                }
             }
             val eq = equalizerRef.value ?: return
             val numBands = eq.numberOfBands.toInt()
@@ -1282,20 +1412,49 @@ fun WearAudioScreen(
                 val gainMb = (activeEqBands[b] * 100f).roundToInt().coerceIn(minMb, maxMb).toShort()
                 eq.setBandLevel(b.toShort(), gainMb)
             }
+            val actualFrequenciesHz = (0 until eq.numberOfBands.toInt())
+                .map { band ->
+                    eq.getCenterFreq(band.toShort()) / 1000f
+                }
         }
     }
 
-    DisposableEffect(Unit) {
+    LaunchedEffect(
+        audioService,
+        audioService?.getAudioSessionId(),
+        selectedEqPresetId,
+        eqPresets.size
+    ) {
+        val preset = eqPresets.firstOrNull {
+            it.id == selectedEqPresetId
+        } ?: return@LaunchedEffect
+
+        applyHardwareEqualizerGains(preset.bandGainsDb)
+    }
+
+    val latestCurrentTrack by rememberUpdatedState(currentTrack)
+    val latestElapsedSeconds by rememberUpdatedState(elapsedSeconds)
+    val latestQueueIds by rememberUpdatedState(queue.map { it.id })
+    val latestCurrentTrackId by rememberUpdatedState(currentTrackId)
+    DisposableEffect(context) {
         onDispose {
-            if (currentTrackId.isNotBlank() && currentTrackId != "empty") {
+            if (
+                latestCurrentTrackId.isNotBlank() &&
+                latestCurrentTrackId != "empty"
+            ) {
                 WearAudioStudioPrefs.savePlaybackState(
                     context = context,
-                    track = currentTrack,
-                    elapsedSecs = elapsedSeconds,
-                    queueIds = queue.map { it.id }
+                    track = latestCurrentTrack,
+                    elapsedSecs = latestElapsedSeconds,
+                    queueIds = latestQueueIds
                 )
             }
-            runCatching { equalizerRef.value?.release() }
+
+            runCatching {
+                equalizerRef.value?.release()
+            }
+
+            equalizerRef.value = null
         }
     }
 
@@ -1307,7 +1466,40 @@ fun WearAudioScreen(
             audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0)
         }
     }
+    fun selectOutputRoute(route: OutputRouteDevice) {
+        selectedOutputRoute = route
 
+        if (route.isPhoneRemote) {
+            scope.launch(Dispatchers.IO) {
+                runCatching {
+                    val nodes = Wearable
+                        .getNodeClient(context)
+                        .connectedNodes
+                        .await()
+
+                    val node = nodes.firstOrNull() ?: return@runCatching
+
+                    Wearable.getMessageClient(context)
+                        .sendMessage(
+                            node.id,
+                            "/lifeos/audio_route_phone",
+                            "SPEAKER".toByteArray()
+                        )
+                        .await()
+                }.onFailure {
+                    feedbackOverlay = "Phone Route Unavailable" to true
+                }
+            }
+        } else {
+            runCatching {
+                WearAudioMediaEngine.switchHardwareAudioOutput(context, route)
+            }.onFailure {
+                feedbackOverlay = "Output Switch Failed" to true
+            }
+        }
+
+        feedbackOverlay = "Output: ${route.name}" to false
+    }
     fun rebuildShufflePool(anchorTrack: WearTrack, scopeMode: ShuffleScopeMode): List<String> {
         val pool = when (scopeMode) {
             ShuffleScopeMode.FOLDER -> queue.filter { it.folderPath.equals(anchorTrack.folderPath, ignoreCase = true) }
@@ -1319,65 +1511,94 @@ fun WearAudioScreen(
 
     fun togglePlayPause() {
         val svc = audioService
-        if (svc != null) {
-            val isNowPlaying = svc.togglePlayPause(
-                fallbackUri = currentTrack.contentUri,
-                fallbackTitle = currentTrack.title,
-                fallbackTrackId = currentTrack.id,
-                fallbackPositionMs = elapsedSeconds * 1000
-            )
-            isPlaying = isNowPlaying
-        } else {
-            isPlaying = !isPlaying
+
+        if (svc == null) {
+            isPlaying = false
+            feedbackOverlay = "Audio Service Unavailable" to true
+            return
         }
 
-        // Fixed: Pass 'currentTrack' (WearTrack) instead of 'currentTrackId' (String)
-        if (currentTrackId.isNotBlank() && currentTrackId != "empty") {
-            WearAudioStudioPrefs.savePlaybackState(
-                context = context,
-                track = currentTrack,
-                elapsedSecs = elapsedSeconds,
-                queueIds = queue.map { it.id }
-            )
+        val uri = currentTrack.contentUri
+            ?: currentTrack.filePath
+                .takeIf { it.isNotBlank() }
+                ?.let { Uri.fromFile(File(it)) }
+
+        if (uri == null || currentTrack.id == "empty") {
+            isPlaying = false
+            feedbackOverlay = "No Valid Track Loaded" to true
+            return
         }
+
+        isPlaying = svc.togglePlayPause(
+            fallbackUri = uri,
+            fallbackTitle = currentTrack.title,
+            fallbackTrackId = currentTrack.id,
+            fallbackPositionMs = elapsedSeconds * 1000
+        )
+
+        WearAudioStudioPrefs.savePlaybackState(
+            context = context,
+            track = currentTrack,
+            elapsedSecs = elapsedSeconds,
+            queueIds = queue.map { it.id }
+        )
+
         haptic.click()
     }
-    fun selectTrack(trackId: String, startPlayback: Boolean = true) {
-        val targetIdx = queue.indexOfFirst { it.id == trackId }
-        val resolved: WearTrack = if (targetIdx < 0) {
-            val fromAll = allTracks.firstOrNull { it.id == trackId }
-            if (fromAll != null) {
-                queue.add(0, fromAll)
-                fromAll
-            } else {
+    fun selectTrack(
+        trackId: String,
+        startPlayback: Boolean = true,
+        resetShuffle: Boolean = true
+    ) {
+        val resolved = queue.firstOrNull { it.id == trackId }
+            ?: allTracks.firstOrNull { it.id == trackId }
+            ?: run {
                 feedbackOverlay = "Track Unavailable" to true
-                haptic.click()
                 return
             }
-        } else {
-            queue[targetIdx]
+
+        val uriToPlay = resolved.contentUri
+            ?: resolved.filePath
+                .takeIf { it.isNotBlank() }
+                ?.let { Uri.fromFile(File(it)) }
+
+        val svc = audioService
+
+        if (startPlayback && (svc == null || uriToPlay == null)) {
+            feedbackOverlay = (
+                    if (svc == null) {
+                        "Audio Service Unavailable"
+                    } else {
+                        "Track File Unavailable"
+                    }
+                    ) to true
+            return
+        }
+
+        if (queue.none { it.id == resolved.id }) {
+            queue.add(0, resolved)
         }
 
         currentTrackId = resolved.id
         restoredTrackSnapshot = resolved
         elapsedSeconds = 0
-        isPlaying = startPlayback
-        currentTrackAlbumBitmap = albumArtCache[resolved.id] ?: albumArtCache[resolved.album]
+        isPlaying = false
+        currentTrackAlbumBitmap =
+            albumArtCache[resolved.id] ?: albumArtCache[resolved.album]
 
-        val uriToPlay = resolved.contentUri
-            ?: resolved.filePath.takeIf { it.isNotBlank() }?.let { Uri.fromFile(File(it)) }
-
-        if (uriToPlay != null && audioService != null) {
-            audioService?.playTrack(
+        if (uriToPlay != null && svc != null) {
+            svc.playTrack(
                 uri = uriToPlay,
                 title = resolved.title,
                 trackId = resolved.id,
                 startPositionMs = 0,
                 autoStart = startPlayback
             )
+
+            isPlaying = startPlayback
         }
 
-        if (shuffleScope != ShuffleScopeMode.OFF) {
+        if (shuffleScope != ShuffleScopeMode.OFF && resetShuffle) {
             shuffleOrder = rebuildShufflePool(resolved, shuffleScope)
             shufflePosition = 0
         }
@@ -1389,10 +1610,39 @@ fun WearAudioScreen(
             queueIds = queue.map { it.id }
         )
 
-        feedbackOverlay = "Playing ${resolved.title}" to false
+        feedbackOverlay = if (startPlayback) {
+            "Playing ${resolved.title}"
+        } else {
+            "Loaded ${resolved.title}"
+        } to false
+
         haptic.click()
     }
+    fun replaceQueueAndPlay(
+        tracks: List<WearTrack>,
+        filterTitle: String
+    ) {
+        val validTracks = tracks.distinctBy { it.id }
 
+        if (validTracks.isEmpty()) {
+            feedbackOverlay = "No Tracks Found" to true
+            return
+        }
+
+        queue.clear()
+        queue.addAll(validTracks)
+
+        activeFilterTitle = filterTitle
+        shuffleOrder = emptyList()
+        shufflePosition = 0
+
+        activeLibraryTab = AudioLibraryTab.QUEUE
+
+        selectTrack(
+            trackId = validTracks.first().id,
+            startPlayback = true
+        )
+    }
     fun seekToFraction(fraction: Float) {
         val targetSec = (fraction.coerceIn(0f, 1f) * currentTrack.durationSeconds).roundToInt().coerceIn(0, currentTrack.durationSeconds)
         elapsedSeconds = targetSec
@@ -1434,10 +1684,18 @@ fun WearAudioScreen(
             val previousPosition = shufflePosition - 1
             if (previousPosition >= 0) {
                 shufflePosition = previousPosition
-                selectTrack(shuffleOrder[shufflePosition], startPlayback = true)
+                selectTrack(
+                    shuffleOrder[shufflePosition],
+                    startPlayback = true,
+                    resetShuffle = false
+                )
             } else if (repeatMode == RepeatMode.QUEUE_ALL || repeatMode == RepeatMode.FOLDER) {
                 shufflePosition = shuffleOrder.lastIndex
-                selectTrack(shuffleOrder[shufflePosition], startPlayback = true)
+                selectTrack(
+                    shuffleOrder[shufflePosition],
+                    startPlayback = true,
+                    resetShuffle = false
+                )
             } else {
                 seekToFraction(0f)
             }
@@ -1490,7 +1748,11 @@ fun WearAudioScreen(
             } else {
                 shufflePosition = nextPosition
             }
-            selectTrack(shuffleOrder[shufflePosition], startPlayback = true)
+            selectTrack(
+                shuffleOrder[shufflePosition],
+                startPlayback = true,
+                resetShuffle = false
+            )
             return
         }
 
@@ -1639,7 +1901,7 @@ fun WearAudioScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (showLyricsOverlay) {
                 M3FullScreenLyricsOverlay(
@@ -1647,10 +1909,19 @@ fun WearAudioScreen(
                     elapsedSeconds = elapsedSeconds,
                     isFetchingLrcLib = isFetchingLrcLib,
                     onSeek = { fraction ->
+                        val wasPlaying = isPlaying
+
                         seekToFraction(fraction)
-                        audioService?.resume()
-                        isPlaying = true
-                        feedbackOverlay = "Seeked to ${formatPlaybackTime(elapsedSeconds)}" to false
+
+                        if (wasPlaying) {
+                            audioService?.resume()
+                        }
+
+                        isPlaying = wasPlaying
+
+//                        feedbackOverlay =
+//                            "Seeked to ${formatPlaybackTime(elapsedSeconds)}" to false
+
                         haptic.click()
                     },
                     onFetchLrcLibNow = {
@@ -1676,7 +1947,7 @@ fun WearAudioScreen(
                             val ok = WearAudioMediaEngine.burnLyricsToAudioFile(context, currentTrack, lrcToBurn)
                             val qIdx = queue.indexOfFirst { it.id == currentTrack.id }
                             if (qIdx >= 0) queue[qIdx] = queue[qIdx].copy(lyrics = lrcToBurn, lyricsSourceLabel = "Burned in File")
-                            feedbackOverlay = (if (ok) "Lyrics Burned to Audio File!" else "Saved to Tag Cache") to false
+                            feedbackOverlay = (if (ok) "Lyrics Saved Locally" else "Lyrics Cache Saved") to !ok
                         }
                     },
                     onClose = {
@@ -1787,10 +2058,40 @@ fun WearAudioScreen(
                             onMoveQueueTrack = ::moveQueueItemOrder,
                             onRemoveFromQueue = { id ->
                                 haptic.click()
-                                queue.removeAll { it.id == id }
-                                WearAudioStudioPrefs.savePlaybackState(context, currentTrack,
-                                    elapsedSeconds, queue.map { it.id })
-                                feedbackOverlay = "Removed from Queue" to false
+
+                                val removedIndex = queue.indexOfFirst { it.id == id }
+
+                                if (removedIndex >= 0) {
+                                    val wasCurrentTrack = id == currentTrackId
+
+                                    queue.removeAll { it.id == id }
+
+                                    if (wasCurrentTrack) {
+                                        if (queue.isNotEmpty()) {
+                                            val nextIndex = removedIndex.coerceAtMost(queue.lastIndex)
+                                            selectTrack(queue[nextIndex].id, startPlayback = true)
+                                        } else {
+                                            audioService?.pause()
+                                            isPlaying = false
+                                            elapsedSeconds = 0
+                                            currentTrackId = ""
+                                            restoredTrackSnapshot = null
+                                            currentTrackAlbumBitmap = null
+                                            shuffleOrder = emptyList()
+                                            shufflePosition = 0
+                                            feedbackOverlay = "Queue Empty" to false
+                                            WearAudioStudioPrefs.clearPlaybackState(context)
+                                        }
+                                    } else {
+                                        WearAudioStudioPrefs.savePlaybackState(
+                                            context,
+                                            currentTrack,
+                                            elapsedSeconds,
+                                            queue.map { it.id }
+                                        )
+                                        feedbackOverlay = "Removed from Queue" to false
+                                    }
+                                }
                             },
                             onOpenAddToPlaylist = { id ->
                                 haptic.click()
@@ -1831,51 +2132,67 @@ fun WearAudioScreen(
                                 } else {
                                     allTracks.filter { it.id in pl.trackIds }
                                 }
-                                queue.clear()
-                                queue.addAll(matching.ifEmpty { allTracks })
-                                activeFilterTitle = "Playlist: ${pl.name}"
-                                activeLibraryTab = AudioLibraryTab.QUEUE
-                                queue.firstOrNull()?.let { selectTrack(it.id, startPlayback = true) }
+
+                                replaceQueueAndPlay(
+                                    tracks = matching,
+                                    filterTitle = "Playlist: ${pl.name}"
+                                )
                             },
                             onSelectSquareAlbum = { albumTitle ->
                                 haptic.click()
                                 selectedAlbumForSquareDrilldown = albumTitle
                             },
                             onPlayEntireAlbum = { albumTitle ->
-                                val matching = allTracks.filter { it.album.equals(albumTitle, ignoreCase = true) }
-                                queue.clear()
-                                queue.addAll(matching.ifEmpty { allTracks })
-                                activeFilterTitle = "Album: $albumTitle"
+                                val matching = allTracks.filter {
+                                    it.album.equals(albumTitle, ignoreCase = true)
+                                }
+
                                 selectedAlbumForSquareDrilldown = null
-                                activeLibraryTab = AudioLibraryTab.QUEUE
-                                queue.firstOrNull()?.let { selectTrack(it.id, startPlayback = true) }
+
+                                replaceQueueAndPlay(
+                                    tracks = matching,
+                                    filterTitle = "Album: $albumTitle"
+                                )
                             },
                             onSelectArtist = { artistName ->
                                 haptic.click()
                                 selectedArtistForDrilldown = artistName
                             },
                             onPlayEntireArtist = { artistName ->
-                                val matching = allTracks.filter { it.artist.equals(artistName, ignoreCase = true) }
-                                queue.clear()
-                                queue.addAll(matching.ifEmpty { allTracks })
-                                activeFilterTitle = "Artist: $artistName"
+                                val matching = allTracks.filter {
+                                    it.artist.equals(artistName, ignoreCase = true)
+                                }
+
                                 selectedArtistForDrilldown = null
-                                activeLibraryTab = AudioLibraryTab.QUEUE
-                                queue.firstOrNull()?.let { selectTrack(it.id, startPlayback = true) }
+
+                                replaceQueueAndPlay(
+                                    tracks = matching,
+                                    filterTitle = "Artist: $artistName"
+                                )
                             },
                             onNavigateFolder = { path ->
                                 haptic.click()
                                 currentFolderBrowserPath = path
                             },
                             onPlayFolderQueue = { folderPath, shuffleFolder ->
-                                val matching = allTracks.filter { it.folderPath.equals(folderPath, ignoreCase = true) }
-                                    .ifEmpty { allTracks }
-                                queue.clear()
-                                queue.addAll(if (shuffleFolder) matching.shuffled() else matching)
-                                if (shuffleFolder) shuffleScope = ShuffleScopeMode.FOLDER
-                                activeFilterTitle = "Folder: ${File(folderPath).name}"
-                                activeLibraryTab = AudioLibraryTab.QUEUE
-                                queue.firstOrNull()?.let { selectTrack(it.id, startPlayback = true) }
+                                val matching = allTracks.filter {
+                                    it.folderPath.equals(folderPath, ignoreCase = true)
+                                }
+
+                                if (matching.isEmpty()) {
+                                    feedbackOverlay = "Folder Is Empty" to true
+                                } else {
+                                    shuffleScope = if (shuffleFolder) {
+                                        ShuffleScopeMode.FOLDER
+                                    } else {
+                                        ShuffleScopeMode.OFF
+                                    }
+
+                                    replaceQueueAndPlay(
+                                        tracks = matching,
+                                        filterTitle = "Folder: ${File(folderPath).name}"
+                                    )
+                                }
                             },
                             onJumpToEqPage = {
                                 haptic.click()
@@ -1930,29 +2247,14 @@ fun WearAudioScreen(
                             },
                             onSelectOutputRoute = { route ->
                                 haptic.click()
-                                selectedOutputRoute = route
-                                if (route.isPhoneRemote) {
-                                    scope.launch(Dispatchers.IO) {
-                                        runCatching {
-                                            val nodes = Wearable.getNodeClient(context).connectedNodes.await()
-                                            nodes.firstOrNull()?.let { node ->
-                                                Wearable.getMessageClient(context)
-                                                    .sendMessage(node.id, "/lifeos/audio_route_phone", "SPEAKER".toByteArray())
-                                                    .await()
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    WearAudioMediaEngine.switchHardwareAudioOutput(context, route)
-                                }
-                                feedbackOverlay = "Output: ${route.name}" to false
+                                selectOutputRoute(route)
                             },
-                            onScanAndPairBluetooth = {
+                            onPairBluetoothDevice = {
                                 haptic.click()
-                                if (!WearAudioMediaEngine.hasBluetoothPermission(context)) {
-                                    permissionLauncher.launch(WearAudioMediaEngine.requiredAudioPermissions())
+                                onPairBluetoothDevice = {
+                                    haptic.click()
+                                    requestBluetoothPairing()
                                 }
-                                WearAudioMediaEngine.openBluetoothPairingSettings(context)
                             },
                             onPhoneRemoteCommand = { cmd ->
                                 haptic.click()
@@ -1990,13 +2292,11 @@ fun WearAudioScreen(
                         onVolumeChange = ::updateSystemVolume,
                         onSelectRoute = { route ->
                             haptic.click()
-                            selectedOutputRoute = route
-                            WearAudioMediaEngine.switchHardwareAudioOutput(context, route)
-                            feedbackOverlay = "Route: ${route.name}" to false
+                            selectOutputRoute(route)
                         },
                         onPairBluetoothDevice = {
                             haptic.click()
-                            WearAudioMediaEngine.openBluetoothPairingSettings(context)
+                            requestBluetoothPairing()
                         },
                         onDismiss = {
                             haptic.click()
@@ -2104,13 +2404,18 @@ fun WearAudioScreen(
                 AudioModalOverlay.NONE -> {}
             }
 
-            VerticalPagerIndicator(
-                currentPage = pagerState.currentPage,
-                pageCount = 3,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = adaptiveSpec.screenWidth * 0.02f)
-            )
+            if (
+                !showLyricsOverlay &&
+                activeModalOverlay == AudioModalOverlay.NONE
+            ) {
+                VerticalPagerIndicator(
+                    currentPage = pagerState.currentPage,
+                    pageCount = 3,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = adaptiveSpec.screenWidth * 0.02f)
+                )
+            }
 
             feedbackOverlay?.let { (msg, isError) ->
                 ViewportConstrainedAudioConfirmation(
@@ -2196,8 +2501,9 @@ private fun M3ExpressiveCanvasPlayerPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment =
+                Alignment.Center
         ) {
             val artworkPrimary = MaterialTheme.colorScheme.primaryContainer
             val artworkTertiary = MaterialTheme.colorScheme.tertiaryContainer
@@ -2538,7 +2844,9 @@ private fun M3AudioLibraryBrowserPage(
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         edgeButton = {
             WearAnchoredEdgeButton(
                 onClick = onReturnToPlayer,
@@ -2555,9 +2863,7 @@ private fun M3AudioLibraryBrowserPage(
                 start = spec.outerHorizontalMargin,
                 end = spec.outerHorizontalMargin
             ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2619,7 +2925,9 @@ private fun M3AudioLibraryBrowserPage(
                     if (!hasAudioPerm) {
                         Button(
                             onClick = onRequestAudioPermissions,
-                            modifier = Modifier.weight(1f).heightIn(min = 34.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 34.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -2633,7 +2941,9 @@ private fun M3AudioLibraryBrowserPage(
                     }
                     FilledTonalButton(
                         onClick = onOpenFolderManagerModal,
-                        modifier = Modifier.weight(1f).heightIn(min = 34.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 34.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Icon(Icons.Rounded.CreateNewFolder, contentDescription = null, modifier = Modifier.size(13.dp))
@@ -2642,7 +2952,9 @@ private fun M3AudioLibraryBrowserPage(
                     }
                     FilledTonalButton(
                         onClick = onRescanLibrary,
-                        modifier = Modifier.weight(1f).heightIn(min = 34.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 34.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(13.dp))
@@ -3260,7 +3572,11 @@ private fun SquareAlbumArtCard(
             .aspectRatio(1f)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(0.8.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+            .border(
+                0.8.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                RoundedCornerShape(16.dp)
+            )
             .clickable(onClick = onClick)
     ) {
         Box(
@@ -3327,7 +3643,7 @@ private fun M3EqualizerAndOutputStudioPage(
     onSaveCustomEqPreset: (String) -> Unit,
     onOpenCurvedVolumeOverlay: () -> Unit,
     onSelectOutputRoute: (OutputRouteDevice) -> Unit,
-    onScanAndPairBluetooth: () -> Unit,
+    onPairBluetoothDevice: () -> Unit,
     onPhoneRemoteCommand: (String) -> Unit,
     onReturnToPlayer: () -> Unit
 ) {
@@ -3336,7 +3652,9 @@ private fun M3EqualizerAndOutputStudioPage(
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         edgeButton = {
             WearAnchoredEdgeButton(
                 onClick = onReturnToPlayer,
@@ -3353,9 +3671,7 @@ private fun M3EqualizerAndOutputStudioPage(
                 start = spec.outerHorizontalMargin,
                 end = spec.outerHorizontalMargin
             ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -3368,7 +3684,7 @@ private fun M3EqualizerAndOutputStudioPage(
 
             item {
                 Card(
-                    onClick = onToggleCustomEqCreator,
+                    onClick = {  },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -3655,7 +3971,7 @@ private fun M3EqualizerAndOutputStudioPage(
 
             item {
                 FilledTonalButton(
-                    onClick = onScanAndPairBluetooth,
+                    onClick = onPairBluetoothDevice,
                     icon = { Icon(Icons.Rounded.BluetoothSearching, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -3752,16 +4068,7 @@ private fun M3FullScreenLyricsOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onClose() },
-                    onLongPress = {
-                        haptic.click()
-                        onFetchLrcLibNow()
-                    }
-                )
-            },
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -3856,7 +4163,8 @@ private fun M3FullScreenLyricsOverlay(
                             )
                             .clickable {
                                 haptic.click()
-                                val durationMs = currentTrack.durationSeconds.coerceAtLeast(1).toFloat() * 1_000f
+                                val durationMs =
+                                    currentTrack.durationSeconds.coerceAtLeast(1).toFloat() * 1_000f
                                 onSeek((line.timestampMs.toFloat() / durationMs).coerceIn(0f, 1f))
                             }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -3882,7 +4190,11 @@ private fun M3FullScreenLyricsOverlay(
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f), Color.Black)
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.9f),
+                            Color.Black
+                        )
                     )
                 )
                 .padding(vertical = 10.dp),
@@ -3898,10 +4210,10 @@ private fun M3FullScreenLyricsOverlay(
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .clickable { onBurnLyricsToFile(lyricsSource) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+//                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Burn LRC",
+                            text = "Save LRC",
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.Bold
@@ -3949,7 +4261,9 @@ private fun M3QuickTrackOptionsModal(
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.96f)),
         edgeButton = {
             WearAnchoredEdgeButton(onClick = onDismiss, label = "Close", icon = Icons.Default.Close)
         }
@@ -3962,9 +4276,7 @@ private fun M3QuickTrackOptionsModal(
                 start = 14.dp,
                 end = 14.dp
             ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.96f)),
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.96f)),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -4048,7 +4360,9 @@ private fun M3AddToPlaylistModal(
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.96f)),
         edgeButton = {
             WearAnchoredEdgeButton(onClick = onDismiss, label = "Cancel", icon = Icons.Default.Close)
         }
@@ -4061,9 +4375,7 @@ private fun M3AddToPlaylistModal(
                 start = 14.dp,
                 end = 14.dp
             ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.96f)),
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.96f)),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -4120,7 +4432,9 @@ private fun M3LibraryFolderScanManagerModal(
     ScreenScaffold(
         scrollState = columnState,
         timeText = { TimeText() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.97f)),
         edgeButton = {
             WearAnchoredEdgeButton(onClick = onRescanNow, label = "Rescan Now", icon = Icons.Rounded.Refresh)
         }
@@ -4133,9 +4447,7 @@ private fun M3LibraryFolderScanManagerModal(
                 start = 12.dp,
                 end = 12.dp
             ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.97f)),
+            modifier = Modifier,
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -4285,13 +4597,18 @@ private fun MiniCircleIconBtn(
 ) {
     Box(
         modifier = Modifier
-            .size(22.dp)
+            .size(40.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(12.dp), tint = tint)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = tint
+        )
     }
 }
 

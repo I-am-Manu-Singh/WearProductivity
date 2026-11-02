@@ -8,6 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -15,6 +18,10 @@ import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Card
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
@@ -38,7 +45,12 @@ fun WearExerciseSetupScreen(
     var goal by remember { mutableStateOf(savedPrefs.goal) }
     var experience by remember { mutableStateOf(savedPrefs.experience) }
     var discipline by remember { mutableStateOf(savedPrefs.discipline) }
-    var duration by remember { mutableIntStateOf(savedPrefs.durationMinutes) }
+    var duration by remember {
+        mutableIntStateOf(savedPrefs.durationMinutes.coerceIn(5, 60))
+    }
+    val scope = rememberCoroutineScope()
+    var isGenerating by remember { mutableStateOf(false) }
+    var generationError by remember { mutableStateOf<String?>(null) }
     val muscles = listOf("Full Body", "Chest", "Back", "Shoulders", "Arms", "Legs", "Core")
     val equipment = listOf("bodyweight", "dumbbell", "barbell", "machine", "cable", "resistance band")
     val goals = listOf("General fitness", "Build muscle", "Strength", "Weight loss", "Endurance", "Mobility")
@@ -49,8 +61,6 @@ fun WearExerciseSetupScreen(
     val selectedEquipment = remember { mutableStateListOf<String>().apply { addAll(savedPrefs.equipment) } }
     val avoidTargets = remember { mutableStateListOf<String>().apply { addAll(savedPrefs.avoidTargets) } }
     val avoidOptions = listOf("Shoulders", "Knees", "Back", "Wrists")
-    val recommendations = remember { mutableStateListOf<String>() }
-
     ScreenScaffold(scrollState = state, timeText = { TimeText() }) { padding ->
         TransformingLazyColumn(
             state = state,
@@ -59,7 +69,7 @@ fun WearExerciseSetupScreen(
                 bottom = padding.calculateBottomPadding() + 12.dp,
                 start = 12.dp, end = 12.dp
             ),
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -159,25 +169,80 @@ fun WearExerciseSetupScreen(
                     }
                     Button(
                         onClick = {
-                            if (step < 3) step++ else {
+                            if (isGenerating) return@Button
+
+                            if (step < 3) {
+                                if (step == 2 && selectedMuscles.isEmpty()) {
+                                    generationError = "Select at least one muscle group."
+                                    return@Button
+                                }
+
+                                step++
+                            } else {
                                 val prefs = WorkoutPreferences(
                                     goal = goal,
                                     experience = experience,
-                                    targetMuscles = selectedMuscles.toSet().ifEmpty { setOf("Full Body") },
+                                    targetMuscles = selectedMuscles.toSet(),
                                     equipment = selectedEquipment.toSet(),
                                     discipline = discipline,
                                     durationMinutes = duration,
                                     avoidTargets = avoidTargets.toSet()
                                 )
-                                savePreferences(context, prefs)
-                                val routine = repository.generatePersonalizedWorkout(prefs)
-                                onWorkoutGenerated(routine.map { it.id })
+
+                                if (prefs.equipment.isEmpty()) {
+                                    generationError = "Select at least one equipment option."
+                                    return@Button
+                                }
+
+                                isGenerating = true
+                                generationError = null
+
+                                scope.launch {
+                                    try {
+                                        savePreferences(context, prefs)
+
+                                        val routine = withContext(Dispatchers.Default) {
+                                            repository.generatePersonalizedWorkout(prefs)
+                                        }
+
+                                        if (routine.isEmpty()) {
+                                            generationError = "No matching exercises found. Change your filters."
+                                        } else {
+                                            onWorkoutGenerated(routine.map { it.id })
+                                        }
+                                    } catch (e: Exception) {
+                                        generationError = "Could not generate your workout. Try again."
+                                    } finally {
+                                        isGenerating = false
+                                    }
+                                }
                             }
                         },
+                        enabled = !isGenerating,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
-                    ) { Text(if (step < 3) "NEXT" else "BUILD PLAN", fontWeight = FontWeight.Bold) }
+                    ) {
+                        Text(
+                            when {
+                                isGenerating -> "BUILDING..."
+                                step < 3 -> "NEXT"
+                                else -> "BUILD PLAN"
+
+                            },
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                }
+            }
+            generationError?.let { message ->
+                item {
+                    Text(
+                        message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
@@ -226,8 +291,19 @@ private fun loadPreferences(context: Context): WorkoutPreferences {
         experience = prefsFile.getString("experience", "Beginner") ?: "Beginner",
         discipline = prefsFile.getString("discipline", "GYM") ?: "GYM",
         durationMinutes = prefsFile.getInt("duration", 20),
-        targetMuscles = prefsFile.getStringSet("targetMuscles", setOf("Full Body")) ?: setOf("Full Body"),
-        equipment = prefsFile.getStringSet("equipment", setOf("bodyweight")) ?: setOf("bodyweight"),
-        avoidTargets = prefsFile.getStringSet("avoidTargets", emptySet()) ?: emptySet()
+        targetMuscles = prefsFile
+            .getStringSet("targetMuscles", setOf("Full Body"))
+            ?.toSet()
+            ?: setOf("Full Body"),
+
+        equipment = prefsFile
+            .getStringSet("equipment", setOf("bodyweight"))
+            ?.toSet()
+            ?: setOf("bodyweight"),
+
+        avoidTargets = prefsFile
+            .getStringSet("avoidTargets", emptySet())
+            ?.toSet()
+            ?: emptySet()
     )
 }

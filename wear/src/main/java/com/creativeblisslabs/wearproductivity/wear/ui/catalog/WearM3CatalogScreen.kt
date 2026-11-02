@@ -198,7 +198,7 @@ fun WearM3CatalogScreen(state: LifeState, repository: LifeRepository) {
                     ),
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black),
+                        .background(MaterialTheme.colorScheme.background),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -564,7 +564,7 @@ fun WearM3CatalogScreen(state: LifeState, repository: LifeRepository) {
                 CatalogOverlayState.NONE -> Unit
 
                 CatalogOverlayState.HOURS_MINUTES_PICKER -> {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         DurationPicker(
                             title = "CATALOG TIMER",
                             initialMinutes = sliderValue,
@@ -582,7 +582,7 @@ fun WearM3CatalogScreen(state: LifeState, repository: LifeRepository) {
                 }
 
                 CatalogOverlayState.DATE_PICKER -> {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         DatePicker(
                             initialDate = java.time.LocalDate.now(),
                             onDatePicked = {
@@ -594,7 +594,7 @@ fun WearM3CatalogScreen(state: LifeState, repository: LifeRepository) {
                 }
 
                 CatalogOverlayState.TIME_PICKER -> {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         TimePicker(
                             initialTime = java.time.LocalTime.now(),
                             onTimePicked = {

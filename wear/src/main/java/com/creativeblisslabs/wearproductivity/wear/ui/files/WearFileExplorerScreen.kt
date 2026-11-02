@@ -5,8 +5,14 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import androidx.documentfile.provider.DocumentFile
 import android.graphics.BitmapFactory
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import android.media.MediaMetadataRetriever
+import android.os.Bundle
+import android.content.ContentUris
 import android.media.MediaPlayer
 import android.media.ThumbnailUtils
 import android.net.Uri
@@ -114,7 +120,7 @@ enum class FileSortOption(val label: String) {
     SIZE_DESC("Size ↓"),
     SIZE_ASC("Size ↑"),
     MODIFIED_DESC("Modified"),
-    CREATED_DESC("Created")
+    ADDED_DESC("Added")
 }
 
 enum class TransferTransportProtocol(val label: String, val subtitle: String, val icon: ImageVector) {
@@ -154,7 +160,6 @@ data class StorageCategorySummary(
     val count: Int,
     val totalBytes: Long
 )
-
 data class WearFileItem(
     val name: String,
     val path: String,
@@ -168,29 +173,49 @@ data class WearFileItem(
     val canRead: Boolean = true,
     val canWrite: Boolean = true,
     val isHidden: Boolean = false,
-    val contentUri: Uri? = null
+    val contentUri: Uri? = null,
+    val relativePath: String? = null,
+    val dateAddedMs: Long = 0L
 ) {
     val category: FileCategoryFilter
         get() = when {
-            extension in setOf("mp3", "wav", "m4a", "flac", "ogg", "aac", "opus") -> FileCategoryFilter.AUDIO
-            extension in setOf("mp4", "mkv", "avi", "mov", "webm", "3gp") -> FileCategoryFilter.VIDEO
-            extension in setOf("jpg", "jpeg", "png", "webp", "gif", "bmp", "heic") -> FileCategoryFilter.IMAGES
-            extension in setOf("apk", "aab") -> FileCategoryFilter.APK
-            extension in setOf("pdf", "txt", "md", "json", "xml", "csv", "log", "doc", "docx", "kt", "py") -> FileCategoryFilter.DOCS
-            path.contains("/Download", ignoreCase = true) -> FileCategoryFilter.DOWNLOADS
+            isDirectory -> FileCategoryFilter.ALL
+            extension in setOf("mp3", "wav", "m4a", "flac", "ogg", "aac", "opus") ->
+                FileCategoryFilter.AUDIO
+            extension in setOf("mp4", "mkv", "avi", "mov", "webm", "3gp") ->
+                FileCategoryFilter.VIDEO
+            extension in setOf("jpg", "jpeg", "png", "webp", "gif", "bmp", "heic") ->
+                FileCategoryFilter.IMAGES
+            extension in setOf("apk", "aab") ->
+                FileCategoryFilter.APK
+            extension in setOf(
+                "pdf", "txt", "md", "json", "xml", "csv",
+                "log", "doc", "docx", "kt", "py"
+            ) -> FileCategoryFilter.DOCS
             else -> FileCategoryFilter.ALL
         }
+
+    val isInDownloads: Boolean
+        get() = relativePath
+            ?.replace('\\', '/')
+            ?.startsWith("Download/", ignoreCase = true)
+            ?: path.contains("/Download/", ignoreCase = true)
 
     val formattedSize: String
         get() = if (isDirectory) "$childCount items" else formatByteCount(sizeBytes)
 
     val formattedModifiedDate: String
         get() = if (lastModifiedMs <= 0L) "--"
-        else SimpleDateFormat("dd MMM HH:mm", Locale.getDefault()).format(Date(lastModifiedMs))
+        else SimpleDateFormat("dd MMM HH:mm", Locale.getDefault())
+            .format(Date(lastModifiedMs))
 
     val formattedCreatedDate: String
-        get() = if (createdMs <= 0L) formattedModifiedDate
-        else SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault()).format(Date(createdMs))
+        get() {
+            val timestamp = dateAddedMs.takeIf { it > 0L } ?: createdMs
+            return if (timestamp <= 0L) "--"
+            else SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+                .format(Date(timestamp))
+        }
 
     val permissionsBadge: String
         get() = buildString {
@@ -200,10 +225,7 @@ data class WearFileItem(
         }
 
     val icon: ImageVector
-        get() = when {
-            isDirectory -> Icons.Rounded.Folder
-            else -> category.icon
-        }
+        get() = if (isDirectory) Icons.Rounded.Folder else category.icon
 
     val accentColor: Color
         get() = if (isDirectory) Color(0xFF8EAEFF) else category.accent
@@ -238,30 +260,55 @@ private data class FileExplorerAdaptiveSpec(
 private object WearStorageEngine {
 
     fun hasMediaOrStoragePermissions(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            Environment.isExternalStorageManager()
+        ) {
             return true
         }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+
+        val required = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO
+            )
+
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+
+            else -> arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
+
+        return required.all {
+            ContextCompat.checkSelfPermission(
+                context,
+                it
+            ) == PackageManager.PERMISSION_GRANTED
         }
     }
+
 
     fun hasAllFilesManageAccess(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else true
 
     fun requiredRuntimePermissions(): Array<String> =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
                 Manifest.permission.READ_MEDIA_AUDIO,
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_VIDEO
             )
-        } else {
-            arrayOf(
+
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+
+            else -> arrayOf(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
@@ -293,176 +340,228 @@ private object WearStorageEngine {
     suspend fun listDirectoryHybrid(
         context: Context,
         dirPath: String,
-        rootPath: String
+        rootPath: String,
+        mediaItems: List<WearFileItem>
     ): List<WearFileItem> = withContext(Dispatchers.IO) {
-        val mergedByPath = linkedMapOf<String, WearFileItem>()
-        val targetDir = File(dirPath)
+        val result = LinkedHashMap<String, WearFileItem>()
+        val currentDir = File(dirPath)
 
-        // 1. Direct File.listFiles() scan
+        // App vault and directories the app can directly access.
         runCatching {
-            val rawChildren = targetDir.listFiles()
-            rawChildren?.forEach { f ->
-                val item = buildWearFileItem(f)
-                mergedByPath[f.absolutePath] = item
+            currentDir.listFiles()?.forEach { file ->
+                val item = buildWearFileItem(file)
+                result[item.path] = item
             }
         }
 
-        // 2. If root directory and standard folders weren't returned, ensure standard Wear OS folders are visible
-        if (dirPath == rootPath && mergedByPath.isEmpty()) {
-            listOf("Music", "Download", "Pictures", "Movies", "DCIM", "Documents", "Podcasts", "Ringtones").forEach { stdName ->
-                val stdDir = File(rootPath, stdName)
-                if (stdDir.exists()) {
-                    mergedByPath[stdDir.absolutePath] = buildWearFileItem(stdDir)
+        // Match MediaStore records by RELATIVE_PATH, not by DATA.
+        val currentRelativePath = dirPath
+            .removePrefix(rootPath)
+            .trim('/')
+            .let { if (it.isBlank()) "" else "$it/" }
+
+        mediaItems.forEach { item ->
+            val relative = item.relativePath ?: return@forEach
+            val normalized = relative.replace('\\', '/')
+
+            if (normalized.equals(currentRelativePath, ignoreCase = true)) {
+                result[item.path] = item
+            } else if (
+                normalized.startsWith(currentRelativePath, ignoreCase = true)
+            ) {
+                val remainder = normalized.removePrefix(currentRelativePath)
+                val childName = remainder.substringBefore('/').trim()
+
+                if (childName.isNotBlank()) {
+                    val childPath = File(dirPath, childName).absolutePath
+
+                    if (!result.containsKey(childPath)) {
+                        result[childPath] = WearFileItem(
+                            name = childName,
+                            path = childPath,
+                            isDirectory = true,
+                            mimeType = "inode/directory",
+                            canRead = true,
+                            canWrite = false
+                        )
+                    }
                 }
             }
         }
 
-        // 3. Hybrid MediaStore scan for files inside this directory that File.listFiles() hid under Scoped Storage
-        runCatching {
-            val normalizedPrefix = if (dirPath.endsWith("/")) dirPath else "$dirPath/"
-            queryMediaStoreFiles(context).forEach { mediaItem ->
-                val parentPath = File(mediaItem.path).parent ?: ""
-                if (parentPath.equals(dirPath, ignoreCase = true)) {
-                    if (!mergedByPath.containsKey(mediaItem.path)) {
-                        mergedByPath[mediaItem.path] = mediaItem
-                    }
-                } else if (mediaItem.path.startsWith(normalizedPrefix, ignoreCase = true)) {
-                    // Immediate child subfolder discovered via MediaStore
-                    val remainder = mediaItem.path.substring(normalizedPrefix.length)
-                    val subFolderName = remainder.substringBefore('/', "")
-                    if (subFolderName.isNotBlank()) {
-                        val subFolderFile = File(dirPath, subFolderName)
-                        if (!mergedByPath.containsKey(subFolderFile.absolutePath)) {
-                            mergedByPath[subFolderFile.absolutePath] = buildWearFileItem(subFolderFile)
-                        }
-                    }
-                }
-            }
-        }
+        // Show the app vault only at shared-storage root.
+        val vault = File(
+            context.getExternalFilesDir(null) ?: context.filesDir,
+            "LifeOS_Vault"
+        )
 
-        // 4. Ensure app-specific sandbox workspace is always accessible and seeded with sample files if device is blank
-        val appWorkspaceDir = File(context.getExternalFilesDir(null) ?: context.filesDir, "LifeOS_Vault")
-        if (!appWorkspaceDir.exists()) {
-            runCatching {
-                appWorkspaceDir.mkdirs()
-                File(appWorkspaceDir, "Watch_Readme.txt").writeText(
-                    "LifeOS Wear File Explorer\n- Supports Audio, Video, Images, Docs & APKs\n- Sequential Transfer Queue via DataLayer, Wi-Fi & Bluetooth"
-                )
-                File(appWorkspaceDir, "Workout_Telemetry.json").writeText(
-                    "{\n  \"device\": \"WearOS\",\n  \"status\": \"Synced\",\n  \"bpm\": 72\n}"
-                )
-            }
-        }
-        if (dirPath == rootPath && !mergedByPath.containsKey(appWorkspaceDir.absolutePath)) {
-            mergedByPath[appWorkspaceDir.absolutePath] = buildWearFileItem(appWorkspaceDir).copy(
+        if (
+            dirPath == rootPath &&
+            vault.isDirectory &&
+            !result.containsKey(vault.absolutePath)
+        ) {
+            result[vault.absolutePath] = buildWearFileItem(vault).copy(
                 name = "LifeOS Vault (App Storage)"
             )
         }
 
-        mergedByPath.values.toList()
+        result.values.toList()
     }
 
     /**
      * Global scan across storage + MediaStore for category filtering (Audio, Video, Images, Docs, APKs, Downloads)
      * and storage analytics breakdown.
      */
-    suspend fun scanAllCategorizedFiles(context: Context, rootPath: String): List<WearFileItem> =
-        withContext(Dispatchers.IO) {
-            val allMap = linkedMapOf<String, WearFileItem>()
+    suspend fun scanAllCategorizedFiles(
+        context: Context,
+        rootPath: String
+    ): List<WearFileItem> = withContext(Dispatchers.IO) {
+        val allItems = LinkedHashMap<String, WearFileItem>()
 
-            // MediaStore global query
-            runCatching {
-                queryMediaStoreFiles(context).forEach { item ->
-                    allMap[item.path] = item
-                }
-            }
-
-            // Recursive walk (depth-limited to 3) across standard directories & LifeOS Vault
-            val rootsToWalk = listOf(
-                File(rootPath, "Music"),
-                File(rootPath, "Download"),
-                File(rootPath, "Pictures"),
-                File(rootPath, "Movies"),
-                File(rootPath, "DCIM"),
-                File(rootPath, "Documents"),
-                File(context.getExternalFilesDir(null) ?: context.filesDir, "LifeOS_Vault")
-            )
-            rootsToWalk.forEach { folder ->
-                runCatching {
-                    if (folder.exists()) {
-                        folder.walkTopDown().maxDepth(3).forEach { f ->
-                            if (f.isFile && !allMap.containsKey(f.absolutePath)) {
-                                allMap[f.absolutePath] = buildWearFileItem(f)
-                            }
-                        }
-                    }
-                }
-            }
-            allMap.values.toList()
+        // Shared storage: MediaStore is the discovery source.
+        queryMediaStoreFiles(context).forEach { item ->
+            allItems[item.path] = item
         }
 
-    private fun queryMediaStoreFiles(context: Context): List<WearFileItem> {
-        val list = mutableListOf<WearFileItem>()
-        val resolver: ContentResolver = context.contentResolver
-        val uri = MediaStore.Files.getContentUri("external")
-        val projection = arrayOf(
-            MediaStore.Files.FileColumns._ID,
-            MediaStore.Files.FileColumns.DISPLAY_NAME,
-            MediaStore.Files.FileColumns.DATA,
-            MediaStore.Files.FileColumns.SIZE,
-            MediaStore.Files.FileColumns.DATE_MODIFIED,
-            MediaStore.Files.FileColumns.DATE_ADDED,
-            MediaStore.Files.FileColumns.MIME_TYPE
+        // App-specific vault: direct File access is appropriate here.
+        val vault = File(
+            context.getExternalFilesDir(null) ?: context.filesDir,
+            "LifeOS_Vault"
         )
-        runCatching {
-            resolver.query(
-                uri,
-                projection,
-                "${MediaStore.Files.FileColumns.SIZE} > 0",
-                null,
-                "${MediaStore.Files.FileColumns.DATE_MODIFIED} DESC"
-            )?.use { cursor ->
-                val idCol = cursor.getColumnIndex(MediaStore.Files.FileColumns._ID)
-                val nameCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
-                val dataCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATA)
-                val sizeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.SIZE)
-                val modCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED)
-                val addCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED)
-                val mimeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.MIME_TYPE)
 
-                while (cursor.moveToNext() && list.size < 250) {
-                    val id = if (idCol >= 0) cursor.getLong(idCol) else 0L
-                    val path = (if (dataCol >= 0) cursor.getString(dataCol) else null) ?: continue
-                    val fileObj = File(path)
-                    val name = (if (nameCol >= 0) cursor.getString(nameCol) else null)?.ifBlank { fileObj.name } ?: fileObj.name
-                    val size = if (sizeCol >= 0) cursor.getLong(sizeCol) else fileObj.length()
-                    val modSec = if (modCol >= 0) cursor.getLong(modCol) else 0L
-                    val addSec = if (addCol >= 0) cursor.getLong(addCol) else modSec
-                    val mime = (if (mimeCol >= 0) cursor.getString(mimeCol) else null) ?: resolveMimeType(fileObj.extension)
-                    val ext = fileObj.extension.lowercase(Locale.ROOT)
+        if (vault.isDirectory) {
+            runCatching {
+                vault.walkTopDown()
+                    .filter { it.isFile }
+                    .forEach { file ->
+                        val item = buildWearFileItem(file)
+                        allItems[item.path] = item
+                    }
+            }
+        }
 
-                    list.add(
-                        WearFileItem(
+        allItems.values.toList()
+    }
+    private fun queryMediaStoreFiles(context: Context): List<WearFileItem> {
+        val resolver = context.contentResolver
+        val collection = MediaStore.Files.getContentUri("external")
+
+        val projection = buildList {
+            add(MediaStore.Files.FileColumns._ID)
+            add(MediaStore.Files.FileColumns.DISPLAY_NAME)
+            add(MediaStore.Files.FileColumns.SIZE)
+            add(MediaStore.Files.FileColumns.DATE_MODIFIED)
+            add(MediaStore.Files.FileColumns.DATE_ADDED)
+            add(MediaStore.Files.FileColumns.MIME_TYPE)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                add(MediaStore.Files.FileColumns.RELATIVE_PATH)
+            }
+        }.toTypedArray()
+
+        val result = LinkedHashMap<String, WearFileItem>()
+        val pageSize = 200
+        var offset = 0
+        var hasMore = true
+
+        while (hasMore) {
+            val queryArgs = Bundle().apply {
+                putInt(ContentResolver.QUERY_ARG_LIMIT, pageSize)
+                putInt(ContentResolver.QUERY_ARG_OFFSET, offset)
+                putStringArray(
+                    ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                    arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED)
+                )
+                putInt(
+                    ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                    ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
+                )
+            }
+
+            val pageCount = runCatching {
+                resolver.query(
+                    collection,
+                    projection,
+                    queryArgs,
+                    null
+                )?.use { cursor ->
+                    val idCol = cursor.getColumnIndex(MediaStore.Files.FileColumns._ID)
+                    val nameCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
+                    val sizeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.SIZE)
+                    val modifiedCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED)
+                    val addedCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED)
+                    val mimeCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.MIME_TYPE)
+
+                    val relativePathCol =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            cursor.getColumnIndex(MediaStore.Files.FileColumns.RELATIVE_PATH)
+                        } else {
+                            -1
+                        }
+
+                    var count = 0
+
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getLong(idCol)
+                        val name = cursor.getString(nameCol)?.takeIf { it.isNotBlank() }
+                            ?: continue
+
+                        val itemUri = ContentUris.withAppendedId(collection, id)
+                        val extension = name.substringAfterLast('.', "")
+                            .lowercase(Locale.ROOT)
+
+                        val size = if (sizeCol >= 0) {
+                            cursor.getLong(sizeCol).coerceAtLeast(0L)
+                        } else 0L
+
+                        val modifiedMs = if (modifiedCol >= 0) {
+                            cursor.getLong(modifiedCol).coerceAtLeast(0L) * 1000L
+                        } else 0L
+
+                        val addedMs = if (addedCol >= 0) {
+                            cursor.getLong(addedCol).coerceAtLeast(0L) * 1000L
+                        } else 0L
+
+                        val mime = if (mimeCol >= 0) {
+                            cursor.getString(mimeCol)
+                        } else null
+
+                        val relativePath = if (relativePathCol >= 0) {
+                            cursor.getString(relativePathCol)
+                        } else null
+
+                        val uriString = itemUri.toString()
+
+                        result[uriString] = WearFileItem(
                             name = name,
-                            path = path,
+                            path = uriString,
                             isDirectory = false,
                             sizeBytes = size,
-                            lastModifiedMs = modSec * 1000L,
-                            createdMs = addSec * 1000L,
-                            extension = ext,
-                            mimeType = mime,
+                            lastModifiedMs = modifiedMs,
+                            createdMs = 0L,
+                            dateAddedMs = addedMs,
+                            extension = extension,
+                            mimeType = mime ?: resolveMimeType(extension),
                             canRead = true,
-                            canWrite = fileObj.canWrite(),
+                            canWrite = false,
                             isHidden = name.startsWith("."),
-                            contentUri = Uri.withAppendedPath(uri, id.toString())
+                            contentUri = itemUri,
+                            relativePath = relativePath
                         )
-                    )
-                }
-            }
-        }
-        return list
-    }
 
+                        count++
+                    }
+
+                    count
+                } ?: 0
+            }.getOrDefault(0)
+
+            offset += pageSize
+            hasMore = pageCount == pageSize
+        }
+
+        return result.values.toList()
+    }
     fun buildWearFileItem(f: File): WearFileItem {
         val isDir = f.isDirectory
         val ext = if (isDir) "" else f.extension.lowercase(Locale.ROOT)
@@ -510,59 +609,86 @@ private object WearStorageEngine {
             }
     }
 
-    suspend fun computeMd5Checksum(path: String): String = withContext(Dispatchers.IO) {
+    suspend fun computeMd5Checksum(
+        context: Context,
+        item: WearFileItem
+    ): String = withContext(Dispatchers.IO) {
         runCatching {
-            val file = File(path)
-            if (!file.exists() || !file.isFile || file.length() > 50 * 1024 * 1024) return@withContext "N/A (>50MB)"
+            if (item.sizeBytes > 50L * 1024L * 1024L) {
+                return@withContext "N/A (>50MB)"
+            }
+
+            val input = item.contentUri?.let { uri ->
+                context.contentResolver.openInputStream(uri)
+            } ?: FileInputStream(File(item.path))
+
+            requireNotNull(input) {
+                "Unable to open file"
+            }
+
             val digest = MessageDigest.getInstance("MD5")
-            FileInputStream(file).use { fis ->
+
+            input.use { stream ->
                 val buffer = ByteArray(8192)
-                var read: Int
-                while (fis.read(buffer).also { read = it } != -1) {
-                    digest.update(buffer, 0, read)
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count == -1) break
+                    digest.update(buffer, 0, count)
                 }
             }
-            digest.digest().joinToString("") { "%02x".format(it) }.take(16).uppercase(Locale.ROOT)
+
+            digest.digest().joinToString("") {
+                "%02x".format(it)
+            }.uppercase(Locale.ROOT).take(16)
         }.getOrDefault("UNAVAILABLE")
     }
 
-    suspend fun loadThumbnailBitmap(context: Context, item: WearFileItem, targetPx: Int = 96): ImageBitmap? =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                when (item.category) {
-                    FileCategoryFilter.IMAGES -> {
-                        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                        BitmapFactory.decodeFile(item.path, opts)
-                        var sampleSize = 1
-                        while (opts.outWidth / sampleSize > targetPx * 2 || opts.outHeight / sampleSize > targetPx * 2) {
-                            sampleSize *= 2
-                        }
-                        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-                        BitmapFactory.decodeFile(item.path, decodeOpts)?.asImageBitmap()
+    suspend fun loadThumbnailBitmap(
+        context: Context,
+        item: WearFileItem,
+        targetPx: Int = 96
+    ): ImageBitmap? = withContext(Dispatchers.IO) {
+        runCatching {
+            val uri = item.contentUri
+
+            when (item.category) {
+                FileCategoryFilter.IMAGES,
+                FileCategoryFilter.VIDEO -> {
+                    if (uri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        context.contentResolver
+                            .loadThumbnail(uri, AndroidSize(targetPx, targetPx), null)
+                            .asImageBitmap()
+                    } else if (item.category == FileCategoryFilter.IMAGES) {
+                        BitmapFactory.decodeFile(item.path)?.asImageBitmap()
+                    } else {
+                        null
                     }
-                    FileCategoryFilter.VIDEO -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            ThumbnailUtils.createVideoThumbnail(
-                                File(item.path),
-                                AndroidSize(targetPx, targetPx),
-                                null
-                            ).asImageBitmap()
-                        } else null
-                    }
-                    FileCategoryFilter.AUDIO -> {
-                        val mmr = MediaMetadataRetriever()
-                        mmr.setDataSource(item.path)
-                        val artBytes = mmr.embeddedPicture
-                        mmr.release()
-                        if (artBytes != null) {
-                            BitmapFactory.decodeByteArray(artBytes, 0, artBytes.size)?.asImageBitmap()
-                        } else null
-                    }
-                    else -> null
                 }
-            }.getOrNull()
-        }
-}
+
+                FileCategoryFilter.AUDIO -> {
+                    val retriever = MediaMetadataRetriever()
+
+                    try {
+                        if (uri != null) {
+                            retriever.setDataSource(context, uri)
+                        } else {
+                            retriever.setDataSource(item.path)
+                        }
+
+                        retriever.embeddedPicture
+                            ?.let { bytes ->
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                    ?.asImageBitmap()
+                            }
+                    } finally {
+                        retriever.release()
+                    }
+                }
+
+                else -> null
+            }
+        }.getOrNull()
+    }
 
 // =============================================================================
 // BASELINE VIEWPORT CONTAINER
@@ -575,8 +701,9 @@ private fun FileExplorerBaselineViewport(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment =
+            Alignment.Center
     ) {
         val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
         val viewportWidth = if (isPhonePreview) baselineWatchSize else this.maxWidth
@@ -599,7 +726,7 @@ private fun FileExplorerBaselineViewport(
                 modifier = Modifier
                     .size(baselineWatchSize)
                     .clip(CircleShape)
-                    .background(Color.Black)
+                    .background(MaterialTheme.colorScheme.background)
                     .border(
                         width = 1.5.dp,
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
@@ -612,19 +739,29 @@ private fun FileExplorerBaselineViewport(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
-            ) {
+                    .background(MaterialTheme.colorScheme.background),
+                ) {
                 content(spec)
             }
         }
     }
 }
+private fun isValidFileName(raw: String): Boolean {
+    val name = raw.trim()
 
+    return name.isNotEmpty() &&
+            name != "." &&
+            name != ".." &&
+            name.none {
+                it == '/' ||
+                        it == '\\' ||
+                        Character.isISOControl(it)
+            }
+}
 // =============================================================================
 // MAIN COMPOSABLE: 3-PAGE WEAR OS FILE EXPLORER, ANALYTICS & TRANSFER STUDIO
 // =============================================================================
-@Suppress("UNUSED_PARAMETER")
-@OptIn(ExperimentalFoundationApi::class)
+
 @Composable
 fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     val context = LocalContext.current
@@ -665,42 +802,83 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     var isQueueProcessorRunning by remember { mutableStateOf(false) }
 
     var feedbackOverlay by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-
-    // Storage StatFs Telemetry
-    val storageStats = remember(currentDirectoryPath, directoryFiles.size) {
-        runCatching {
-            val stat = StatFs(Environment.getDataDirectory().path)
-            val total = stat.totalBytes.coerceAtLeast(1L)
-            val free = stat.availableBytes.coerceAtLeast(0L)
-            val used = (total - free).coerceAtLeast(0L)
-            Triple(used, total, (used.toFloat() / total.toFloat()).coerceIn(0f, 1f))
-        }.getOrDefault(Triple(4_200_000_000L, 16_000_000_000L, 0.26f))
+    var storageRefreshKey by remember {
+        mutableIntStateOf(0)
     }
+    // Storage StatFs Telemetry
+    val storageStats = remember(rootPath, storageRefreshKey) {
+        runCatching {
+            val stat = StatFs(rootPath)
 
+            val total = stat.totalBytes.coerceAtLeast(1L)
+            val free = stat.availableBytes.coerceIn(0L, total)
+            val used = total - free
+
+            Triple(
+                used,
+                total,
+                (used.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+            )
+        }.getOrElse {
+            Triple(0L, 0L, 0f)
+        }
+    }
     fun refreshFilesAndAnalytics() {
+        if (isScanning) return
+
         isScanning = true
+
         scope.launch {
-            hasReadPermission = WearStorageEngine.hasMediaOrStoragePermissions(context)
-            hasAllFilesAccess = WearStorageEngine.hasAllFilesManageAccess()
+            try {
+                hasReadPermission =
+                    WearStorageEngine.hasMediaOrStoragePermissions(context)
 
-            val dirList = WearStorageEngine.listDirectoryHybrid(context, currentDirectoryPath, rootPath)
-            directoryFiles.clear()
-            directoryFiles.addAll(dirList)
+                hasAllFilesAccess =
+                    WearStorageEngine.hasAllFilesManageAccess()
 
-            val allList = WearStorageEngine.scanAllCategorizedFiles(context, rootPath)
-            globalCategorizedFiles.clear()
-            globalCategorizedFiles.addAll(allList)
-            isScanning = false
+                val allList = WearStorageEngine.scanAllCategorizedFiles(
+                    context = context,
+                    rootPath = rootPath
+                )
+
+                val dirList = WearStorageEngine.listDirectoryHybrid(
+                    context = context,
+                    dirPath = currentDirectoryPath,
+                    rootPath = rootPath,
+                    mediaItems = allList
+                )
+
+                globalCategorizedFiles.clear()
+                globalCategorizedFiles.addAll(allList)
+
+                directoryFiles.clear()
+                directoryFiles.addAll(dirList)
+
+                storageRefreshKey++
+            } finally {
+                isScanning = false
+            }
         }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { grants ->
-        hasReadPermission = grants.values.any { it } || WearStorageEngine.hasMediaOrStoragePermissions(context)
-        hasAllFilesAccess = WearStorageEngine.hasAllFilesManageAccess()
+    ) { _ ->
+        hasReadPermission =
+            WearStorageEngine.hasMediaOrStoragePermissions(context)
+
+        hasAllFilesAccess =
+            WearStorageEngine.hasAllFilesManageAccess()
+
         refreshFilesAndAnalytics()
-        feedbackOverlay = (if (hasReadPermission) "Storage Access Granted" else "Using MediaStore Fallback") to !hasReadPermission
+
+        feedbackOverlay = (
+                if (hasReadPermission) {
+                    "Storage Access Granted"
+                } else {
+                    "Some Storage Permissions Missing"
+                }
+                ) to !hasReadPermission
     }
 
     // Auto-request permissions on first entry if not yet granted
@@ -716,131 +894,184 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     }
 
     LaunchedEffect(currentDirectoryPath) {
-        refreshFilesAndAnalytics()
+        if (globalCategorizedFiles.isNotEmpty()) {
+            isScanning = true
+
+            try {
+                val dirList = WearStorageEngine.listDirectoryHybrid(
+                    context = context,
+                    dirPath = currentDirectoryPath,
+                    rootPath = rootPath,
+                    mediaItems = globalCategorizedFiles.toList()
+                )
+
+                directoryFiles.clear()
+                directoryFiles.addAll(dirList)
+            } finally {
+                isScanning = false
+            }
+        }
     }
 
     // =========================================================================
     // AUTHENTIC SEQUENTIAL ONE-BY-ONE FILE TRANSFER QUEUE PROCESSOR
     // =========================================================================
-    LaunchedEffect(transferQueue.size, isQueueProcessorRunning) {
-        if (isQueueProcessorRunning) return@LaunchedEffect
-        val nextQueuedIdx = transferQueue.indexOfFirst { it.status == TransferJobStatus.QUEUED }
-        if (nextQueuedIdx < 0) return@LaunchedEffect
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            transferQueue.any {
+                it.status == TransferJobStatus.QUEUED
+            }
+        }.collect { hasQueuedJobs ->
 
-        isQueueProcessorRunning = true
-        while (isActive) {
-            val jobIdx = transferQueue.indexOfFirst { it.status == TransferJobStatus.QUEUED }
-            if (jobIdx < 0) break
+            if (!hasQueuedJobs || isQueueProcessorRunning) {
+                return@collect
+            }
 
-            val job = transferQueue[jobIdx]
-            val srcFile = File(job.fileItem.path)
-            val totalBytes = srcFile.length().coerceAtLeast(1024L)
+            isQueueProcessorRunning = true
 
-            transferQueue[jobIdx] = job.copy(
-                status = TransferJobStatus.SENDING,
-                progress = 0.02f,
-                statusDetail = "Opening ${job.protocol.label} link..."
-            )
+            try {
+                while (isActive) {
+                    val jobIdx =
+                        transferQueue.indexOfFirst { it.status == TransferJobStatus.QUEUED }
+                    if (jobIdx < 0) break
 
-            val startTimeMs = System.currentTimeMillis()
-            var realChannelDelivered = false
+                    val job = transferQueue[jobIdx]
+                    val srcFile = File(job.fileItem.path)
+                    val fileItem = job.fileItem
+                    val totalBytes = fileItem.sizeBytes.coerceAtLeast(1L)
+                    transferQueue[jobIdx] = job.copy(
+                        status = TransferJobStatus.SENDING,
+                        progress = 0.02f,
+                        statusDetail = "Opening ${job.protocol.label} link..."
+                    )
 
-            // Attempt real Wearable ChannelClient / DataClient transfer first
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val nodes = Wearable.getNodeClient(context).connectedNodes.await()
-                    val targetNode = nodes.firstOrNull()
-                    if (targetNode != null && srcFile.exists() && srcFile.isFile) {
-                        connectedNodeName = targetNode.displayName
-                        when (job.protocol) {
-                            TransferTransportProtocol.DATA_LAYER, TransferTransportProtocol.BLUETOOTH -> {
-                                val channelClient = Wearable.getChannelClient(context)
-                                val channel = channelClient.openChannel(
-                                    targetNode.id,
-                                    "/lifeos/file_transfer/${job.fileItem.name}"
-                                ).await()
-                                val outputStream = channelClient.getOutputStream(channel).await()
-                                FileInputStream(srcFile).use { inputStream ->
-                                    val buffer = ByteArray(8192)
-                                    var read: Int
-                                    var sent = 0L
-                                    while (inputStream.read(buffer).also { read = it } != -1) {
-                                        outputStream.write(buffer, 0, read)
-                                        sent += read
-                                        val elapsedSec = ((System.currentTimeMillis() - startTimeMs) / 1000f).coerceAtLeast(0.1f)
-                                        val kbps = ((sent / 1024f) / elapsedSec).roundToInt().coerceAtLeast(12)
-                                        val prog = (sent.toFloat() / totalBytes.toFloat()).coerceIn(0.05f, 0.99f)
-                                        val currIdx = transferQueue.indexOfFirst { it.id == job.id }
-                                        if (currIdx >= 0) {
-                                            transferQueue[currIdx] = transferQueue[currIdx].copy(
-                                                progress = prog,
-                                                transferredBytes = sent,
-                                                speedKbps = kbps,
-                                                targetDeviceName = targetNode.displayName,
-                                                statusDetail = "${formatByteCount(sent)} / ${formatByteCount(totalBytes)}"
-                                            )
-                                        }
-                                    }
-                                    outputStream.flush()
-                                    outputStream.close()
+                    val startTimeMs = System.currentTimeMillis()
+                    var realChannelDelivered = false
+
+                    // Attempt real Wearable ChannelClient / DataClient transfer first
+                    withContext(Dispatchers.IO) {
+                        runCatching {
+                            val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                            val targetNode = nodes.firstOrNull()
+                            if (targetNode != null && fileItem.canRead) {
+                                withContext(Dispatchers.Main.immediate) {
+                                    connectedNodeName = targetNode.displayName
                                 }
-                                channelClient.close(channel).await()
-                                realChannelDelivered = true
-                            }
-                            TransferTransportProtocol.WIFI, TransferTransportProtocol.MOBILE_CLOUD -> {
-                                val putReq = PutDataMapRequest.create("/lifeos/cloud_relay/${job.id}").apply {
-                                    dataMap.putString("name", job.fileItem.name)
-                                    dataMap.putLong("size", totalBytes)
-                                    dataMap.putString("protocol", job.protocol.name)
-                                    dataMap.putLong("ts", System.currentTimeMillis())
-                                }.asPutDataRequest().setUrgent()
-                                Wearable.getDataClient(context).putDataItem(putReq).await()
+                                when (job.protocol) {
+                                    TransferTransportProtocol.DATA_LAYER, TransferTransportProtocol.BLUETOOTH -> {
+                                        val channelClient = Wearable.getChannelClient(context)
+                                        val channel = channelClient.openChannel(
+                                            targetNode.id,
+                                            "/lifeos/file_transfer/${job.fileItem.name}"
+                                        ).await()
+                                        val outputStream =
+                                            channelClient.getOutputStream(channel).await()
+                                        val inputStream = fileItem.contentUri?.let { uri ->
+                                            context.contentResolver.openInputStream(uri)
+                                        } ?: run {
+                                            val file = File(fileItem.path)
+                                            require(file.isFile && file.canRead()) {
+                                                "File is unavailable or unreadable"
+                                            }
+                                            FileInputStream(file)
+                                        }
+
+                                        requireNotNull(inputStream) {
+                                            "Unable to open file content"
+                                        }
+
+                                        inputStream.use { stream ->
+                                            val buffer = ByteArray(32 * 1024)
+                                            var read: Int
+                                            var sent = 0L
+
+                                            while (stream.read(buffer).also { read = it } != -1) {
+                                                currentCoroutineContext().ensureActive()
+
+                                                outputStream.write(buffer, 0, read)
+                                                sent += read
+
+                                                val elapsedSec = (
+                                                        (System.currentTimeMillis() - startTimeMs) / 1000f
+                                                        ).coerceAtLeast(0.1f)
+
+                                                val kbps = (
+                                                        (sent / 1024f) / elapsedSec
+                                                        ).roundToInt().coerceAtLeast(0)
+
+                                                val progress = (
+                                                        sent.toFloat() / totalBytes.toFloat()
+                                                        ).coerceIn(0f, 0.99f)
+
+                                                withContext(Dispatchers.Main.immediate) {
+                                                    val index = transferQueue.indexOfFirst {
+                                                        it.id == job.id
+                                                    }
+
+                                                    if (index >= 0 &&
+                                                        transferQueue[index].status != TransferJobStatus.CANCELLED
+                                                    ) {
+                                                        transferQueue[index] = transferQueue[index].copy(
+                                                            progress = progress,
+                                                            transferredBytes = sent,
+                                                            speedKbps = kbps,
+                                                            statusDetail = "${formatByteCount(sent)} / ${formatByteCount(totalBytes)}"
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        channelClient.close(channel).await()
+                                        realChannelDelivered = true
+                                    }
+
+                                    TransferTransportProtocol.WIFI,
+                                    TransferTransportProtocol.MOBILE_CLOUD -> {
+                                        throw UnsupportedOperationException(
+                                            "${job.protocol.label} file transfer is not implemented"
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            // If no physical companion node was open or using Wi-Fi/Mobile packet framing, stream chunked progress
-            if (!realChannelDelivered) {
-                val steps = 16
-                for (step in 1..steps) {
-                    val checkIdx = transferQueue.indexOfFirst { it.id == job.id }
-                    if (checkIdx < 0 || transferQueue[checkIdx].status == TransferJobStatus.CANCELLED) break
-                    delay(140L)
-                    val ratio = step.toFloat() / steps.toFloat()
-                    val sentBytes = (totalBytes * ratio).toLong()
-                    val simulatedSpeed = when (job.protocol) {
-                        TransferTransportProtocol.WIFI -> 2450
-                        TransferTransportProtocol.MOBILE_CLOUD -> 1120
-                        TransferTransportProtocol.DATA_LAYER -> 480
-                        TransferTransportProtocol.BLUETOOTH -> 210
+                    // If no physical companion node was open or using Wi-Fi/Mobile packet framing, stream chunked progress
+                    if (!realChannelDelivered) {
+                        val failedIdx = transferQueue.indexOfFirst {
+                            it.id == job.id
+                        }
+
+                        if (
+                            failedIdx >= 0 &&
+                            transferQueue[failedIdx].status != TransferJobStatus.CANCELLED
+                        ) {
+                            transferQueue[failedIdx] = transferQueue[failedIdx].copy(
+                                status = TransferJobStatus.FAILED,
+                                progress = 0f,
+                                statusDetail = "No real file payload was transferred"
+                            )
+                        }
+
+                        continue
                     }
-                    val updateIdx = transferQueue.indexOfFirst { it.id == job.id }
-                    if (updateIdx >= 0) {
-                        transferQueue[updateIdx] = transferQueue[updateIdx].copy(
-                            progress = ratio,
-                            transferredBytes = sentBytes,
-                            speedKbps = simulatedSpeed,
-                            statusDetail = "${formatByteCount(sentBytes)} / ${formatByteCount(totalBytes)} ($simulatedSpeed KB/s)"
+
+                    val finalIdx = transferQueue.indexOfFirst { it.id == job.id }
+                    if (finalIdx >= 0 && transferQueue[finalIdx].status != TransferJobStatus.CANCELLED) {
+                        transferQueue[finalIdx] = transferQueue[finalIdx].copy(
+                            progress = 1f,
+                            transferredBytes = totalBytes,
+                            status = TransferJobStatus.COMPLETED,
+                            statusDetail = "Delivered via ${job.protocol.label} to ${transferQueue[finalIdx].targetDeviceName}"
                         )
+                        haptic.click()
+                        feedbackOverlay = "Sent ${job.fileItem.name}" to false
                     }
                 }
-            }
-
-            val finalIdx = transferQueue.indexOfFirst { it.id == job.id }
-            if (finalIdx >= 0 && transferQueue[finalIdx].status != TransferJobStatus.CANCELLED) {
-                transferQueue[finalIdx] = transferQueue[finalIdx].copy(
-                    progress = 1f,
-                    transferredBytes = totalBytes,
-                    status = TransferJobStatus.COMPLETED,
-                    statusDetail = "Delivered via ${job.protocol.label} to ${transferQueue[finalIdx].targetDeviceName}"
-                )
-                haptic.click()
-                feedbackOverlay = "Sent ${job.fileItem.name}" to false
+            } finally {
+                isQueueProcessorRunning = false
             }
         }
-        isQueueProcessorRunning = false
     }
 
     fun enqueueFileTransfer(item: WearFileItem, protocol: TransferTransportProtocol = selectedProtocol) {
@@ -896,20 +1127,47 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     // REAL FILE SYSTEM OPERATIONS: RENAME, COPY, MOVE (PASTE), DELETE, NEW FOLDER
     // =========================================================================
     fun executeRename(item: WearFileItem, newNameInput: String) {
-        val cleanName = newNameInput.trim().replace("/", "")
-        if (cleanName.isBlank()) {
-            feedbackOverlay = "Enter Valid Name" to true
+        val cleanName = newNameInput.trim()
+
+        if (!isValidFileName(cleanName)) {
+            feedbackOverlay = "Invalid File Name" to true
             return
         }
+
         scope.launch(Dispatchers.IO) {
-            val src = File(item.path)
-            val dest = File(src.parentFile, cleanName)
-            val success = runCatching { src.renameTo(dest) }.getOrDefault(false)
+            val success = runCatching {
+                val src = File(item.path)
+                val parent = src.parentFile
+                    ?: error("Invalid source directory")
+
+                require(src.exists() && parent.isDirectory)
+
+                val dest = File(parent, cleanName)
+
+                if (dest.canonicalFile == src.canonicalFile) {
+                    true
+                } else {
+                    require(!dest.exists()) {
+                        "A file with this name already exists"
+                    }
+
+                    src.renameTo(dest)
+                }
+            }.getOrDefault(false)
+
             withContext(Dispatchers.Main) {
-                renamingFileItem = null
-                selectedFileForInspector = null
+                if (success) {
+                    renamingFileItem = null
+                    selectedFileForInspector = null
+                }
+
                 refreshFilesAndAnalytics()
-                feedbackOverlay = (if (success) "Renamed to $cleanName" else "Rename Restricted") to !success
+
+                feedbackOverlay = (
+                        if (success) "Renamed to $cleanName"
+                        else "Rename Failed"
+                        ) to !success
+
                 haptic.click()
             }
         }
@@ -925,14 +1183,46 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
                 dest = File(targetDir, "Copy_${src.name}")
             }
             val ok = runCatching {
-                if (src.isDirectory) {
-                    src.copyRecursively(dest, overwrite = true)
+                require(src.exists() && src.canRead())
+                require(targetDir.isDirectory && targetDir.canWrite())
+
+                val sourcePath = src.canonicalPath
+                val targetPath = targetDir.canonicalPath
+
+                require(
+                    !src.isDirectory ||
+                            !targetPath.startsWith(sourcePath + File.separator)
+                ) {
+                    "Cannot copy a folder into itself"
+                }
+
+                require(!dest.exists()) {
+                    "Destination already exists"
+                }
+
+                val copied = if (src.isDirectory) {
+                    src.copyRecursively(
+                        target = dest,
+                        overwrite = false
+                    )
                 } else {
-                    src.copyTo(dest, overwrite = true)
+                    src.copyTo(
+                        target = dest,
+                        overwrite = false
+                    )
+                    true
                 }
-                if (op.isMoveOperation && src.absolutePath != dest.absolutePath) {
-                    src.deleteRecursively()
+
+                require(copied) {
+                    "Copy failed"
                 }
+
+                if (op.isMoveOperation) {
+                    require(src.deleteRecursively()) {
+                        "Copied, but original could not be deleted"
+                    }
+                }
+
                 true
             }.getOrDefault(false)
 
@@ -963,10 +1253,23 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     }
 
     fun executeCreateFolder(folderName: String) {
-        val clean = folderName.trim().replace("/", "").ifBlank { "New_Folder" }
+        val clean = folderName.trim()
+
+        if (!isValidFileName(clean)) {
+            feedbackOverlay = "Invalid Folder Name" to true
+            return
+        }
         scope.launch(Dispatchers.IO) {
             val newDir = File(currentDirectoryPath, clean)
-            val created = runCatching { newDir.mkdirs() || newDir.exists() }.getOrDefault(false)
+            val created = runCatching {
+                val parent = File(currentDirectoryPath).canonicalFile
+                val target = File(parent, clean).canonicalFile
+
+                target.parentFile == parent &&
+                        parent.isDirectory &&
+                        !target.exists() &&
+                        target.mkdir()
+            }.getOrDefault(false)
             withContext(Dispatchers.Main) {
                 showCreateFolderEditor = false
                 refreshFilesAndAnalytics()
@@ -979,6 +1282,18 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     // =========================================================================
     // FILTERING & SORTING PIPELINE
     // =========================================================================
+    fun WearFileItem.matchesCategoryFilter(
+        filter: FileCategoryFilter
+    ): Boolean {
+        if (isDirectory) return false
+
+        return when (filter) {
+            FileCategoryFilter.ALL -> true
+            FileCategoryFilter.DOWNLOADS -> isInDownloads
+            else -> category == filter
+        }
+    }
+
     val sourceItemsForDisplay = remember(
         directoryFiles.toList(),
         globalCategorizedFiles.toList(),
@@ -987,9 +1302,9 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
         if (activeCategoryFilter == FileCategoryFilter.ALL) {
             directoryFiles.toList()
         } else {
-            val inCurrentDir = directoryFiles.filter { !it.isDirectory && it.category == activeCategoryFilter }
-            val inGlobal = globalCategorizedFiles.filter { !it.isDirectory && it.category == activeCategoryFilter }
-            (inCurrentDir + inGlobal).distinctBy { it.path }
+            (directoryFiles + globalCategorizedFiles)
+                .filter { it.matchesCategoryFilter(activeCategoryFilter) }
+                .distinctBy { it.path }
         }
     }
 
@@ -1000,24 +1315,39 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
             FileSortOption.SIZE_DESC -> compareBy<WearFileItem> { !it.isDirectory }.thenByDescending { it.sizeBytes }
             FileSortOption.SIZE_ASC -> compareBy<WearFileItem> { !it.isDirectory }.thenBy { it.sizeBytes }
             FileSortOption.MODIFIED_DESC -> compareBy<WearFileItem> { !it.isDirectory }.thenByDescending { it.lastModifiedMs }
-            FileSortOption.CREATED_DESC -> compareBy<WearFileItem> { !it.isDirectory }.thenByDescending { it.createdMs }
+            FileSortOption.ADDED_DESC ->
+                compareBy<WearFileItem> { !it.isDirectory }
+                    .thenByDescending {
+                        it.dateAddedMs.takeIf { timestamp -> timestamp > 0L }
+                            ?: it.createdMs
+                    }
         }
         sourceItemsForDisplay.sortedWith(comparator)
     }
 
     // Category Analytics Breakdown
-    val categorySummaries = remember(globalCategorizedFiles.toList(), directoryFiles.toList()) {
-        val pool = (globalCategorizedFiles + directoryFiles).filter { !it.isDirectory }.distinctBy { it.path }
-        FileCategoryFilter.entries.filter { it != FileCategoryFilter.ALL }.map { cat ->
-            val matching = pool.filter { it.category == cat }
-            StorageCategorySummary(
-                category = cat,
-                count = matching.size,
-                totalBytes = matching.sumOf { it.sizeBytes }
-            )
-        }
-    }
+    val categorySummaries = remember(
+        globalCategorizedFiles.toList(),
+        directoryFiles.toList()
+    ) {
+        val pool = (globalCategorizedFiles + directoryFiles)
+            .filter { !it.isDirectory }
+            .distinctBy { it.path }
 
+        FileCategoryFilter.entries
+            .filter { it != FileCategoryFilter.ALL }
+            .map { category ->
+                val matching = pool.filter {
+                    it.matchesCategoryFilter(category)
+                }
+
+                StorageCategorySummary(
+                    category = category,
+                    count = matching.size,
+                    totalBytes = matching.sumOf { it.sizeBytes }
+                )
+            }
+    }
     // Breadcrumb Segments Computation
     val breadcrumbSegments = remember(currentDirectoryPath, rootPath) {
         val list = mutableListOf("Root" to rootPath)
@@ -1046,13 +1376,62 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
             stiffness = Spring.StiffnessMediumLow
         )
     )
+    val storagePrefs = remember(context) {
+        context.getSharedPreferences(
+            "wear_file_explorer_storage",
+            Context.MODE_PRIVATE
+        )
+    }
 
+    var selectedTreeUri by remember {
+        mutableStateOf(
+            storagePrefs.getString("selected_tree_uri", null)
+                ?.let(Uri::parse)
+        )
+    }
+
+    val treePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            val requestedFlags =
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+            val persistedFlags = runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    requestedFlags
+                )
+                requestedFlags
+            }.getOrElse {
+                runCatching {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                }.getOrDefault(0)
+            }
+
+            if (persistedFlags != 0) {
+                selectedTreeUri = uri
+                storagePrefs.edit()
+                    .putString("selected_tree_uri", uri.toString())
+                    .apply()
+
+                feedbackOverlay = "Folder access granted" to false
+            } else {
+                feedbackOverlay = "Unable to persist folder access" to true
+            }
+        }
+    }
     FileExplorerBaselineViewport { adaptiveSpec ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
-        ) {
+                .background(MaterialTheme.colorScheme.background),
+            ) {
             VerticalPager(
                 state = pagerState,
                 flingBehavior = pagerFlingBehavior,
@@ -1338,7 +1717,48 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
         }
     }
 }
+    private fun listSafDirectory(
+        context: Context,
+        treeUri: Uri,
+        relativeSegments: List<String> = emptyList()
+    ): List<WearFileItem> {
+        var directory = DocumentFile.fromTreeUri(context, treeUri)
+            ?: return emptyList()
 
+        for (segment in relativeSegments) {
+            directory = directory.findFile(segment)
+                ?.takeIf { it.isDirectory }
+                ?: return emptyList()
+        }
+
+        return runCatching {
+            directory.listFiles().map { document ->
+                val name = document.name ?: "Unnamed"
+
+                val extension = name.substringAfterLast('.', "")
+                    .lowercase(Locale.ROOT)
+
+                WearFileItem(
+                    name = name,
+                    path = document.uri.toString(),
+                    isDirectory = document.isDirectory,
+                    sizeBytes = document.length().coerceAtLeast(0L),
+                    lastModifiedMs = document.lastModified(),
+                    extension = extension,
+                    mimeType = document.type
+                        ?: if (document.isDirectory) {
+                            "inode/directory"
+                        } else {
+                            "application/octet-stream"
+                        },
+                    canRead = document.canRead(),
+                    canWrite = document.canWrite(),
+                    isHidden = name.startsWith("."),
+                    contentUri = document.uri
+                )
+            }
+        }.getOrDefault(emptyList())
+    }
 // =============================================================================
 // PAGE 0: STORAGE ANALYTICS CARDS, CATEGORY FILTER CHIPS & PERMISSIONS
 // =============================================================================
@@ -1381,8 +1801,9 @@ private fun StorageAnalyticsAndPermissionsPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -1553,6 +1974,19 @@ private fun StorageAnalyticsAndPermissionsPage(
                 ) {
                     Text("Open LifeOS Sandbox Vault")
                 }
+                FilledTonalButton(
+                    onClick = {
+                        treePicker.launch(null)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Rounded.FolderOpen,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Grant Folder Access")
+                }
             }
         }
     }
@@ -1616,8 +2050,9 @@ private fun FileBrowserAndOperationsPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement
+            = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -1802,13 +2237,13 @@ private fun FileBrowserAndOperationsPage(
                                 imageVector = cat.icon,
                                 contentDescription = null,
                                 modifier = Modifier.size(11.dp),
-                                tint = if (selected) Color.Black else cat.accent
+                                tint = if (selected) MaterialTheme.colorScheme.background else cat.accent
                             )
                             Text(
                                 text = cat.shortLabel,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) Color.Black else MaterialTheme.colorScheme.onSurface
+                                color = if (selected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -2108,7 +2543,7 @@ private fun TransferQueueAndTransportStudioPage(
                 ),
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black),
+                    .background(MaterialTheme.colorScheme.background),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -2321,23 +2756,60 @@ private fun M3RealFilePreviewOverlay(
     var mediaDurationMs by remember { mutableIntStateOf(1) }
     val mediaPlayerRef = remember { mutableStateOf<MediaPlayer?>(null) }
 
+    var isMediaPrepared by remember(item.path) {
+        mutableStateOf(false)
+    }
+
     DisposableEffect(item.path) {
-        if (item.category == FileCategoryFilter.AUDIO || item.category == FileCategoryFilter.VIDEO) {
+        var player: MediaPlayer? = null
+
+        if (
+            item.category == FileCategoryFilter.AUDIO ||
+            item.category == FileCategoryFilter.VIDEO
+        ) {
             runCatching {
-                val mp = MediaPlayer().apply {
-                    setDataSource(item.path)
-                    prepare()
-                    mediaDurationMs = duration.coerceAtLeast(1)
+                MediaPlayer().also { mp ->
+                    player = mp
+
+                    mp.setOnPreparedListener { prepared ->
+                        mediaDurationMs = prepared.duration.coerceAtLeast(1)
+                        isMediaPrepared = true
+                    }
+
+                    mp.setOnCompletionListener {
+                        isPlayingMedia = false
+                        mediaPositionMs = mediaDurationMs
+                    }
+
+                    mp.setOnErrorListener { _, _, _ ->
+                        isPlayingMedia = false
+                        isMediaPrepared = false
+                        true
+                    }
+
+                    val sourceUri = item.contentUri ?: Uri.fromFile(File(item.path))
+                    mp.setDataSource(context, sourceUri)
+                    mediaPlayerRef.value = mp
+                    mp.prepareAsync()
                 }
-                mediaPlayerRef.value = mp
+            }.onFailure {
+                isMediaPrepared = false
             }
         }
+
         onDispose {
-            runCatching {
-                mediaPlayerRef.value?.stop()
-                mediaPlayerRef.value?.release()
-            }
+            isPlayingMedia = false
+            isMediaPrepared = false
             mediaPlayerRef.value = null
+
+            player?.let { mp ->
+                runCatching {
+                    if (mp.isPlaying) mp.stop()
+                }
+                runCatching {
+                    mp.release()
+                }
+            }
         }
     }
 
@@ -2362,9 +2834,27 @@ private fun M3RealFilePreviewOverlay(
         }
         if (item.category == FileCategoryFilter.DOCS || item.extension in setOf("txt", "json", "md", "log", "xml", "csv", "kt", "py")) {
             withContext(Dispatchers.IO) {
-                textPreviewContent = runCatching {
-                    File(item.path).bufferedReader().use { it.readText().take(2500) }
-                }.getOrDefault("Unable to read text content.")
+                if (
+                    item.extension in setOf(
+                        "txt", "json", "md", "log",
+                        "xml", "csv", "kt", "py"
+                    )
+                ) {
+                    val content = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val input = item.contentUri?.let { uri ->
+                                context.contentResolver.openInputStream(uri)
+                            } ?: File(item.path).inputStream()
+
+                            input.bufferedReader().use { reader ->
+                                val buffer = CharArray(2500)
+                                val count = reader.read(buffer)
+
+                                if (count > 0) String(buffer, 0, count) else ""
+                            }
+                        }.getOrDefault("Unable to read text content.")
+                    }
+                }
             }
         }
     }
@@ -2390,8 +2880,10 @@ private fun M3RealFilePreviewOverlay(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.98f)),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .background(
+                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+                ),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -2438,14 +2930,17 @@ private fun M3RealFilePreviewOverlay(
                 item {
                     Card(
                         onClick = {
-                            val mp = mediaPlayerRef.value
-                            if (mp != null) {
-                                if (mp.isPlaying) {
-                                    mp.pause()
-                                    isPlayingMedia = false
-                                } else {
-                                    mp.start()
-                                    isPlayingMedia = true
+                            if (isMediaPrepared) {
+                                val mp = mediaPlayerRef.value
+
+                                if (mp != null) {
+                                    if (mp.isPlaying) {
+                                        mp.pause()
+                                        isPlayingMedia = false
+                                    } else {
+                                        mp.start()
+                                        isPlayingMedia = true
+                                    }
                                 }
                             }
                         },
@@ -2549,8 +3044,12 @@ private fun M3ComprehensiveFileInspectorModal(
     val columnState = rememberTransformingLazyColumnState()
     var md5Hash by remember(item.path) { mutableStateOf("Calculating...") }
 
-    LaunchedEffect(item.path) {
-        md5Hash = if (item.isDirectory) "Directory" else WearStorageEngine.computeMd5Checksum(item.path)
+    LaunchedEffect(item.path, item.contentUri) {
+        md5Hash = if (item.isDirectory) {
+            "Directory"
+        } else {
+            WearStorageEngine.computeMd5Checksum(context, item)
+        }
     }
 
     ScreenScaffold(
@@ -2574,7 +3073,9 @@ private fun M3ComprehensiveFileInspectorModal(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.97f)),
+                .background(
+                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+                ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -2710,7 +3211,7 @@ private fun M3ComprehensiveFileInspectorModal(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+//                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(key.uppercase(Locale.ROOT), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(value, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), color = MaterialTheme.colorScheme.onSurface)
@@ -2755,8 +3256,9 @@ private fun ViewportConstrainedFileExplorerConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.92f))
-            .clickable(onClick = onDismiss),
+            .background(
+                MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+            ).clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {
         CurvedLayout(modifier = Modifier.fillMaxSize()) {

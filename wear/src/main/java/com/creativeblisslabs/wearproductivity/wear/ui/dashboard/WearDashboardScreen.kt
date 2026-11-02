@@ -12,7 +12,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import androidx.compose.foundation.pager.PagerDefaults
+import android.content.BroadcastReceiver
+import android.content.Context
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -73,7 +77,8 @@ private enum class ComplicationSlot(val key: String, val label: String) {
     UPPER_LEFT("face_upper_left_complication", "Upper Left"),
     UPPER_RIGHT("face_upper_right_complication", "Upper Right"),
     BOTTOM_LEFT("face_bottom_left_complication", "Bottom Left"),
-    BOTTOM_RIGHT("face_bottom_left_complication", "Bottom Right"),
+
+    BOTTOM_RIGHT("face_bottom_right_complication", "Bottom Right"),
     BOTTOM("face_bottom_complication","Bottom Slot"),
     RING("face_ring_complication", "Outer Bezel Ring")
 }
@@ -94,9 +99,9 @@ private enum class ComplicationDataType(
     STEPS("STEPS", "STP", "Daily Steps", Icons.Rounded.DirectionsWalk, Color(0xFF79E2B0)),
     SLEEP("SLEEP", "SLP", "Sleep Duration", Icons.Rounded.Bedtime, Color(0xFFA6B8FF)),
     CALORIES("CALORIES", "KCAL", "Nutrition Calories", Icons.Rounded.LocalFireDepartment, Color(0xFFFFB76B)),
-    EXPENSES("EXPENSES", "EXP", "Today's Spend", Icons.Rounded.AccountBalanceWallet, Color(0xFFFFD177)),
+    EXPENSES("EXPENSES", "EXP", "Expenses", Icons.Rounded.AccountBalanceWallet, Color(0xFFFFD177)),
     ALARM("ALARM", "ALM", "Next Alarm", Icons.Rounded.Alarm, Color(0xFFFFD177)),
-    EVENTS("EVENTS", "EVT", "Upcoming Events", Icons.Rounded.Event, Color(0xFF8EAEFF)),
+    EVENTS("EVENTS", "EVT", "Calendar Events", Icons.Rounded.Event, Color(0xFF8EAEFF)),
     ROUTINES("ROUTINES", "RTN", "Daily Routines", Icons.Rounded.Schedule, Color(0xFFBBA5FF)),
     RUNS("RUNS", "RUN", "Run Workouts", Icons.Rounded.DirectionsRun, Color(0xFF79E2B0)),
     BATTERY("BATTERY", "BAT", "Watch Battery", Icons.Rounded.BatteryChargingFull, Color(0xFF79E2B0)),
@@ -118,8 +123,16 @@ private data class FaceMetric(
     val progress: Float = 0f,
     val visible: Boolean = true
 )
-
-
+data class AlarmDisplayInfo(
+    val alarmId: String,
+    val triggerAtEpochMs: Long
+)
+data class CompanionStatus(
+    val batteryPercent: Int? = null,
+    val isCharging: Boolean = false,
+    val connected: Boolean = false,
+    val lastUpdatedEpochMs: Long? = null
+)
 
 @SuppressLint("SuspiciousIndentation")
 @Suppress("UNUSED_PARAMETER")
@@ -139,10 +152,15 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
     val defaultFocusMinutes = rememberWearIntPreference(WearAppPreferences.KEY_FOCUS_DEFAULT_MINUTES, 25).coerceIn(5, 180)
 
     val initTop = rememberWearStringPreference(WearAppPreferences.KEY_FACE_TOP_COMPLICATION, "FAST")
-    val initLeft = rememberWearStringPreference(WearAppPreferences.KEY_FACE_TOP_LEFT_COMPLICATION,
-        "WATER")
-    val initRight = rememberWearStringPreference(WearAppPreferences.KEY_FACE_TOP_RIGHT_COMPLICATION,
-        "HABITS")
+    val initLeft = rememberWearStringPreference(
+        ComplicationSlot.BOTTOM_LEFT.key,
+        "WATER"
+    )
+
+    val initRight = rememberWearStringPreference(
+        ComplicationSlot.BOTTOM_RIGHT.key,
+        "HABITS"
+    )
     val initBottom = rememberWearStringPreference(WearAppPreferences.KEY_FACE_BOTTOM_COMPLICATION, "ALARM")
     val initRing = rememberWearStringPreference(WearAppPreferences.KEY_FACE_RING_METRIC, "TASKS")
     val initUpperLeft = rememberWearStringPreference(ComplicationSlot.UPPER_LEFT.key, "HEART")
@@ -199,23 +217,72 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
     }
 
     // Battery & Weather Telemetry
-    var watchBatteryPercent by remember { mutableIntStateOf(85) }
-    var isWatchCharging by remember { mutableStateOf(false) }
-    val phoneBatteryPercent by remember { mutableIntStateOf(90) }
-    val weatherTempText = "28°C"
-
-    LaunchedEffect(Unit) {
-        try {
-            val batteryIntent = appContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-            val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-            if (level >= 0 && scale > 0) {
-                watchBatteryPercent = ((level.toFloat() / scale.toFloat()) * 100f).toInt().coerceIn(0, 100)
-            }
-            isWatchCharging = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING
-        } catch (_: Exception) {}
+    var watchBatteryPercent by remember {
+        mutableIntStateOf(-1)
     }
 
+    var isWatchCharging by remember {
+        mutableStateOf(false)
+    }
+
+    val phoneBatteryPercent = -1
+    val weatherTempText = "—"
+
+    DisposableEffect(appContext) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(
+                context: Context?,
+                intent: Intent?
+            ) {
+                if (intent?.action != Intent.ACTION_BATTERY_CHANGED) {
+                    return
+                }
+
+                val level = intent.getIntExtra(
+                    BatteryManager.EXTRA_LEVEL,
+                    -1
+                )
+
+                val scale = intent.getIntExtra(
+                    BatteryManager.EXTRA_SCALE,
+                    -1
+                )
+
+                watchBatteryPercent = if (level >= 0 && scale > 0) {
+                    ((level.toFloat() / scale) * 100f)
+                        .toInt()
+                        .coerceIn(0, 100)
+                } else {
+                    -1
+                }
+
+                val batteryStatus = intent.getIntExtra(
+                    BatteryManager.EXTRA_STATUS,
+                    -1
+                )
+
+                isWatchCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
+                        batteryStatus == BatteryManager.BATTERY_STATUS_FULL
+            }
+        }
+
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+
+        val initialBatteryIntent = appContext.registerReceiver(
+            receiver,
+            filter
+        )
+
+        initialBatteryIntent?.let {
+            receiver.onReceive(appContext, it)
+        }
+
+        onDispose {
+            runCatching {
+                appContext.unregisterReceiver(receiver)
+            }
+        }
+    }
     fun click() {
         if (prefHaptics) haptic.click()
     }
@@ -239,48 +306,156 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
         click()
         infoDialog = title to body
     }
-
-    fun sendPhoneRemoteCommand(actionPath: String, actionName: String) {
+    fun sendPhoneRemoteCommand(
+        actionPath: String,
+        actionName: String
+    ) {
         click()
-        scope.launch(Dispatchers.IO) {
+
+        scope.launch {
             try {
-                val nodes = Wearable.getNodeClient(appContext).connectedNodes.await()
+                val nodes = Wearable
+                    .getNodeClient(appContext)
+                    .connectedNodes
+                    .await()
+
                 val phoneNode = nodes.firstOrNull()
-                if (phoneNode != null) {
-                    Wearable.getMessageClient(appContext)
-                        .sendMessage(phoneNode.id, "/lifeos/phone_control/$actionPath", "TOGGLE".toByteArray())
-                        .await()
-                    statusMessage = "$actionName Sent"
-                } else {
-                    statusMessage = "$actionName Queued"
+
+                if (phoneNode == null) {
+                    statusMessage = "Phone Not Connected"
+                    return@launch
                 }
+
+                val commandId = java.util.UUID.randomUUID().toString()
+
+                val payload = kotlinx.serialization.json.buildJsonObject {
+                    put("commandId", commandId)
+                    put("action", actionPath)
+                    put("createdAt", System.currentTimeMillis())
+                }.toString()
+
+                Wearable
+                    .getMessageClient(appContext)
+                    .sendMessage(
+                        phoneNode.id,
+                        "/lifeos/phone_control/request",
+                        payload.toByteArray(Charsets.UTF_8)
+                    )
+                    .await()
+
+                statusMessage = "$actionName Request Sent"
+
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Exception) {
-                statusMessage = "$actionName Sent"
+                statusMessage = "$actionName Send Failed"
             }
         }
     }
 
     // Derived Domain Metrics (Every single repository entity represented)
-    val visibleAlarms = uiState.alarms.filter { it.stamp.deletedAt == null }
+
+    val today = LocalDate.now()
+    val zoneId = java.time.ZoneId.systemDefault()
+    val nowEpochMs = System.currentTimeMillis()
+
+    val todayStart = today
+        .atStartOfDay(zoneId)
+        .toInstant()
+        .toEpochMilli()
+
+    val tomorrowStart = today
+        .plusDays(1)
+        .atStartOfDay(zoneId)
+        .toInstant()
+        .toEpochMilli()
+
+    val visibleAlarms = uiState.alarms.filter {
+        it.stamp.deletedAt == null
+    }
+
     val enabledAlarms = visibleAlarms.count { it.enabled }
-    val activeEvents = uiState.events.filter { it.stamp.deletedAt == null }
-    val activeDates = uiState.importantDates.filter { it.stamp.deletedAt == null }
-    val activeRoutines = uiState.routines.filter { it.stamp.deletedAt == null }
-    val doneRoutines = activeRoutines.count { it.doneToday }
-    val activeRuns = uiState.runs.filter { it.stamp.deletedAt == null }
-    val doneRuns = activeRuns.count { it.completed }
-    val taskDone = uiState.activeTasks.count { it.complete }
+
+    val activeEvents = uiState.events.filter {
+        it.stamp.deletedAt == null
+    }
+
+    val upcomingEvents = activeEvents
+        .filter { event ->
+            event.scheduledAtEpochMs?.let {
+                it >= nowEpochMs
+            } == true
+        }
+        .sortedBy { it.scheduledAtEpochMs }
+
+    val unscheduledEvents = activeEvents.count {
+        it.scheduledAtEpochMs == null
+    }
+
+    val activeDates = uiState.importantDates.filter {
+        it.stamp.deletedAt == null
+    }
+
+    val activeRoutines = uiState.routines.filter {
+        it.stamp.deletedAt == null
+    }
+
+    val doneRoutines = activeRoutines.count {
+        it.doneToday
+    }
+
+    val activeRuns = uiState.runs.filter {
+        it.stamp.deletedAt == null
+    }
+
+    val doneRuns = activeRuns.count {
+        it.completed
+    }
+
+    val taskDone = uiState.activeTasks.count {
+        it.complete
+    }
+
     val taskTotal = uiState.activeTasks.size
-    val habitDone = uiState.activeHabits.count { it.doneToday }
+
+    val habitDone = uiState.activeHabits.count {
+        it.doneToday
+    }
+
     val habitTotal = uiState.activeHabits.size
-    val waterMl = uiState.wellness.waterGlasses.coerceAtLeast(0) * 250
+
+    val waterMl = uiState.wellness.waterGlasses
+        .coerceAtLeast(0) * 250
+
     val stepsCount = uiState.wellness.steps.coerceAtLeast(0)
-    val sleepMinutes = uiState.wellness.sleepLastNightMinutes.coerceAtLeast(0)
-    val activeFoodLogs = uiState.foodLogs.filter { it.stamp.deletedAt == null }
-    val totalCalories = activeFoodLogs.sumOf { it.calories }
-    val totalProtein = activeFoodLogs.sumOf { it.proteinGrams }.toInt()
-    val activeExpenses = uiState.expenses.filter { it.stamp.deletedAt == null }
-    val totalExpenseAmount = activeExpenses.sumOf { it.amount }.toInt()
+
+    val sleepMinutes = uiState.wellness.sleepLastNightMinutes
+        .coerceAtLeast(0)
+
+// Local-calendar-day filtering, not all-time totals.
+    val activeFoodLogs = uiState.foodLogs.filter {
+        it.stamp.deletedAt == null &&
+                it.loggedAtEpochMs >= todayStart &&
+                it.loggedAtEpochMs < tomorrowStart
+    }
+
+    val totalCalories = activeFoodLogs.sumOf {
+        it.calories.coerceAtLeast(0)
+    }
+
+    val totalProtein = activeFoodLogs.sumOf {
+        it.proteinGrams.coerceAtLeast(0.0)
+    }.toInt()
+
+    val activeExpenses = uiState.expenses.filter {
+        it.stamp.deletedAt == null &&
+                it.occurredAtEpochMs >= todayStart &&
+                it.occurredAtEpochMs < tomorrowStart
+    }
+
+    val totalExpenseAmount = activeExpenses
+        .sumOf { it.amount.coerceAtLeast(0.0) }
+        .toInt()
 
     fun completeNextTask() {
         val next = uiState.activeTasks.firstOrNull { !it.complete }
@@ -321,10 +496,23 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
     }
 
     fun toggleAlarm() {
-        val target = visibleAlarms.filter { it.enabled }.minByOrNull { it.time }
-            ?: visibleAlarms.minByOrNull { it.time }
-        if (target == null) showInfo("Alarms", "No alarms configured yet.")
-        else runAction(if (target.enabled) "Alarm Off" else "Alarm On") {
+        val target = visibleAlarms
+            .filter { it.enabled }
+            .minByOrNull {
+                parseStoredAlarmTime(it.time) ?: LocalTime.MAX
+            }
+            ?: visibleAlarms.minByOrNull {
+                parseStoredAlarmTime(it.time) ?: LocalTime.MAX
+            }
+
+        if (target == null) {
+            showInfo("Alarms", "No alarms configured yet.")
+            return
+        }
+
+        runAction(
+            if (target.enabled) "Alarm Off" else "Alarm On"
+        ) {
             repository.toggleAlarm(target.stamp.id)
         }
     }
@@ -387,12 +575,30 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
             }
             ComplicationDataType.HEART -> {
                 val bpm = uiState.wellness.currentHeartRateBpm.toInt()
+                val heartRateFresh = remember(
+                    uiState.wellness.heartRateMeasuredAtEpochMs,
+                    nowEpochMs
+                ) {
+                    uiState.wellness.heartRateMeasuredAtEpochMs?.let {
+                        nowEpochMs - it in 0..(5 * 60 * 1000L)
+                    } == true
+                }
+
+                val heartRateBpm = uiState.wellness.currentHeartRateBpm
+                    .takeIf { heartRateFresh && it > 0.0 }
+                    ?.toInt()
                 FaceMetric(
                     type = type,
                     title = "BPM",
-                    value = if (bpm > 0) "$bpm" else "72",
-                    subtitle = uiState.wellness.heartRateAccuracy,
-                    progress = ((if (bpm > 0) bpm else 72) / 180f).coerceIn(0f, 1f)
+                    value = heartRateBpm?.toString() ?: "—",
+                    subtitle = if (heartRateBpm != null) {
+                        "Live · ${uiState.wellness.heartRateAccuracy}"
+                    } else {
+                        "No recent reading"
+                    },
+                    progress = heartRateBpm
+                        ?.let { (it / 180f).coerceIn(0f, 1f) }
+                        ?: 0f
                 )
             }
             ComplicationDataType.STEPS -> FaceMetric(
@@ -405,12 +611,25 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
             ComplicationDataType.SLEEP -> {
                 val hrs = sleepMinutes / 60
                 val mins = sleepMinutes % 60
+
                 FaceMetric(
                     type = type,
                     title = "SLP",
-                    value = if (sleepMinutes > 0) "${hrs}h${mins}m" else "7h30m",
-                    subtitle = "Last night sleep",
-                    progress = ((if (sleepMinutes > 0) sleepMinutes else 450) / 480f).coerceIn(0f, 1f)
+                    value = if (sleepMinutes > 0) {
+                        "${hrs}h${mins}m"
+                    } else {
+                        "—"
+                    },
+                    subtitle = if (sleepMinutes > 0) {
+                        "Last night sleep"
+                    } else {
+                        "No sleep data"
+                    },
+                    progress = if (sleepMinutes > 0) {
+                        (sleepMinutes / 480f).coerceIn(0f, 1f)
+                    } else {
+                        0f
+                    }
                 )
             }
             ComplicationDataType.CALORIES -> FaceMetric(
@@ -424,17 +643,36 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                 type = type,
                 title = "EXP",
                 value = "₹$totalExpenseAmount",
-                subtitle = "${activeExpenses.size} entries today",
+                subtitle = "${activeExpenses.size} entries recorded",
                 progress = (totalExpenseAmount / 2000f).coerceIn(0f, 1f)
             )
             ComplicationDataType.ALARM -> {
-                val alarm = visibleAlarms.filter { it.enabled }.minByOrNull { it.time } ?: visibleAlarms.minByOrNull { it.time }
+                val nextAlarmInfo = nextScheduledAlarms
+                    .filter { it.triggerAtEpochMs > nowEpochMs }
+                    .minByOrNull { it.triggerAtEpochMs }
+
+                val nextAlarm = nextAlarmInfo?.let { info ->
+                    visibleAlarms.firstOrNull {
+                        it.stamp.id == info.alarmId
+                    }
+                }
+                val nextTrigger = nextAlarmInfo?.triggerAtEpochMs
+
                 FaceMetric(
                     type = type,
                     title = "ALM",
-                    value = alarm?.let { formatStoredAlarmTime(it.time, use24HourClock) } ?: "OFF",
-                    subtitle = "$enabledAlarms active",
-                    progress = if (enabledAlarms > 0) 1f else 0f
+                    value = nextTrigger?.let {
+                        java.time.Instant.ofEpochMilli(it)
+                            .atZone(zoneId)
+                            .format(
+                                DateTimeFormatter.ofPattern(
+                                    if (use24HourClock) "HH:mm" else "h:mm a",
+                                    Locale.getDefault()
+                                )
+                            )
+                    } ?: "OFF",
+                    subtitle = nextAlarm?.label ?: "No upcoming alarm",
+                    progress = if (nextAlarm != null) 1f else 0f
                 )
             }
             ComplicationDataType.EVENTS -> FaceMetric(
@@ -461,16 +699,23 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
             ComplicationDataType.BATTERY -> FaceMetric(
                 type = type,
                 title = "BAT",
-                value = "$watchBatteryPercent%",
-                subtitle = "Phone $phoneBatteryPercent%",
-                progress = (watchBatteryPercent / 100f).coerceIn(0f, 1f)
+                value = watchBatteryPercent
+                    .takeIf { it in 0..100 }
+                    ?.let { "$it%" } ?: "—",
+                subtitle = "Phone ${
+                    phoneBatteryPercent.takeIf { it in 0..100 }
+                        ?.let { "$it%" } ?: "—"
+                }",
+                progress = watchBatteryPercent
+                    .takeIf { it in 0..100 }
+                    ?.div(100f) ?: 0f
             )
             ComplicationDataType.WEATHER -> FaceMetric(
                 type = type,
                 title = "WTH",
-                value = weatherTempText,
-                subtitle = "Clear · Outdoor",
-                progress = 0.7f
+                value = "—",
+                subtitle = "Weather unavailable",
+                progress = 0f
             )
             ComplicationDataType.DATE -> FaceMetric(
                 type = type,
@@ -491,26 +736,42 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
 
     fun triggerComplicationAction(metric: FaceMetric) {
         when (metric.type) {
-            ComplicationDataType.FAST -> runAction(if (uiState.fast.active) "Fast Ended" else "Fast Started") {
-                repository.toggleFast()
+            ComplicationDataType.FAST -> runAction(
+                if (uiState.fast.hasSession) "Fast Ended" else "Fast Started"
+            ) {
+                if (uiState.fast.hasSession) {
+                    repository.stopFast()
+                } else {
+                    repository.startFast(
+                        programId = uiState.fast.programId,
+                        targetSeconds = uiState.fast.targetSeconds
+                    )
+                }
             }
             ComplicationDataType.WATER -> logWater()
             ComplicationDataType.HABITS -> completeNextHabit()
             ComplicationDataType.TASKS -> completeNextTask()
             ComplicationDataType.FOCUS -> toggleFocus()
             ComplicationDataType.HEART -> showInfo("Heart Rate Telemetry", "Current: ${metric.value} BPM (${metric.subtitle})")
-            ComplicationDataType.STEPS -> runAction("+500 Steps Synced") {
-                repository.updateSteps((stepsCount + 500).toLong())
-            }
+            ComplicationDataType.STEPS -> showInfo(
+                "Step Tracking",
+                "$stepsCount steps recorded by your activity tracker."
+            )
             ComplicationDataType.SLEEP -> showInfo("Sleep Recovery", "Last night: ${metric.value}")
             ComplicationDataType.CALORIES -> showInfo("Nutrition Summary", "$totalCalories kcal · ${totalProtein}g protein across ${activeFoodLogs.size} meals.")
-            ComplicationDataType.EXPENSES -> showInfo("Daily Expenses", "Total spent: ₹$totalExpenseAmount across ${activeExpenses.size} transactions.")
+            ComplicationDataType.EXPENSES -> showInfo(
+                "Expenses",
+                "Total spent: ₹$totalExpenseAmount across ${activeExpenses.size} transactions."
+            )
             ComplicationDataType.ALARM -> toggleAlarm()
             ComplicationDataType.EVENTS -> showInfo("Agenda", "${activeEvents.size} upcoming events & ${activeDates.size} important dates.")
             ComplicationDataType.ROUTINES -> completeNextRoutine()
             ComplicationDataType.RUNS -> completeNextWorkout()
             ComplicationDataType.BATTERY -> showInfo("Battery Status", "Watch: $watchBatteryPercent% ${if (isWatchCharging) "(Charging)" else ""}\nPhone Companion: $phoneBatteryPercent%")
-            ComplicationDataType.WEATHER -> showInfo("Weather Conditions", "Current: $weatherTempText · Clear sky")
+            ComplicationDataType.WEATHER -> showInfo(
+                "Weather Conditions",
+                "Weather data is not currently available."
+            )
             ComplicationDataType.DATE -> showInfo("Today", "$dateText · $taskDone/$taskTotal tasks done")
             ComplicationDataType.NONE -> {}
         }
@@ -546,7 +807,12 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                 WearAppPreferences.setString(appContext, ComplicationSlot.BOTTOM_LEFT.key, newTypeId)
             }
             ComplicationSlot.BOTTOM_RIGHT -> {
-                WearAppPreferences.setString(appContext, ComplicationSlot.BOTTOM_RIGHT.key, newTypeId)
+                faceBottomRight = newTypeId
+                WearAppPreferences.setString(
+                    appContext,
+                    ComplicationSlot.BOTTOM_RIGHT.key,
+                    newTypeId
+                )
             }
             ComplicationSlot.BOTTOM -> {
                 faceBottom = newTypeId
@@ -613,7 +879,7 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.primary),
         ) {
             VerticalPager(
                 state = pagerState,
@@ -743,13 +1009,23 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                         onToggleFocus = ::toggleFocus,
                         onLogWater = ::logWater,
                         onAddSteps = {
-                            runAction("+500 Steps Logged") {
-                                repository.updateSteps((stepsCount + 500).toLong())
-                            }
+                            showInfo(
+                                "Step Tracking",
+                                "Steps are updated from your activity tracker. Manual step adjustments are unavailable here."
+                            )
                         },
                         onToggleFast = {
-                            runAction(if (uiState.fast.active) "Fast Ended" else "Fast Started") {
-                                repository.toggleFast()
+                            runAction(
+                                if (uiState.fast.hasSession) "Fast Ended" else "Fast Started"
+                            ) {
+                                if (uiState.fast.hasSession) {
+                                    repository.stopFast()
+                                } else {
+                                    repository.startFast(
+                                        programId = uiState.fast.programId,
+                                        targetSeconds = uiState.fast.targetSeconds
+                                    )
+                                }
                             }
                         },
                         onToggleAlarm = ::toggleAlarm,
@@ -786,13 +1062,15 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
             }
 
             // Native M3 Vertical Pager Indicator (3 Pages: Face, Face Studio, Stats Deck)
-            VerticalPagerIndicator(
-                currentPage = pagerState.currentPage,
-                pageCount = 3,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = adaptiveSpec.screenWidth * 0.02f)
-            )
+            if (selectedSlotForEdit == null) {
+                VerticalPagerIndicator(
+                    currentPage = pagerState.currentPage,
+                    pageCount = 3,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = adaptiveSpec.screenWidth * 0.02f)
+                )
+            }
 
             // 1. In-Viewport Constrained Curved Confirmation Overlay
             statusMessage?.let { msg ->
@@ -861,7 +1139,7 @@ private fun M3WatchFacePage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             // 1. Outer Bezel Progress Ring
@@ -941,16 +1219,24 @@ private fun M3WatchFacePage(
                 // Row 3: Center Expressive Time, Date & Ring Metric Indicator
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable(
                             onClick = {
-                                if (isEditMode) onComplicationClick(ComplicationSlot.RING, ringMetric)
-                                else onOpenStatsDeck()
+                                if (isEditMode) {
+                                    onComplicationClick(
+                                        ComplicationSlot.RING,
+                                        ringMetric
+                                    )
+                                } else {
+                                    onComplicationClick(
+                                        ComplicationSlot.RING,
+                                        ringMetric
+                                    )
+                                }
                             }
                         )
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.Bottom,
@@ -992,14 +1278,6 @@ private fun M3WatchFacePage(
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
                         )
-                        if (isEditMode) {
-                            Text(
-                                text = "· RING: ${ringMetric.type.shortLabel}",
-                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
-                                color = ringMetric.type.accent,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
 
                     // Telemetry Status Bar
@@ -1009,8 +1287,14 @@ private fun M3WatchFacePage(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         WearStatusBadge(
-                            text = "$watchBatteryPercent%",
-                            icon = if (isWatchCharging) Icons.Default.BatteryChargingFull else Icons.Default.Watch
+                            text = watchBatteryPercent
+                                .takeIf { it in 0..100 }
+                                ?.let { "$it%" } ?: "—",
+                            icon = if (isWatchCharging) {
+                                Icons.Default.BatteryChargingFull
+                            } else {
+                                Icons.Default.Watch
+                            }
                         )
                         WearStatusBadge(
                             text = "$phoneBatteryPercent%",
@@ -1063,7 +1347,12 @@ private fun M3ComplicationPill(
     onClick: () -> Unit
 ) {
     if (!metric.visible && !isEditMode) {
-        Spacer(modifier = Modifier.size(width = 64.dp, height = 24.dp))
+        Spacer(
+            modifier = Modifier.size(
+                width = 64.dp,
+                height = 40.dp
+            )
+        )
         return
     }
 
@@ -1081,7 +1370,7 @@ private fun M3ComplicationPill(
 
     Row(
         modifier = Modifier
-            .height(24.dp)
+            .heightIn(min = 40.dp)
             .clip(CircleShape)
             .background(containerColor)
             .then(borderModifier)
@@ -1149,7 +1438,7 @@ private fun M3WatchFaceCustomizerPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.primary),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1185,77 +1474,73 @@ private fun M3WatchFaceCustomizerPage(
                 }
             }
 
-//            items(ComplicationSlot.entries.size) { index ->
-//                val slot = ComplicationSlot.entries[index]
-//                val currentMetric = getSlotMetric(slot)
-//
-//                Card(
-//                    onClick = { onSelectSlotToEdit(slot) },
-//                    modifier = Modifier.fillMaxWidth(),
-//                    shape = RoundedCornerShape(20.dp),
-//                    colors = CardDefaults.cardColors(
-//                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-//                        contentColor = MaterialTheme.colorScheme.onSurface
-//                    )
-//                ) {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(horizontal = 10.dp, vertical = 6.dp),
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                    ) {
-//                        Box(
-//                            modifier = Modifier
-//                                .size(30.dp)
-//                                .clip(CircleShape)
-//                                .background(currentMetric.type.accent.copy(alpha = 0.2f)),
-//                            contentAlignment = Alignment.Center
-//                        ) {
-//                            Icon(
-//                                imageVector = currentMetric.type.icon,
-//                                contentDescription = null,
-//                                modifier = Modifier.size(16.dp),
-//                                tint = currentMetric.type.accent
-//                            )
-//                        }
-//
-//                        Column(modifier = Modifier.weight(1f)) {
-//                            Text(
-//                                text = slot.label.uppercase(Locale.getDefault()),
-//                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
-//                                color = MaterialTheme.colorScheme.primary,
-//                                fontWeight = FontWeight.Bold,
-//                                maxLines = 1
-//                            )
-//                            Text(
-//                                text = "${currentMetric.type.fullName} (${currentMetric.value})",
-//                                style = MaterialTheme.typography.bodySmall.compactLineHeight(),
-//                                color = MaterialTheme.colorScheme.onSurface,
-//                                fontWeight = FontWeight.SemiBold,
-//                                maxLines = 1,
-//                                overflow = TextOverflow.Ellipsis
-//                            )
-//                        }
-//
-//                        FilledTonalIconButton(
-//                            onClick = { onCycleSlotQuick(slot) },
-//                            modifier = Modifier.size(30.dp)
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Rounded.Refresh,
-//                                contentDescription = "Cycle Data Type",
-//                                modifier = Modifier.size(15.dp)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
+            items(ComplicationSlot.entries.size) { index ->
+                val slot = ComplicationSlot.entries[index]
+                val currentMetric = getSlotMetric(slot)
 
-            // Clock & Bezel Ring Style Settings
-            item {
-                CatalogM3ListHeaderSample(title = "FACE APPEARANCE")
+                Card(
+                    onClick = { onSelectSlotToEdit(slot) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(currentMetric.type.accent.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = currentMetric.type.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = currentMetric.type.accent
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = slot.label.uppercase(Locale.getDefault()),
+                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "${currentMetric.type.fullName} (${currentMetric.value})",
+                                style = MaterialTheme.typography.bodySmall.compactLineHeight(),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        FilledTonalIconButton(
+                            onClick = { onCycleSlotQuick(slot) },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = "Cycle Data Type",
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+                }
             }
+
 
             item {
                 WearExpressiveSwitchRow(
@@ -1315,7 +1600,7 @@ private fun M3ComplicationPickerOverlay(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.96f)),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.96f)),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1451,7 +1736,7 @@ private fun M3DashboardStatsDeckPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.primary),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1480,62 +1765,47 @@ private fun M3DashboardStatsDeckPage(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // 1. Lock / Unlock Toggle
-                        val isLocked = true // TODO: Replace with your actual state variable
                         FilledIconButton(
                             onClick = {
-                                val command = if (isLocked) "unlock" else "lock"
-                                val label = if (isLocked) "Unlock" else "Lock"
-                                onRemoteCommand(command, label)
+                                onRemoteCommand("lock", "Lock Phone")
                             }
                         ) {
                             Icon(
-                                imageVector = if (isLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
-                                contentDescription = if (isLocked) "Unlock Phone" else "Lock Phone"
+                                imageVector = Icons.Rounded.Lock,
+                                contentDescription = "Lock Phone"
                             )
                         }
 
-                        // 2. Ringer / Mute Toggle
-                        val isRingerOn = true // TODO: Replace with your actual state variable
                         FilledTonalIconButton(
                             onClick = {
-                                val command = if (isRingerOn) "mute" else "ringer"
-                                val label = if (isRingerOn) "Mute" else "Ringer"
-                                onRemoteCommand(command, label)
+                                onRemoteCommand("mute", "Mute Phone")
                             }
                         ) {
                             Icon(
-                                imageVector = if (isRingerOn) Icons.Rounded.PhonelinkRing else Icons.Rounded.VolumeMute,
-                                contentDescription = if (isRingerOn) "Mute Ringer" else "Enable Ringer"
+                                imageVector = Icons.Rounded.VolumeMute,
+                                contentDescription = "Mute Phone"
                             )
                         }
 
-                        // 3. Bluetooth On / Off Toggle
-                        val isBluetoothOn = true // TODO: Replace with your actual state variable
                         FilledTonalIconButton(
                             onClick = {
-                                val command = if (isBluetoothOn) "bluetooth_off" else "bluetooth"
-                                val label = if (isBluetoothOn) "Disable Bluetooth" else "Bluetooth"
-                                onRemoteCommand(command, label)
+                                onRemoteCommand("bluetooth_off", "Disable Bluetooth")
                             }
                         ) {
                             Icon(
-                                imageVector = if (isBluetoothOn) Icons.Rounded.Bluetooth else Icons.Rounded.BluetoothDisabled,
-                                contentDescription = if (isBluetoothOn) "Disable Bluetooth" else "Enable Bluetooth"
+                                imageVector = Icons.Rounded.BluetoothDisabled,
+                                contentDescription = "Disable Bluetooth"
                             )
                         }
 
-                        // 4. Wi-Fi On / Off Toggle
-                        val isWifiOn = true // TODO: Replace with your actual state variable
                         OutlinedIconButton(
                             onClick = {
-                                val command = if (isWifiOn) "wifi_off" else "wifi"
-                                val label = if (isWifiOn) "Disable Wi-Fi" else "Wi-Fi"
-                                onRemoteCommand(command, label)
+                                onRemoteCommand("wifi_off", "Disable Wi-Fi")
                             }
                         ) {
                             Icon(
-                                imageVector = if (isWifiOn) Icons.Rounded.Wifi else Icons.Rounded.WifiOff,
-                                contentDescription = if (isWifiOn) "Disable Wi-Fi" else "Enable Wi-Fi"
+                                imageVector = Icons.Rounded.WifiOff,
+                                contentDescription = "Disable Wi-Fi"
                             )
                         }
                     }
@@ -1669,7 +1939,11 @@ private fun M3DashboardStatsDeckPage(
             item {
                 val hrs = sleepMinutes / 60
                 val mins = sleepMinutes % 60
-                val sleepStr = if (sleepMinutes > 0) "${hrs}h ${mins}m" else "7h 30m"
+                val sleepStr = if (sleepMinutes > 0) {
+                    "${hrs}h ${mins}m"
+                } else {
+                    "No data"
+                }
                 WearMetricCard(
                     title = "STEPS & SLEEP",
                     value = "$stepsCount Steps · $sleepStr",
@@ -1682,7 +1956,7 @@ private fun M3DashboardStatsDeckPage(
             item {
                 val bpmText = if (state.wellness.currentHeartRateBpm > 0.0) {
                     "${state.wellness.currentHeartRateBpm.toInt()} BPM"
-                } else "72 BPM"
+                } else "No reading"
                 WearMetricCard(
                     title = "HEART RATE & MOOD",
                     value = "$bpmText · ${state.wellness.mood}",
@@ -1701,7 +1975,9 @@ private fun M3DashboardStatsDeckPage(
                 WearMetricCard(
                     title = "NUTRITION LOG",
                     value = "$totalCalories kcal · ${totalProtein}g P",
-                    subtitle = "${state.foodLogs.count { it.stamp.deletedAt == null }} meals logged today",
+                    subtitle = "${state.foodLogs.count {
+                        it.stamp.deletedAt == null
+                    }} meals logged",
                     icon = Icons.Rounded.LocalFireDepartment,
                     onClick = {
                         onShowInfo("Nutrition", "Calories: $totalCalories kcal\nProtein: ${totalProtein}g")
@@ -1727,16 +2003,12 @@ private fun M3DashboardStatsDeckPage(
             }
 
             item {
-                SplitSwitchButton(
-                    checked = enabledAlarms > 0,
-                    onCheckedChange = { onToggleAlarm() },
-                    onContainerClick = {
-                        onShowInfo("Alarms", "$enabledAlarms of $totalAlarms alarms enabled.")
-                    },
-                    toggleContentDescription = "Toggle Next Alarm",
-                    label = { Text("Alarms ($enabledAlarms/$totalAlarms)") },
-                    secondaryLabel = { Text("Tap switch to toggle next alarm") },
-                    modifier = Modifier.fillMaxWidth()
+                WearMetricCard(
+                    title = "ALARMS",
+                    value = "$enabledAlarms / ${visibleAlarms.size} Enabled",
+                    subtitle = "Tap to manage the next alarm",
+                    icon = Icons.Rounded.Alarm,
+                    onClick = onToggleAlarm
                 )
             }
 
@@ -1818,4 +2090,32 @@ private fun formatStoredAlarmTime(raw: String, use24HourClock: Boolean): String 
         val suffix = if (hour < 12) "AM" else "PM"
         String.format(Locale.getDefault(), "%d:%02d %s", twelveHour, minute, suffix)
     }
+}
+private fun parseStoredAlarmTime(raw: String): LocalTime? {
+    val match = Regex(
+        """^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$""",
+        RegexOption.IGNORE_CASE
+    ).matchEntire(raw.trim()) ?: return null
+
+    val rawHour = match.groupValues[1].toIntOrNull() ?: return null
+    val minute = match.groupValues[2]
+        .takeIf { it.isNotBlank() }
+        ?.toIntOrNull() ?: 0
+
+    if (minute !in 0..59) return null
+
+    val period = match.groupValues[3].uppercase(Locale.ROOT)
+
+    val hour = if (period.isNotEmpty()) {
+        if (rawHour !in 1..12) return null
+
+        (rawHour % 12) + if (period == "PM") 12 else 0
+    } else {
+        if (rawHour !in 0..23) return null
+        rawHour
+    }
+
+    return runCatching {
+        LocalTime.of(hour, minute)
+    }.getOrNull()
 }

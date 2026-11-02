@@ -39,6 +39,7 @@ fun FastingScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val fast = state.fast
+    val uiState by repository.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -88,7 +89,14 @@ fun FastingScreen(
                     Button(
                         onClick = {
                             coroutineScope.launch {
-                                repository.toggleFast()
+                                if (uiState.fast.hasSession) {
+                                    repository.stopFast()
+                                } else {
+                                    repository.startFast(
+                                        programId = uiState.fast.programId,
+                                        targetSeconds = uiState.fast.targetSeconds
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier.weight(1f),

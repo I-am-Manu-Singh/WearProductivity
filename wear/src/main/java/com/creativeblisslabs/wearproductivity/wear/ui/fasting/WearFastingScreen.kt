@@ -1,6 +1,15 @@
 package com.creativeblisslabs.wearproductivity.wear.ui.fasting
 
 import android.content.Context
+import java.util.Calendar
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -35,6 +44,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.cancelAndJoin
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,16 +82,19 @@ import com.creativeblisslabs.wearproductivity.wear.ui.util.rememberLifeOSHapticP
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val DEFAULT_FASTING_GOAL_MINUTES = 16 * 60
 private const val DEFAULT_WATER_TARGET_ML = 12 * 250
@@ -170,29 +183,46 @@ private fun formatHoursMinsShort(totalMinutes: Int): String {
 }
 
 private fun currentClockStamp(): String =
-    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-
+    SimpleDateFormat(
+        "yyyy-MM-dd HH:mm",
+        Locale.getDefault()
+    ).format(Date())
 // =============================================================================
 // REAL-TIME PCM AMBIENT SOUND SYNTHESIZER ENGINE (MINDFUL FASTING & CRAVING CALM)
 // =============================================================================
-private class FastingSoundEngine(private val scope: CoroutineScope) {
+private class FastingSoundEngine(
+    private val scope: CoroutineScope
+) {
     private var audioJob: Job? = null
-    private var audioTrack: AudioTrack? = null
 
-    fun updatePlayback(shouldPlay: Boolean, mode: FastingSoundMode, volume: Float = 0.22f) {
-        stop()
+    suspend fun updatePlayback(
+        shouldPlay: Boolean,
+        mode: FastingSoundMode,
+        volume: Float = 0.22f
+    ) {
+        // Wait for the previous track's finally block to finish.
+        audioJob?.cancelAndJoin()
+        audioJob = null
+
         if (!shouldPlay || mode == FastingSoundMode.OFF) return
 
         audioJob = scope.launch(Dispatchers.Default) {
-            val sampleRate = 22050
-            val bufferSize = AudioTrack.getMinBufferSize(
-                sampleRate,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT
-            ).coerceAtLeast(2048)
+            var track: AudioTrack? = null
 
-            val track = runCatching {
-                AudioTrack.Builder()
+            try {
+                val sampleRate = 22_050
+
+                val minBufferSize = AudioTrack.getMinBufferSize(
+                    sampleRate,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT
+                )
+
+                if (minBufferSize <= 0) return@launch
+
+                val bufferSize = maxOf(minBufferSize, 2_048)
+
+                val createdTrack = AudioTrack.Builder()
                     .setAudioAttributes(
                         AudioAttributes.Builder()
                             .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -209,72 +239,115 @@ private class FastingSoundEngine(private val scope: CoroutineScope) {
                     .setBufferSizeInBytes(bufferSize)
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build()
-            }.getOrNull() ?: return@launch
 
-            audioTrack = track
-            runCatching {
-                track.setVolume(volume.coerceIn(0.05f, 1f))
-                track.play()
-            }
+                if (createdTrack.state != AudioTrack.STATE_INITIALIZED) {
+                    createdTrack.release()
+                    return@launch
+                }
 
-            val samples = ShortArray(1024)
-            var phase1 = 0.0
-            var phase2 = 0.0
-            var lfoPhase = 0.0
-            var filterOut = 0.0
+                track = createdTrack
 
-            try {
+                createdTrack.setVolume(volume.coerceIn(0f, 1f))
+                createdTrack.play()
+
+                val samples = ShortArray(1_024)
+
+                var phase1 = 0.0
+                var phase2 = 0.0
+                var lfoPhase = 0.0
+                var filterOut = 0.0
+
                 while (isActive) {
                     for (i in samples.indices) {
-                        val sampleVal = when (mode) {
+                        val sample = when (mode) {
                             FastingSoundMode.ZEN_432 -> {
                                 phase1 += (2.0 * Math.PI * 216.0) / sampleRate
                                 phase2 += (2.0 * Math.PI * 220.0) / sampleRate
-                                if (phase1 > 2.0 * Math.PI) phase1 -= 2.0 * Math.PI
-                                if (phase2 > 2.0 * Math.PI) phase2 -= 2.0 * Math.PI
+
+                                if (phase1 > 2.0 * Math.PI) {
+                                    phase1 -= 2.0 * Math.PI
+                                }
+
+                                if (phase2 > 2.0 * Math.PI) {
+                                    phase2 -= 2.0 * Math.PI
+                                }
+
                                 (sin(phase1) + sin(phase2)) * 0.20
                             }
+
                             FastingSoundMode.RAIN -> {
                                 val white = Random.nextDouble(-1.0, 1.0)
                                 filterOut += 0.08 * (white - filterOut)
-                                val drop = if (Random.nextInt(1000) > 996) Random.nextDouble(-0.5, 0.5) else 0.0
-                                (filterOut * 0.65) + drop
+
+                                val drop = if (Random.nextInt(1_000) > 996) {
+                                    Random.nextDouble(-0.5, 0.5)
+                                } else {
+                                    0.0
+                                }
+
+                                filterOut * 0.65 + drop
                             }
+
                             FastingSoundMode.WAVES -> {
                                 lfoPhase += (2.0 * Math.PI * 0.12) / sampleRate
-                                if (lfoPhase > 2.0 * Math.PI) lfoPhase -= 2.0 * Math.PI
-                                val swell = 0.25 + 0.75 * ((sin(lfoPhase) + 1.0) * 0.5)
+
+                                if (lfoPhase > 2.0 * Math.PI) {
+                                    lfoPhase -= 2.0 * Math.PI
+                                }
+
+                                val swell = 0.25 +
+                                        0.75 * ((sin(lfoPhase) + 1.0) * 0.5)
+
                                 val white = Random.nextDouble(-1.0, 1.0)
                                 filterOut += 0.03 * (white - filterOut)
+
                                 filterOut * swell * 0.75
                             }
-                            FastingSoundMode.WHITE -> {
+
+                            FastingSoundMode.WHITE ->
                                 Random.nextDouble(-1.0, 1.0) * 0.30
-                            }
+
                             FastingSoundMode.OFF -> 0.0
                         }
-                        samples[i] = (sampleVal.coerceIn(-1.0, 1.0) * Short.MAX_VALUE).toInt().toShort()
+
+                        samples[i] = (
+                                sample.coerceIn(-1.0, 1.0) * Short.MAX_VALUE
+                                ).toInt().toShort()
                     }
-                    track.write(samples, 0, samples.size)
+
+                    val written = createdTrack.write(
+                        samples,
+                        0,
+                        samples.size
+                    )
+
+                    if (written < 0) break
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Exception) {
+                // Audio device or track failure. Cleanup remains in finally.
             } finally {
-                runCatching {
-                    track.stop()
-                    track.release()
+                // Only the owning coroutine releases its AudioTrack.
+                track?.let { ownedTrack ->
+                    runCatching {
+                        if (ownedTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                            ownedTrack.stop()
+                        }
+                    }
+
+                    runCatching {
+                        ownedTrack.release()
+                    }
                 }
             }
         }
     }
 
-    fun stop() {
+    fun cancel() {
+        // Never release the track here. Its coroutine owns cleanup.
         audioJob?.cancel()
         audioJob = null
-        runCatching {
-            audioTrack?.stop()
-            audioTrack?.release()
-        }
-        audioTrack = null
     }
 }
 
@@ -282,6 +355,7 @@ private class FastingSoundEngine(private val scope: CoroutineScope) {
 // PERSISTENCE MANAGER FOR CUSTOM FASTING PROGRAMS, DIET TARGETS & WEIGHT HISTORY
 // =============================================================================
 private object FastingStudioPrefs {
+
     private const val PREFS_NAME = "lifeos_fasting_studio_prefs_v2"
     private const val KEY_PROGRAMS = "custom_fasting_programs"
     private const val KEY_ACTIVE_PROGRAM_ID = "active_program_id"
@@ -294,7 +368,11 @@ private object FastingStudioPrefs {
     private const val KEY_ACTIVE_DIET_ID = "active_diet_id"
     private const val KEY_SOUND_MODE = "fasting_sound_mode"
     private const val KEY_SOUND_MUTED = "fasting_sound_muted"
-
+    private const val KEY_FAST_ACTIVE = "fast_session_active"
+    private const val KEY_FAST_START_EPOCH_MS = "fast_start_epoch_ms"
+    private const val KEY_FAST_ELAPSED_SECONDS = "fast_elapsed_seconds"
+    private const val KEY_FAST_PROGRAM_ID = "fast_session_program_id"
+    private const val KEY_FAST_PAUSED = "fast_session_paused"
     fun loadPrograms(context: Context): List<FastingProgramPreset> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_PROGRAMS, null)
         if (!raw.isNullOrBlank()) {
@@ -313,10 +391,34 @@ private object FastingStudioPrefs {
             if (parsed.isNotEmpty()) return parsed
         }
         return listOf(
-            FastingProgramPreset("prog-16-8", "16:8 Leangains", 16, 8, "Metabolic fat burn"),
-            FastingProgramPreset("prog-18-6", "18:6 Warrior", 18, 6, "Autophagy boost"),
-            FastingProgramPreset("prog-20-4", "20:4 OMAD Prep", 20, 4, "Deep ketosis"),
-            FastingProgramPreset("prog-14-10", "14:10 Circadian", 14, 10, "Gentle rhythm")
+            FastingProgramPreset(
+                "prog-16-8",
+                "16:8 Leangains",
+                16,
+                8,
+                "16-hour fast · 8-hour eating window"
+            ),
+            FastingProgramPreset(
+                "prog-18-6",
+                "18:6",
+                18,
+                6,
+                "18-hour fast · 6-hour eating window"
+            ),
+            FastingProgramPreset(
+                "prog-20-4",
+                "20:4",
+                20,
+                4,
+                "20-hour fast · 4-hour eating window"
+            ),
+            FastingProgramPreset(
+                "prog-14-10",
+                "14:10",
+                14,
+                10,
+                "14-hour fast · 10-hour eating window"
+            )
         )
     }
 
@@ -473,8 +575,70 @@ private object FastingStudioPrefs {
     fun saveMuted(context: Context, muted: Boolean) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putBoolean(KEY_SOUND_MUTED, muted).apply()
     }
-}
+    fun loadFastStartEpochMs(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_FAST_START_EPOCH_MS, 0L)
+    }
 
+
+    fun saveFastSession(
+        context: Context,
+        active: Boolean,
+        startEpochMs: Long,
+        elapsedSeconds: Int,
+        programId: String,
+        paused: Boolean
+    ) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_FAST_ACTIVE, active)
+            .putLong(KEY_FAST_START_EPOCH_MS, startEpochMs)
+            .putInt(KEY_FAST_ELAPSED_SECONDS, elapsedSeconds)
+            .putString(KEY_FAST_PROGRAM_ID, programId)
+            .putBoolean(KEY_FAST_PAUSED, paused)
+            .apply()
+    }
+    private const val KEY_WATER_LOG_DATE = "water_log_date"
+
+    fun ensureTodayWaterLogs(context: Context) {
+        val prefs = context.getSharedPreferences(
+            PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+
+        val today = java.text.SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.ROOT
+        ).format(Date())
+
+        val savedDate = prefs.getString(KEY_WATER_LOG_DATE, null)
+
+        if (savedDate != today) {
+            prefs.edit()
+                .putString(KEY_WATER_LOG_DATE, today)
+                .putString(KEY_WATER_LOGS, "")
+                .apply()
+        }
+    }
+
+}
+private fun todayEpochBounds(
+    nowMs: Long = System.currentTimeMillis()
+): Pair<Long, Long> {
+    val start = Calendar.getInstance().apply {
+        timeInMillis = nowMs
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    val end = (start.clone() as Calendar).apply {
+        add(Calendar.DAY_OF_YEAR, 1)
+    }
+
+    return start.timeInMillis to end.timeInMillis
+}
 // =============================================================================
 // MAIN ENTRY SCREEN
 // =============================================================================
@@ -486,59 +650,137 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
     val scope = rememberCoroutineScope()
     val haptic = rememberLifeOSHapticProvider()
     val liveState by repository.state.collectAsState()
+    var todayBounds by remember {
+        mutableStateOf(todayEpochBounds())
+    }
 
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = System.currentTimeMillis()
+            todayBounds = todayEpochBounds(now)
+
+            delay(
+                (todayBounds.second - now).coerceAtLeast(1_000L)
+            )
+        }
+    }
+    val visibleFoodLogs = liveState.foodLogs.filter {
+        it.stamp.deletedAt == null
+    }
+
+    val todayFoodLogs = visibleFoodLogs.filter {
+        it.loggedAtEpochMs >= todayBounds.first &&
+                it.loggedAtEpochMs < todayBounds.second
+    }
     val fast = liveState.fast
     val savedWeight = liveState.wellness.bodyWeight ?: 0.0
 
-    // Custom Programs & Active Timer State
+
+    // =============================================================================
+// REPOSITORY-DRIVEN FASTING SESSION
+// =============================================================================
+
+    val fastSession = liveState.fast
+
+    var selectedProgramId by remember {
+        mutableStateOf(FastingStudioPrefs.loadActiveProgramId(context))
+    }
+
     val programs = remember {
-        mutableStateListOf<FastingProgramPreset>().apply { addAll(FastingStudioPrefs.loadPrograms(context)) }
-    }
-    var selectedProgramId by remember { mutableStateOf(FastingStudioPrefs.loadActiveProgramId(context)) }
-    val activeProgram = programs.firstOrNull { it.id == selectedProgramId }
-        ?: programs.firstOrNull()
-        ?: FastingProgramPreset("prog-16-8", "16:8 Leangains", 16, 8, "Metabolic fat burn")
-
-    // Session Phase State (Fasting Window vs Eating/Break Window)
-    var isEatingBreakWindow by remember { mutableStateOf(false) }
-    var isSessionPaused by remember { mutableStateOf(false) }
-    var boundaryMode by remember { mutableStateOf(BoundaryDisplayMode.FASTING) }
-
-    val targetPhaseSeconds = remember(activeProgram, isEatingBreakWindow) {
-        val hours = if (isEatingBreakWindow) activeProgram.eatHours else activeProgram.fastHours
-        (hours.coerceAtLeast(1) * 3600)
-    }
-
-    var elapsedSessionSeconds by remember(activeProgram.id) {
-        val initialProgress = fast.progress.coerceIn(0f, 1f)
-        mutableIntStateOf((initialProgress * activeProgram.fastHours * 3600f).roundToInt())
-    }
-
-    // Sync external repository fast progress when toggled externally
-    LaunchedEffect(fast.active) {
-        if (fast.active && elapsedSessionSeconds == 0) {
-            elapsedSessionSeconds = (fast.progress.coerceIn(0.01f, 1f) * targetPhaseSeconds).roundToInt()
+        mutableStateListOf<FastingProgramPreset>().apply {
+            addAll(FastingStudioPrefs.loadPrograms(context))
         }
     }
 
-    // 1-Second Live Countdown / Elapsed Ticker when Fast or Eating Window is Active
-    var feedbackOverlay by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    val activeProgram = programs.firstOrNull {
+        it.id == if (fastSession.hasSession) {
+            fastSession.programId
+        } else {
+            selectedProgramId
+        }
+    } ?: programs.firstOrNull()
+    ?: FastingProgramPreset(
+        "prog-16-8",
+        "16:8 Leangains",
+        16,
+        8,
+        "Metabolic fat burn"
+    )
 
-    LaunchedEffect(fast.active, isEatingBreakWindow, isSessionPaused, targetPhaseSeconds) {
-        val sessionRunning = (fast.active || isEatingBreakWindow) && !isSessionPaused
-        while (sessionRunning) {
-            delay(1_000L)
-            if (elapsedSessionSeconds + 1 < targetPhaseSeconds) {
-                elapsedSessionSeconds += 1
-            } else {
-                elapsedSessionSeconds = targetPhaseSeconds
+    var boundaryMode by remember {
+        mutableStateOf(BoundaryDisplayMode.FASTING)
+    }
+
+    var feedbackOverlay by remember {
+        mutableStateOf<Pair<String, Boolean>?>(null)
+    }
+
+    var currentTimeMs by remember {
+        mutableLongStateOf(System.currentTimeMillis())
+    }
+
+    val isEatingBreakWindow = fastSession.isEatingWindow
+    val isSessionPaused = fastSession.paused
+    val isAnyPhaseActive = fastSession.hasSession
+
+    val targetPhaseSeconds = fastSession.targetSeconds
+        .coerceIn(1L, Int.MAX_VALUE.toLong())
+        .toInt()
+
+    val elapsedSessionSeconds = fastSession
+        .elapsedSeconds(currentTimeMs)
+        .coerceAtMost(Int.MAX_VALUE.toLong())
+        .toInt()
+
+    val fastingProgress = (
+            elapsedSessionSeconds.toFloat() /
+                    targetPhaseSeconds.coerceAtLeast(1)
+            ).coerceIn(0f, 1f)
+
+    val remainingPhaseSeconds =
+        (targetPhaseSeconds - elapsedSessionSeconds).coerceAtLeast(0)
+
+// Restore only from repository state.
+    LaunchedEffect(repository) {
+        repository.restoreFastSession()
+    }
+
+// UI-only ticker. Never persist every second.
+    LaunchedEffect(
+        fastSession.sessionId,
+        fastSession.phase,
+        fastSession.paused,
+        fastSession.phaseStartedAtEpochMs
+    ) {
+        if (!fastSession.hasSession || fastSession.paused) {
+            currentTimeMs = System.currentTimeMillis()
+            return@LaunchedEffect
+        }
+
+        while (true) {
+            currentTimeMs = System.currentTimeMillis()
+
+            val elapsed = fastSession.elapsedSeconds(currentTimeMs)
+
+            if (elapsed >= fastSession.targetSeconds) {
+                repository.pauseFast()
+
                 haptic.click()
-                feedbackOverlay = (if (isEatingBreakWindow) "Eating Window Complete!" else "Fasting Goal Reached!") to false
+
+                feedbackOverlay = (
+                        if (fastSession.isEatingWindow) {
+                            "Eating Window Complete!"
+                        } else {
+                            "Fasting Goal Reached!"
+                        }
+                        ) to false
+
                 break
             }
+
+            delay(1_000L)
         }
     }
-
     // Ambient Sound Synthesizer Engine
     val soundEngine = remember { FastingSoundEngine(scope) }
     var soundMode by remember { mutableStateOf(FastingStudioPrefs.loadSoundMode(context)) }
@@ -548,20 +790,46 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
         val shouldPlay = (fast.active || isEatingBreakWindow) && !isSessionPaused && !isSoundMuted && soundMode != FastingSoundMode.OFF
         soundEngine.updatePlayback(shouldPlay = shouldPlay, mode = soundMode)
     }
-
-    DisposableEffect(Unit) {
-        onDispose { soundEngine.stop() }
+    DisposableEffect(soundEngine) {
+        onDispose {
+            soundEngine.cancel()
+        }
     }
-
     // Hydration State & Timestamped Logs
     var waterTargetMl by remember { mutableIntStateOf(FastingStudioPrefs.loadWaterTarget(context)) }
+    FastingStudioPrefs.ensureTodayWaterLogs(context)
+
     val waterLogs = remember {
-        mutableStateListOf<WaterLogRecord>().apply { addAll(FastingStudioPrefs.loadWaterLogs(context)) }
+        mutableStateListOf<WaterLogRecord>().apply {
+            addAll(FastingStudioPrefs.loadWaterLogs(context))
+        }
     }
-    val repoWaterMl = liveState.wellness.waterGlasses.coerceIn(0, 18) * WATER_SERVING_ML
-    val loggedWaterSum = waterLogs.sumOf { it.amountMl }
-    val effectiveWaterMl = maxOf(repoWaterMl, loggedWaterSum)
-    val waterProgress = (effectiveWaterMl.toFloat() / waterTargetMl.coerceAtLeast(500)).coerceIn(0f, 1f)
+    fun millisUntilNextLocalMidnight(): Long {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        return (calendar.timeInMillis - System.currentTimeMillis())
+            .coerceAtLeast(1_000L)
+    }
+    LaunchedEffect(context) {
+        while (true) {
+            delay(millisUntilNextLocalMidnight().milliseconds)
+
+            FastingStudioPrefs.ensureTodayWaterLogs(context)
+
+            waterLogs.clear()
+            waterLogs.addAll(FastingStudioPrefs.loadWaterLogs(context))
+        }
+    }
+    val effectiveWaterMl = waterLogs.sumOf { it.amountMl.coerceAtLeast(0) }
+    val waterProgress = (
+            effectiveWaterMl.toFloat() / waterTargetMl.coerceAtLeast(500)
+            ).coerceIn(0f, 1f)
 
     // Fasting History Logs
     val fastHistory = remember {
@@ -597,150 +865,300 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
     var showWeightEditor by remember { mutableStateOf(false) }
 
     // Real Hardware Sensors State (Heart Rate & Step Counter)
-    var liveSensorHeartRate by remember { mutableDoubleStateOf(liveState.wellness.currentHeartRateBpm) }
-    var liveSensorAccuracy by remember { mutableStateOf(liveState.wellness.heartRateAccuracy.ifBlank { "Sensor Ready" }) }
-    var liveSensorSteps by remember { mutableIntStateOf(liveState.wellness.steps.coerceAtLeast(0)) }
-    var isScanningVitals by remember { mutableStateOf(false) }
+    var liveSensorHeartRate by remember {
+        mutableDoubleStateOf(0.0)
+    }
 
-    DisposableEffect(context, isScanningVitals) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-        val hrSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-        val stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+    var liveSensorAccuracy by remember {
+        mutableStateOf("Waiting for sensor")
+    }
 
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent?) {
-                val ev = event ?: return
-                if (ev.sensor.type == Sensor.TYPE_HEART_RATE) {
-                    val bpm = ev.values.firstOrNull()?.toDouble() ?: 0.0
-                    if (bpm > 30.0) {
-                        liveSensorHeartRate = bpm
-                        liveSensorAccuracy = "Live Optical HR"
-                        scope.launch { repository.updateHeartRate(bpm, "High") }
-                    }
-                } else if (ev.sensor.type == Sensor.TYPE_STEP_COUNTER) {
-                    val stepsVal = ev.values.firstOrNull()?.toLong() ?: 0L
-                    if (stepsVal > 0L) {
-                        liveSensorSteps = stepsVal.toInt()
-                        scope.launch { repository.updateSteps(stepsVal) }
-                    }
-                }
+    var lastHeartRateAtMs by remember {
+        mutableLongStateOf(0L)
+    }
+
+    var isScanningVitals by remember {
+        mutableStateOf(false)
+    }
+
+    var hasBodySensorsPermission by remember(context) {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BODY_SENSORS
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val heartRatePermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            hasBodySensorsPermission = granted
+            liveSensorHeartRate = 0.0
+            lastHeartRateAtMs = 0L
+
+            liveSensorAccuracy = if (granted) {
+                "Waiting for sensor"
+            } else {
+                "Permission denied"
             }
+        }
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasBodySensorsPermission =
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.BODY_SENSORS
+                    ) == PackageManager.PERMISSION_GRANTED
 
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-                if (sensor?.type == Sensor.TYPE_HEART_RATE) {
-                    liveSensorAccuracy = when (accuracy) {
-                        SensorManager.SENSOR_STATUS_ACCURACY_HIGH -> "High Accuracy"
-                        SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM -> "Medium Accuracy"
-                        else -> "Calibrating"
-                    }
+                if (!hasBodySensorsPermission) {
+                    liveSensorHeartRate = 0.0
+                    lastHeartRateAtMs = 0L
+                    liveSensorAccuracy = "Permission required"
                 }
             }
         }
 
-        if (sensorManager != null) {
-            hrSensor?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL) }
-            stepSensor?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
-        }
+        lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
-            sensorManager?.unregisterListener(listener)
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    DisposableEffect(
+        context,
+        pagerState.currentPage,
+        hasBodySensorsPermission
+    ) {
+        if (pagerState.currentPage != 3 || !hasBodySensorsPermission) {
+            onDispose { }
+        } else {
+            val manager = context.getSystemService(
+                Context.SENSOR_SERVICE
+            ) as? SensorManager
+
+            val sensor = manager?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+            var lastPersistedAtMs = 0L
+
+            val listener = if (manager != null && sensor != null) {
+                object : SensorEventListener {
+                    override fun onSensorChanged(event: SensorEvent?) {
+                        val ev = event ?: return
+                        val bpm = ev.values.firstOrNull()?.toDouble() ?: return
+
+                        if (ev.sensor.type != Sensor.TYPE_HEART_RATE ||
+                            bpm !in 30.0..240.0
+                        ) return
+
+                        val accuracy = when (ev.accuracy) {
+                            SensorManager.SENSOR_STATUS_ACCURACY_HIGH -> "High accuracy"
+                            SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM -> "Medium accuracy"
+                            SensorManager.SENSOR_STATUS_ACCURACY_LOW -> "Low accuracy"
+                            else -> "Unreliable reading"
+                        }
+
+                        val now = System.currentTimeMillis()
+
+                        liveSensorHeartRate = bpm
+                        liveSensorAccuracy = accuracy
+                        lastHeartRateAtMs = now
+
+                        if (now - lastPersistedAtMs >= 30_000L) {
+                            lastPersistedAtMs = now
+                            scope.launch {
+                                repository.updateHeartRate(bpm, accuracy)
+                            }
+                        }
+                    }
+
+                    override fun onAccuracyChanged(
+                        sensor: Sensor?,
+                        accuracy: Int
+                    ) {
+                        liveSensorAccuracy = when (accuracy) {
+                            SensorManager.SENSOR_STATUS_ACCURACY_HIGH -> "High accuracy"
+                            SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM -> "Medium accuracy"
+                            SensorManager.SENSOR_STATUS_ACCURACY_LOW -> "Low accuracy"
+                            else -> "Calibrating"
+                        }
+                    }
+                }.also {
+                    if (!manager.registerListener(
+                            it,
+                            sensor,
+                            SensorManager.SENSOR_DELAY_NORMAL
+                        )
+                    ) {
+                        liveSensorAccuracy = "Sensor registration failed"
+                    }
+                }
+            } else {
+                liveSensorAccuracy = "Heart-rate sensor unavailable"
+                null
+            }
+
+            onDispose {
+                listener?.let { manager?.unregisterListener(it) }
+            }
         }
     }
 
-    // Calculated Fasting Progress
-    val fastingProgress = (elapsedSessionSeconds.toFloat() / targetPhaseSeconds.coerceAtLeast(1)).coerceIn(0f, 1f)
-    val remainingPhaseSeconds = (targetPhaseSeconds - elapsedSessionSeconds).coerceAtLeast(0)
-    val isAnyPhaseActive = fast.active || isEatingBreakWindow
-
-    // Transport Actions
     fun selectProgram(preset: FastingProgramPreset) {
         haptic.click()
+
+        if (fastSession.hasSession) {
+            feedbackOverlay = "Stop the current session to change program" to true
+            return
+        }
+
         selectedProgramId = preset.id
         FastingStudioPrefs.saveActiveProgramId(context, preset.id)
-        elapsedSessionSeconds = (fast.progress.coerceIn(0f, 1f) * preset.fastHours * 3600f).roundToInt()
+
         feedbackOverlay = "${preset.name} (${preset.fastHours}:${preset.eatHours})" to false
     }
 
     fun togglePlayPauseSession() {
         haptic.click()
-        if (!fast.active && !isEatingBreakWindow) {
-            isSessionPaused = false
-            if (elapsedSessionSeconds <= 0 || elapsedSessionSeconds >= targetPhaseSeconds) {
-                elapsedSessionSeconds = 0
+
+        scope.launch {
+            when {
+                !fastSession.hasSession -> {
+                    repository.startFast(
+                        programId = activeProgram.id,
+                        targetSeconds = activeProgram.fastHours * 3600L
+                    )
+                    feedbackOverlay = "Started ${activeProgram.name}" to false
+                }
+
+                fastSession.paused -> {
+                    repository.resumeFast()
+                    feedbackOverlay = "Session Resumed" to false
+                }
+
+                else -> {
+                    repository.pauseFast()
+                    feedbackOverlay = "Session Paused" to false
+                }
             }
-            scope.launch { repository.toggleFast() }
-            feedbackOverlay = "Started ${activeProgram.name}" to false
-        } else {
-            isSessionPaused = !isSessionPaused
-            feedbackOverlay = (if (isSessionPaused) "Session Paused" else "Session Resumed") to false
         }
     }
 
     fun switchBetweenFastAndEatWindow() {
+        if (!fastSession.hasSession) return
+
         haptic.click()
-        isSessionPaused = false
-        isEatingBreakWindow = !isEatingBreakWindow
-        elapsedSessionSeconds = 0
-        if (isEatingBreakWindow && fast.active) {
-            scope.launch { repository.toggleFast() }
-        } else if (!isEatingBreakWindow && !fast.active) {
-            scope.launch { repository.toggleFast() }
+
+        val nextEatingWindow = !fastSession.isEatingWindow
+
+        val targetSeconds = if (nextEatingWindow) {
+            activeProgram.eatHours * 3600L
+        } else {
+            activeProgram.fastHours * 3600L
         }
-        feedbackOverlay = (if (isEatingBreakWindow) "Eating Window (${activeProgram.eatHours}h)" else "Fasting Window (${activeProgram.fastHours}h)") to false
+
+        scope.launch {
+            repository.switchFastPhase(
+                eatingWindow = nextEatingWindow,
+                targetSeconds = targetSeconds
+            )
+        }
+
+        feedbackOverlay = if (nextEatingWindow) {
+            "Eating Window (${activeProgram.eatHours}h)"
+        } else {
+            "Fasting Window (${activeProgram.fastHours}h)"
+        } to false
     }
 
     fun previousOrRestartPhase() {
+        if (!fastSession.hasSession) return
+
         haptic.click()
-        if (elapsedSessionSeconds > 60) {
-            elapsedSessionSeconds = 0
-            isSessionPaused = false
-            feedbackOverlay = "Restarted Current Window" to false
-        } else {
-            switchBetweenFastAndEatWindow()
+
+        scope.launch {
+            if (elapsedSessionSeconds > 60) {
+                repository.restartFastPhase()
+                feedbackOverlay = "Restarted Current Window" to false
+            } else {
+                val nextEatingWindow = !fastSession.isEatingWindow
+
+                repository.switchFastPhase(
+                    eatingWindow = nextEatingWindow,
+                    targetSeconds = if (nextEatingWindow) {
+                        activeProgram.eatHours * 3600L
+                    } else {
+                        activeProgram.fastHours * 3600L
+                    }
+                )
+            }
         }
     }
-
     fun stopAndLogSession() {
         haptic.click()
-        val durationMins = (elapsedSessionSeconds / 60).coerceAtLeast(1)
-        val record = FastingSessionRecord(
-            id = "fh-${System.currentTimeMillis()}",
-            programName = activeProgram.name,
-            phaseLabel = if (isEatingBreakWindow) "Eating Window" else "Fast",
-            durationMinutes = durationMins,
-            completed = elapsedSessionSeconds >= (targetPhaseSeconds * 0.8f),
-            timestampLabel = currentClockStamp()
-        )
-        fastHistory.add(0, record)
-        FastingStudioPrefs.saveFastHistory(context, fastHistory)
 
-        isSessionPaused = false
-        isEatingBreakWindow = false
-        elapsedSessionSeconds = 0
-        if (fast.active) {
-            scope.launch { repository.toggleFast() }
+        if (!fastSession.hasSession) return
+
+        val stoppedAtMs = System.currentTimeMillis()
+
+        val totalDurationMinutes = (
+                fastSession.totalSessionElapsedSeconds(stoppedAtMs) / 60L
+                ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+
+        val currentPhaseCompleted =
+            fastSession.elapsedSeconds(stoppedAtMs) >= fastSession.targetSeconds
+
+        if (totalDurationMinutes > 0) {
+            val record = FastingSessionRecord(
+                id = "fh-${System.currentTimeMillis()}",
+                programName = activeProgram.name,
+                phaseLabel = "Full session",
+                durationMinutes = totalDurationMinutes,
+                completed = currentPhaseCompleted,
+                timestampLabel = currentClockStamp()
+            )
+
+            fastHistory.add(0, record)
+            FastingStudioPrefs.saveFastHistory(context, fastHistory)
         }
-        feedbackOverlay = "Logged ${formatHoursMinsShort(durationMins)}" to false
+
+        scope.launch {
+            repository.stopFast()
+        }
+
+        feedbackOverlay = "Session Stopped" to false
     }
 
     fun extendCurrentFast(minutes: Int = 60) {
+        if (!fastSession.hasSession || fastSession.isEatingWindow) return
+
         haptic.click()
-        scope.launch { repository.extendFast(minutes) }
-        elapsedSessionSeconds = (elapsedSessionSeconds - (minutes * 60)).coerceAtLeast(0)
+
+        scope.launch {
+            repository.extendFast(minutes)
+        }
+
         feedbackOverlay = "Extended +${minutes / 60}h" to false
     }
 
     fun logWaterAmount(amountMl: Int) {
+        val safeAmount = amountMl.coerceIn(1, 1_500)
+
         haptic.click()
-        scope.launch { repository.addWater(amountMl) }
+
         val newEntry = WaterLogRecord(
             id = "wl-${System.currentTimeMillis()}",
-            amountMl = amountMl,
+            amountMl = safeAmount,
             timestampLabel = currentClockStamp()
         )
+
         waterLogs.add(0, newEntry)
         FastingStudioPrefs.saveWaterLogs(context, waterLogs)
-        feedbackOverlay = "+${amountMl}ml Water Logged" to false
+
+        feedbackOverlay = "+${safeAmount}ml Water Logged" to false
     }
 
     fun toggleMuteSound() {
@@ -762,8 +1180,18 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
             haptic.click()
             return
         }
-        val fHrs = fastHrsStr.filter { it.isDigit() }.toIntOrNull()?.coerceIn(1, 72) ?: 16
-        val eHrs = eatHrsStr.filter { it.isDigit() }.toIntOrNull()?.coerceIn(1, 24) ?: (24 - fHrs).coerceAtLeast(1)
+        val fHrs = fastHrsStr.trim().toIntOrNull()
+        val eHrs = eatHrsStr.trim().toIntOrNull()
+
+        if (fHrs == null || fHrs !in 1..72) {
+            feedbackOverlay = "Fasting hours must be 1–72" to true
+            return
+        }
+
+        if (eHrs == null || eHrs !in 1..24) {
+            feedbackOverlay = "Eating hours must be 1–24" to true
+            return
+        }
         val editId = editingProgramId
 
         if (editId != null) {
@@ -798,6 +1226,10 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
     }
 
     fun deleteProgramPreset(id: String) {
+        if (fastSession.hasSession && fastSession.programId == id) {
+            feedbackOverlay = "Cannot delete the active session program" to true
+            return
+        }
         if (programs.size <= 1) {
             feedbackOverlay = "Keep at least 1 program" to true
             return
@@ -838,7 +1270,7 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             VerticalPager(
                 state = pagerState,
@@ -937,15 +1369,22 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                         onExtendFast = { extendCurrentFast(60) },
                         onSelectProgram = ::selectProgram,
                         onStartProgramNow = { preset ->
-                            selectProgram(preset)
-                            isEatingBreakWindow = false
-                            isSessionPaused = false
-                            elapsedSessionSeconds = 0
-                            if (!fast.active) {
-                                scope.launch { repository.toggleFast() }
+                            if (fastSession.hasSession) {
+                                feedbackOverlay = "Stop the current session before starting another" to true
+                            } else {
+                                scope.launch {
+                                    selectedProgramId = preset.id
+                                    FastingStudioPrefs.saveActiveProgramId(context, preset.id)
+
+                                    repository.startFast(
+                                        programId = preset.id,
+                                        targetSeconds = preset.fastHours * 3600L
+                                    )
+
+                                    feedbackOverlay = "Started ${preset.name}" to false
+                                    pagerState.animateScrollToPage(0)
+                                }
                             }
-                            feedbackOverlay = "Started ${preset.name}" to false
-                            scope.launch { pagerState.animateScrollToPage(0) }
                         },
                         onOpenNewProgramEditor = {
                             haptic.click()
@@ -984,14 +1423,29 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                             waterLogs.removeAll { it.id == id }
                             FastingStudioPrefs.saveWaterLogs(context, waterLogs)
                         },
-                        onRepeatFastHistory = { rec ->
-                            val matched = programs.firstOrNull { it.name.equals(rec.programName, ignoreCase = true) }
-                            if (matched != null) selectProgram(matched)
-                            elapsedSessionSeconds = 0
-                            isSessionPaused = false
-                            if (!fast.active) scope.launch { repository.toggleFast() }
-                            feedbackOverlay = "Restarted ${rec.programName}" to false
-                            scope.launch { pagerState.animateScrollToPage(0) }
+                        onRepeatFastHistory = { record ->
+                            val matched = programs.firstOrNull {
+                                it.name.equals(record.programName, ignoreCase = true)
+                            }
+
+                            if (matched != null) {
+                                scope.launch {
+                                    if (fastSession.hasSession) {
+                                        repository.stopFast()
+                                    }
+
+                                    selectedProgramId = matched.id
+                                    FastingStudioPrefs.saveActiveProgramId(context, matched.id)
+
+                                    repository.startFast(
+                                        programId = matched.id,
+                                        targetSeconds = matched.fastHours * 3600L
+                                    )
+
+                                    feedbackOverlay = "Restarted ${matched.name}" to false
+                                    pagerState.animateScrollToPage(0)
+                                }
+                            }
                         },
                         onDeleteFastHistory = { id ->
                             haptic.click()
@@ -1014,7 +1468,8 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                     // =========================================================================
                     2 -> DietAndNutritionPage(
                         spec = adaptiveSpec,
-                        foodLogs = liveState.foodLogs.filter { it.stamp.deletedAt == null },
+                        foodLogs = visibleFoodLogs,
+                        todayFoodLogs = todayFoodLogs,
                         dietPlans = dietPlans,
                         activeDietPlan = activeDietPlan,
                         showMealEditor = showMealEditor,
@@ -1107,7 +1562,7 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                         weightHistory = weightHistory,
                         heartRateBpm = liveSensorHeartRate.takeIf { it > 0.0 } ?: 0.0,
                         heartRateAccuracy = liveSensorAccuracy,
-                        steps = liveSensorSteps,
+                        steps = liveState.wellness.steps.coerceAtLeast(0),
                         sleepMinutes = liveState.wellness.sleepLastNightMinutes.coerceAtLeast(0),
                         mood = liveState.wellness.mood,
                         energy = liveState.wellness.energy,
@@ -1115,33 +1570,54 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                         showWeightEditor = showWeightEditor,
                         onTriggerLiveSensorScan = {
                             haptic.click()
-                            isScanningVitals = true
-                            scope.launch {
-                                delay(1_200L)
-                                val measuredBpm = liveSensorHeartRate
-                                isScanningVitals = false
-                                if (measuredBpm > 35.0 && liveSensorAccuracy.contains("Live", ignoreCase = true)) {
-                                    feedbackOverlay = "${measuredBpm.roundToInt()} BPM · Sensor Reading" to false
-                                } else {
-                                    feedbackOverlay = "No live heart-rate sensor reading" to true
+
+                            if (!hasBodySensorsPermission) {
+                                heartRatePermissionLauncher.launch(
+                                    Manifest.permission.BODY_SENSORS
+                                )
+                            } else {
+                                isScanningVitals = true
+
+                                scope.launch {
+                                    delay(1_500L)
+
+                                    isScanningVitals = false
+
+                                    val isFresh =
+                                        lastHeartRateAtMs > 0L &&
+                                                System.currentTimeMillis() - lastHeartRateAtMs < 15_000L
+
+                                    if (liveSensorHeartRate > 35.0 && isFresh) {
+                                        feedbackOverlay =
+                                            "${liveSensorHeartRate.roundToInt()} BPM · Live reading" to false
+                                    } else {
+                                        feedbackOverlay =
+                                            "No fresh heart-rate reading" to true
+                                    }
                                 }
                             }
                         },
                         onLogStepsQuick = {
                             haptic.click()
-                            val nextSteps = liveSensorSteps + 500
-                            liveSensorSteps = nextSteps
-                            scope.launch { repository.updateSteps(nextSteps.toLong()) }
-                            feedbackOverlay = "+500 Steps Synced" to false
+                            feedbackOverlay = "Steps are tracked automatically" to false
                         },
                         onToggleWeightEditor = {
                             haptic.click()
                             showWeightEditor = !showWeightEditor
                         },
-                        onSaveWeightAndTarget = { currentKgStr, targetKgStr, moodNote ->
-                            val curKg = currentKgStr.toDoubleOrNull()?.coerceIn(25.0, 250.0)
-                                ?: (weightHistory.lastOrNull()?.weightKg ?: 72.0)
-                            val tgtKg = targetKgStr.toDoubleOrNull()?.coerceIn(25.0, 250.0) ?: weightTargetKg
+                        onSaveWeightAndTarget = saveWeight@{ currentKgStr, targetKgStr, moodNote ->
+                            val curKg = currentKgStr.trim().toDoubleOrNull()
+                            val tgtKg = targetKgStr.trim().toDoubleOrNull()
+
+                            if (curKg == null || curKg !in 25.0..250.0) {
+                                feedbackOverlay = "Enter a valid current weight" to true
+                                return@saveWeight
+                            }
+
+                            if (tgtKg == null || tgtKg !in 25.0..250.0) {
+                                feedbackOverlay = "Enter a valid target weight" to true
+                                return@saveWeight
+                            }
 
                             weightTargetKg = tgtKg
                             FastingStudioPrefs.saveWeightTarget(context, tgtKg)
@@ -1151,6 +1627,7 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                                 weightKg = curKg,
                                 dateLabel = currentClockStamp()
                             )
+
                             weightHistory.add(point)
                             FastingStudioPrefs.saveWeightHistory(context, weightHistory)
 
@@ -1160,8 +1637,11 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                                     weight = curKg
                                 )
                             }
+
                             showWeightEditor = false
-                            feedbackOverlay = "Weight ${"%.1f".format(Locale.ROOT, curKg)}kg Logged" to false
+                            feedbackOverlay =
+                                "Weight ${"%.1f".format(Locale.ROOT, curKg)}kg Logged" to false
+
                             haptic.click()
                         },
                         onDeleteWeightPoint = { id ->
@@ -1264,7 +1744,7 @@ private fun ActiveFastingAndWaterBoundaryPage(
     val centerButtonSize = (spec.screenWidth * 0.32f).coerceIn(58.dp, 74.dp)
     val sideButtonWidth = (spec.screenWidth * 0.21f).coerceIn(42.dp, 52.dp)
     val sideButtonHeight = (spec.screenWidth * 0.25f).coerceIn(48.dp, 60.dp)
-    val bottomPillHeight = (spec.screenHeight * 0.14f).coerceIn(30.dp, 36.dp)
+    val bottomPillHeight = (spec.screenHeight * 0.14f).coerceIn(40.dp, 44.dp)
 
     ScreenScaffold(
         timeText = { TimeText() }
@@ -1272,8 +1752,9 @@ private fun ActiveFastingAndWaterBoundaryPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment =
+                Alignment.Center
         ) {
             // 1. FULL-SCREEN RADIAL BACKDROP INSIDE BOUNDARY RING
             Box(
@@ -1370,8 +1851,10 @@ private fun ActiveFastingAndWaterBoundaryPage(
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f))
                                 .clickable(onClick = onCycleProgram)
-                                .padding(horizontal = 8.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                                .heightIn(min = 40.dp)
+                                .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment
+                                    .CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
                             Icon(
@@ -1392,7 +1875,7 @@ private fun ActiveFastingAndWaterBoundaryPage(
                         // Ring Mode Switcher Pill (Fast <-> Water)
                         Box(
                             modifier = Modifier
-                                .size(20.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .background(
                                     if (isWaterMode) Color(0xFF68B6FF).copy(alpha = 0.25f)
@@ -1404,7 +1887,7 @@ private fun ActiveFastingAndWaterBoundaryPage(
                             Icon(
                                 imageVector = Icons.Rounded.WaterDrop,
                                 contentDescription = "Switch Fast and Water Ring",
-                                modifier = Modifier.size(11.dp),
+                                modifier = Modifier.size(16.dp),
                                 tint = Color(0xFF68B6FF)
                             )
                         }
@@ -1460,31 +1943,25 @@ private fun ActiveFastingAndWaterBoundaryPage(
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    
-                    // Fasting Sound Picker Icon Pill
-                    Button(
-                        onClick = { showSoundPicker = true },
-                        modifier = Modifier
-                            .height(bottomPillHeight)
-                            .semantics { contentDescription = "Pick Fasting Sound" },
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.QueueMusic,
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
 
                     // Mute / Enable Ambient Sound Pill
                     val soundActive = !isSoundMuted && soundMode != FastingSoundMode.OFF
+                    Button(
+                        onClick = onToggleMute,
+                        modifier = Modifier.height(bottomPillHeight),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (soundActive) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (soundActive) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeOff,
+                            contentDescription = "Toggle Sound",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
                     // Quick +250ml Water Pill (or +1h Fast when in Water Mode)
                     Button(
                         onClick = if (isWaterMode) onExtendFast else onLogWaterQuick,
@@ -1557,6 +2034,31 @@ private fun ActiveFastingAndWaterBoundaryPage(
                                     contentDescription = null,
                                     modifier = Modifier.size(22.dp)
                                 )
+                            }
+                        }
+                    }
+                }
+                // Add at the bottom of ActiveFastingAndWaterBoundaryPage's Box:
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showSoundPicker,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)) {
+                        val listState = rememberTransformingLazyColumnState()
+                        TransformingLazyColumn(state = listState, contentPadding = PaddingValues(28.dp), modifier = Modifier.fillMaxSize()) {
+                            item { WearExpressiveHeader(title = "FASTING SOUND", badgeText = "SELECT") }
+                            items(FastingSoundMode.entries.size) { idx ->
+                                val mode = FastingSoundMode.entries[idx]
+                                Card(
+                                    onClick = {
+                                        onSelectSoundMode(mode)
+                                        showSoundPicker = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
+                                ) {
+                                    Text(mode.label, modifier = Modifier.padding(10.dp), fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -1680,8 +2182,8 @@ private fun FastingAndHydrationStudioPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -1961,6 +2463,7 @@ private fun TransformingLazyColumnItemScope.M3FastingProgramRow(
 @Composable
 private fun DietAndNutritionPage(
     spec: WearAdaptiveSpec,
+    todayFoodLogs: List<FoodLog>,
     foodLogs: List<FoodLog>,
     dietPlans: List<DietPlanPreset>,
     activeDietPlan: DietPlanPreset,
@@ -1978,10 +2481,10 @@ private fun DietAndNutritionPage(
 ) {
     val columnState = rememberTransformingLazyColumnState()
 
-    val loggedCalories = foodLogs.sumOf { it.calories }
-    val loggedProtein = foodLogs.sumOf { it.proteinGrams }.roundToInt()
-    val loggedCarbs = foodLogs.sumOf { it.carbsGrams }.roundToInt()
-    val loggedFat = foodLogs.sumOf { it.fatGrams }.roundToInt()
+    val loggedCalories = todayFoodLogs.sumOf { it.calories }
+    val loggedProtein = todayFoodLogs.sumOf { it.proteinGrams }.roundToInt()
+    val loggedCarbs = todayFoodLogs.sumOf { it.carbsGrams }.roundToInt()
+    val loggedFat = todayFoodLogs.sumOf { it.fatGrams }.roundToInt()
 
     val calProgress = (loggedCalories.toFloat() / activeDietPlan.targetCalories.coerceAtLeast(500)).coerceIn(0f, 1f)
     val proProgress = (loggedProtein.toFloat() / activeDietPlan.targetProteinG.coerceAtLeast(20)).coerceIn(0f, 1f)
@@ -2009,8 +2512,8 @@ private fun DietAndNutritionPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background)   ,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -2312,8 +2815,8 @@ private fun BodyVitalsAndSensorsPage(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .background(MaterialTheme.colorScheme.background),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
@@ -2362,7 +2865,11 @@ private fun BodyVitalsAndSensorsPage(
                                 }
                             }
                             Text(
-                                text = "${heartRateBpm.roundToInt()} BPM",
+                                text = if (heartRateBpm > 0.0) {
+                                    "${heartRateBpm.roundToInt()} BPM"
+                                } else {
+                                    "— BPM"
+                                },
                                 style = MaterialTheme.typography.titleMedium.tabularNums(),
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFFFF7A9A)
@@ -2492,22 +2999,44 @@ private fun BodyVitalsAndSensorsPage(
 
             if (showWeightEditor) {
                 item {
-                    WearExpressiveUniversalEditorCard(
-                        itemTypeTitle = "BODY WEIGHT",
-                        initialTitle = "%.1f".format(Locale.ROOT, currentWeightKg),
-                        initialTimeOrDate = "%.1f".format(Locale.ROOT, weightTargetKg),
-                        initialSubtitle = mood,
-                        isEditingExisting = false,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Target Weight (kg)",
-                        subtitleFieldLabel = "Mood / Vitals Note",
-                        onSave = { curWeight, tgtWeight, moodStr ->
-                            onSaveWeightAndTarget(curWeight, tgtWeight, moodStr)
-                        },
-                        onCancel = onToggleWeightEditor,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "CURRENT WEIGHT (KG)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        WearExpressiveUniversalEditorCard(
+                            itemTypeTitle = "WEIGHT GOAL",
+                            initialTitle = "%.1f".format(
+                                Locale.ROOT,
+                                currentWeightKg
+                            ),
+                            initialTimeOrDate = "%.1f".format(
+                                Locale.ROOT,
+                                weightTargetKg
+                            ),
+                            initialSubtitle = mood,
+                            isEditingExisting = false,
+                            showTimePickerField = true,
+                            showSubtitleField = true,
+                            timeFieldLabel = "Target Weight (kg)",
+                            subtitleFieldLabel = "Mood / Vitals Note",
+                            onSave = { currentWeight, targetWeight, moodNote ->
+                                onSaveWeightAndTarget(
+                                    currentWeight,
+                                    targetWeight,
+                                    moodNote
+                                )
+                            },
+                            onCancel = onToggleWeightEditor,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
@@ -2518,22 +3047,29 @@ private fun BodyVitalsAndSensorsPage(
 
             item {
                 WearMetricCard(
-                    title = "STEP COUNTER SENSOR",
-                    value = "$steps / 8,000 Steps",
-                    subtitle = "Tap to sync +500 steps activity",
+                    title = "STEP COUNTER",
+                    value = "$steps steps",
+                    subtitle = "Reported by the watch sensor",
                     icon = Icons.Default.DirectionsWalk,
-                    onClick = onLogStepsQuick
+                    onClick = onTriggerLiveSensorScan
                 )
             }
 
             item {
-                val sleepHrs = sleepMinutes / 60
-                val sleepMins = sleepMinutes % 60
-                val sleepLabel = if (sleepMinutes > 0) "${sleepHrs}h ${sleepMins}m" else "7h 30m"
+                val sleepLabel = if (sleepMinutes > 0) {
+                    "${sleepMinutes / 60}h ${sleepMinutes % 60}m"
+                } else {
+                    "No sleep data"
+                }
+
                 WearMetricCard(
                     title = "SLEEP & ENERGY",
-                    value = "$sleepLabel · Energy $energy/10",
-                    subtitle = "Mood: $mood",
+                    value = if (sleepMinutes > 0) {
+                        "$sleepLabel · Energy $energy/10"
+                    } else {
+                        "No sleep data"
+                    },
+                    subtitle = "Mood: ${mood.ifBlank { "Not recorded" }}",
                     icon = Icons.Rounded.Bedtime,
                     onClick = onToggleWeightEditor
                 )
@@ -2594,7 +3130,9 @@ private fun ViewportConstrainedFastingConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.92f))
+            .background(
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.92f)
+            )
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

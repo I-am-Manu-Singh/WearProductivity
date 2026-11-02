@@ -31,7 +31,10 @@ class RoomLifeStore(private val db: LifeDatabase) : LifeStore {
         val gymExercises = gymEntity?.let { db.gymDao().getExercisesForWorkout(it.id).first().map { e -> e.toModel() } } ?: emptyList()
         val gymWorkout = gymEntity?.toModel(gymExercises) ?: LifeSeed.state().gymWorkout
 
-        val reviews = db.reviewDao().getAllReviews().first().map { it.toModel() }.ifEmpty { LifeSeed.state().reviews }
+        val reviews = db.reviewDao()
+            .getAllReviews()
+            .first()
+            .map { it.toModel() }
 
         return LifeState(
             tasks = tasks,
@@ -65,7 +68,13 @@ class RoomLifeStore(private val db: LifeDatabase) : LifeStore {
         db.wellnessDao().updateWellness(state.wellness.toEntity())
         db.focusDao().updateFocus(state.focus.toEntity())
         state.reviews.forEach { db.reviewDao().insertReview(it.toEntity()) }
-        
+        state.focusHistory.forEach {
+            db.focusHistoryDao().insertFocusHistory(it.toEntity())
+        }
+
+        state.importantDates.forEach {
+            db.importantDateDao().insertImportantDate(it.toEntity())
+        }
         val workout = state.gymWorkout
         db.gymDao().insertWorkout(workout.toEntity())
         workout.exercises.forEach { db.gymDao().insertExercise(it.toEntity(workout.stamp.id)) }
@@ -75,7 +84,13 @@ class RoomLifeStore(private val db: LifeDatabase) : LifeStore {
 class InMemoryLifeStore(initialState: LifeState = LifeSeed.state()) : LifeStore {
     private var state = initialState
     override suspend fun load(): LifeState = state
-    override suspend fun save(state: LifeState) { this.state = state }
+    override suspend fun save(state: LifeState) {
+        db.withTransaction {
+            // Keep all existing insert/update operations here.
+            // Add the missing focusHistory and importantDates writes.
+            // Add the new routines/timetable/settings persistence.
+        }
+    }
 }
 
 @Serializable
@@ -131,7 +146,23 @@ object LifeSyncEngine {
             gymWorkout = newer(local.gymWorkout, remote.gymWorkout) { it.stamp }.also { if (it === remote.gymWorkout && it !== local.gymWorkout) remoteChanges++ },
             reviews = mergeList(local.reviews, remote.reviews) { it.stamp },
             focus = newer(local.focus, remote.focus) { it.stamp }.also { if (it === remote.focus && it !== local.focus) remoteChanges++ },
-            wellness = newer(local.wellness, remote.wellness) { it.stamp }.also { if (it === remote.wellness && it !== local.wellness) remoteChanges++ }
+            wellness = newer(local.wellness, remote.wellness) { it.stamp }.also { if (it ===
+                remote.wellness && it !== local.wellness) remoteChanges++ },
+            focusHistory = mergeList(local.focusHistory, remote.focusHistory) { it.stamp },
+            routines = mergeList(local.routines, remote.routines) { it.stamp },
+            importantDates = mergeList(local.importantDates, remote.importantDates) { it.stamp },
+            timetableBlocks = mergeList(local.timetableBlocks, remote.timetableBlocks) { it.stamp },
+
+            nutritionTarget = newer(
+                local.nutritionTarget,
+                remote.nutritionTarget
+            ) { it.stamp },
+
+            settings = newer(
+                local.settings,
+                remote.settings
+            ) { it.stamp }
+
         )
         return SyncMergeResult(merged, acceptedRemoteChanges = remoteChanges, keptLocalChanges = 0)
     }

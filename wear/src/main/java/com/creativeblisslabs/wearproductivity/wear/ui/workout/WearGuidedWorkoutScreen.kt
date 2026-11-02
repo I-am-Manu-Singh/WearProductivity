@@ -237,7 +237,7 @@ fun WearGuidedWorkoutScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Full-screen image layer. The overlays use gradients so the image
         // remains visible while text stays readable in both app themes.

@@ -14,6 +14,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -133,7 +135,7 @@ fun WearBaselineViewport(
     androidx.compose.foundation.layout.BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         val isPhonePreview = this.maxWidth > 280.dp || this.maxHeight > 280.dp
@@ -171,7 +173,7 @@ fun WearBaselineViewport(
                     modifier = Modifier
                         .size(baselineWatchSize)
                         .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(Color.Black)
+                        .background(MaterialTheme.colorScheme.background)
                         .border(
                             width = 1.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
@@ -184,7 +186,7 @@ fun WearBaselineViewport(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black)
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
                     content()
                 }
@@ -669,14 +671,7 @@ fun WearStatusBadge(
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
 ) {
-    Box(
-        modifier = modifier
-            .background(
-                color = containerColor,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
@@ -694,11 +689,11 @@ fun WearStatusBadge(
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = contentColor,
+                color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        }
+
     }
 }
 
@@ -952,7 +947,9 @@ fun PlayerControlBar(
     onTogglePlay: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    previousIcon: ImageVector = Icons.Rounded.SkipPrevious,
+    nextIcon: ImageVector = Icons.Rounded.SkipNext
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -981,6 +978,21 @@ fun PlayerControlBar(
     val prevInteractionSource = remember { MutableInteractionSource() }
     val nextInteractionSource = remember { MutableInteractionSource() }
     val playInteractionSource = remember { MutableInteractionSource() }
+    
+    val isPlayPressed by playInteractionSource.collectIsPressedAsState()
+    val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
+    val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+
+    val buttonSpringSpec = remember {
+        spring<Float>(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    }
+
+    val playPressScale by animateFloatAsState(targetValue = if (isPlayPressed) 0.85f else 1.0f, animationSpec = buttonSpringSpec, label = "PlayPressScale")
+    val prevPressScale by animateFloatAsState(targetValue = if (isPrevPressed) 0.88f else 1.0f, animationSpec = buttonSpringSpec, label = "PrevPressScale")
+    val nextPressScale by animateFloatAsState(targetValue = if (isNextPressed) 0.88f else 1.0f, animationSpec = buttonSpringSpec, label = "NextPressScale")
 
     Row(
         modifier = modifier
@@ -994,6 +1006,7 @@ fun PlayerControlBar(
             onClick = onPrevious,
             interactionSource = prevInteractionSource,
             modifier = Modifier
+                .scale(prevPressScale)
                 .size(width = sideStadiumWidth, height = sideStadiumHeight)
                 .clip(CircleShape)
                 .semantics { contentDescription = "Previous Track" },
@@ -1006,7 +1019,7 @@ fun PlayerControlBar(
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
+                    imageVector = previousIcon,
                     contentDescription = null,
                     modifier = Modifier.size(26.dp)
                 )
@@ -1078,6 +1091,7 @@ fun PlayerControlBar(
             val innerButtonSize = centerBoxSize - 8.dp
             Box(
                 modifier = Modifier
+                    .scale(playPressScale)
                     .size(innerButtonSize)
                     .clip(centerButtonShape)
                     .background(softPinkFill)
@@ -1105,6 +1119,7 @@ fun PlayerControlBar(
             onClick = onNext,
             interactionSource = nextInteractionSource,
             modifier = Modifier
+                .scale(nextPressScale)
                 .size(width = sideStadiumWidth, height = sideStadiumHeight)
                 .clip(CircleShape)
                 .semantics { contentDescription = "Next Track" },
@@ -1117,7 +1132,7 @@ fun PlayerControlBar(
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Rounded.SkipNext,
+                    imageVector = nextIcon,
                     contentDescription = null,
                     modifier = Modifier.size(26.dp)
                 )
@@ -1239,7 +1254,7 @@ fun M3FullScreenCurvedVolumeAndOutputOverlay(
                             .clip(CircleShape)
                             .background(if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh)
                             .clickable { onSelectRoute(r) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+//                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = r.name.take(10),
@@ -1254,7 +1269,7 @@ fun M3FullScreenCurvedVolumeAndOutputOverlay(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                         .clickable(onClick = onPairBluetoothDevice)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+//                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text("+BT", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), fontWeight = FontWeight.Bold)
                 }

@@ -53,7 +53,7 @@ fun DurationPicker(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {

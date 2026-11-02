@@ -1,0 +1,710 @@
+#calendar - 
+
+Important alarm limitation: Your current alarm notification and haptic logic runs inside a composable LaunchedEffect. It is not a reliable background alarm system when the watch app is closed or the process is killed. For that, you need an Android AlarmManager/BroadcastReceiver implementation and notification permission handling. Also, LifeAlarm needs a scheduled-date/anchor field to support true one-time, weekly, monthly and yearly alarm recurrence accurately.
+12. Other issues worth fixing
+Area	Problem	Recommended correction
+Quick alarm	timeStr.take(5) accepts invalid values such as 99:99	Parse with LocalTime.parse() and normalize to HH:mm before saving
+Quick alarm	bulletRepeat is only used for notes; recurrence is hardcoded to "Daily"	Separate recurrence selection from bullet notes
+Quick alarm	onShiftAlarmTime is passed but never called	Remove it or wire actual time adjustment controls
+Quick alarm	alarmDraftTitle is initialized but never updated by this screen	Remove unused state or wire it to the editor
+Alarm notification	No POST_NOTIFICATIONS permission check for Android 13+	Request permission through the Activity Result API before notifying
+Alarm notification	Notification has no content intent	Add a PendingIntent that opens the relevant screen
+Alarm notification	runCatching silently suppresses notification failures	Report permission and notification failures
+Google Calendar	Only 25 events are loaded	Add pagination or a configurable result limit
+Google Calendar	Only start date/time is stored	Include event end time and all-day status
+Calendar	Month grid doesn't display alarm indicators	Add alarm count to NativeWearMonthGridCard
+Birthdays	nextImportantDate() calls LocalDate.now() instead of using the supplied today	Pass today into the helper for consistent date calculations
+Metadata	metaForTask() and similar helpers mutate metaMap through getOrPut() during composition	Prefer pure fallback metadata or seed missing entries in a controlled effect
+Weekly view	Your week is centered around the selected date, not a calendar week	Decide whether this is intentional; otherwise use Monday-Sunday
+Confirmation	Every confirmation blocks the screen for 1.8 seconds	Avoid blocking interaction for routine operations
+
+One more issue: NativeWearMonthGridCard and the horizontal date strip have different touch behavior and date-selection paths. Test both when changing months, especially around December/January and February in leap years.
+Other issues:
+- The fallback inside catch ignores whether fallback scheduling actually succeeded.
+- setExact() is called on every Android version below API 23, although it was introduced in API 19.
+- There is no validation for past trigger times.
+- The current implementation doesn't distinguish normal alarms from snoozes.
+- A false return means exact scheduling was unavailable, not necessarily that scheduling failed. That distinction should be preserved.
+Replace SystemAlarmScheduler.kt
+This version supports independent normal and snooze schedules, reliable cancellation, and explicit exact/inexact results.
+
+package com.creativeblisslabs.wearproductivity.shared.alarms
+
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.SystemClock
+
+object SystemAlarmScheduler {
+
+    private const val ACTION_ALARM =
+        "com.creativeblisslabs.wearproductivity.ALARM_TRIGGER"
+
+    private const val EXTRA_ALARM_ID = "alarm_id"
+    private const val EXTRA_TITLE = "title"
+    private const val EXTRA_MESSAGE = "message"
+    private const val EXTRA_IS_SNOOZE = "is_snooze"
+
+    enum class ScheduleResult {
+        EXACT,
+        INEXACT_FALLBACK,
+        FAILED
+    }
+
+    private fun createPendingIntent(
+        context: Context,
+        receiverClass: Class<*>,
+        alarmId: Int,
+        isSnooze: Boolean,
+        title: String = "",
+        message: String = "",
+        flags: Int
+    ): PendingIntent {
+        val action = if (isSnooze) {
+            "$ACTION_ALARM.SNOOZE"
+        } else {
+            "$ACTION_ALARM.NORMAL"
+        }
+
+        val intent = Intent(context, receiverClass).apply {
+            this.action = action
+            data = android.net.Uri.parse(
+                "lifeos://alarm/$alarmId/${if (isSnooze) "snooze" else "normal"}"
+            )
+
+            putExtra(EXTRA_ALARM_ID, alarmId)
+            putExtra(EXTRA_TITLE, title)
+            putExtra(EXTRA_MESSAGE, message)
+            putExtra(EXTRA_IS_SNOOZE, isSnooze)
+        }
+
+        val pendingFlags = flags or
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_IMMUTABLE
+            } else {
+                0
+            }
+
+        return PendingIntent.getBroadcast(
+            context,
+            alarmId,
+            intent,
+            pendingFlags
+        )
+    }
+
+    fun scheduleAlarm(
+        context: Context,
+        triggerAtMillis: Long,
+        receiverClass: Class<*>,
+        alarmId: Int,
+        title: String,
+        message: String,
+        isSnooze: Boolean = false
+    ): ScheduleResult {
+        if (triggerAtMillis <= System.currentTimeMillis()) {
+            return ScheduleResult.FAILED
+        }
+
+        val appContext = context.applicationContext
+
+        val alarmManager = appContext.getSystemService(
+            Context.ALARM_SERVICE
+        ) as? AlarmManager ?: return ScheduleResult.FAILED
+
+        val pendingIntent = try {
+            createPendingIntent(
+                context = appContext,
+                receiverClass = receiverClass,
+                alarmId = alarmId,
+                isSnooze = isSnooze,
+                title = title,
+                message = message,
+                flags = PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } catch (_: Exception) {
+            return ScheduleResult.FAILED
+        }
+
+        return try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    !alarmManager.canScheduleExactAlarms() -> {
+
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+
+                    ScheduleResult.INEXACT_FALLBACK
+                }
+
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+
+                    ScheduleResult.EXACT
+                }
+
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> {
+                    alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+
+                    ScheduleResult.EXACT
+                }
+
+                else -> {
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+
+                    ScheduleResult.INEXACT_FALLBACK
+                }
+            }
+        } catch (_: SecurityException) {
+            scheduleInexactFallback(
+                alarmManager,
+                triggerAtMillis,
+                pendingIntent
+            )
+        } catch (_: Exception) {
+            ScheduleResult.FAILED
+        }
+    }
+
+    private fun scheduleInexactFallback(
+        alarmManager: AlarmManager,
+        triggerAtMillis: Long,
+        pendingIntent: PendingIntent
+    ): ScheduleResult {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            }
+
+            ScheduleResult.INEXACT_FALLBACK
+        } catch (_: Exception) {
+            ScheduleResult.FAILED
+        }
+    }
+
+    fun cancelAlarm(
+        context: Context,
+        receiverClass: Class<*>,
+        alarmId: Int,
+        isSnooze: Boolean = false
+    ) {
+        val appContext = context.applicationContext
+
+        val alarmManager = appContext.getSystemService(
+            Context.ALARM_SERVICE
+        ) as? AlarmManager ?: return
+
+        val pendingIntent = try {
+            createPendingIntent(
+                context = appContext,
+                receiverClass = receiverClass,
+                alarmId = alarmId,
+                isSnooze = isSnooze,
+                flags = PendingIntent.FLAG_NO_CREATE
+            )
+        } catch (_: Exception) {
+            null
+        } ?: return
+
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
+
+    fun cancelAllAlarmTriggers(
+        context: Context,
+        receiverClass: Class<*>,
+        alarmId: Int
+    ) {
+        cancelAlarm(context, receiverClass, alarmId, false)
+        cancelAlarm(context, receiverClass, alarmId, true)
+    }
+}
+
+
+
+One unused import, SystemClock, can be removed. It isn't needed for RTC-based alarms.
+How to use it
+Normal alarm:
+val result = SystemAlarmScheduler.scheduleAlarm(
+    context = context,
+    triggerAtMillis = triggerTimeMillis,
+    receiverClass = LifeAlarmReceiver::class.java,
+    alarmId = alarm.id,
+    title = alarm.label,
+    message = "Your scheduled alarm is ringing"
+)
+
+
+Snooze:
+val result = SystemAlarmScheduler.scheduleAlarm(
+    context = context,
+    triggerAtMillis = snoozeUntilMillis,
+    receiverClass = LifeAlarmReceiver::class.java,
+    alarmId = alarm.id,
+    title = alarm.label,
+    message = "Snoozed alarm",
+    isSnooze = true
+)
+
+
+Cancel both:
+SystemAlarmScheduler.cancelAllAlarmTriggers(
+    context,
+    LifeAlarmReceiver::class.java,
+    alarm.id
+)
+
+
+Important: The snooze and normal triggers now have separate identities, but both still carry the same alarm ID. The receiver must inspect EXTRA_IS_SNOOZE and validate the persisted alarm state before firing. It must not blindly ring just because a PendingIntent arrived.
+One architectural decision
+Use RTC_WAKEUP, not ELAPSED_REALTIME_WAKEUP, for these alarms. Your alarms are based on wall-clock dates and times, so they must respond correctly to time and timezone changes. The boot/time-change receiver will recalculate their next occurrences.
+
+The next essential file is LifeAlarmReceiver.kt, which should handle the actual notification, vibration, snooze and dismissal actions. The scheduler only schedules delivery; it does not implement those behaviors.
+
+
+
+
+
+#dashboard - 
+
+Issues that need architectural work, not just UI snippets
+Area	Current limitation
+Phone controls	No companion-state synchronization or action acknowledgement
+Phone battery	Hardcoded previously; no actual companion telemetry source
+Weather	Static placeholder, no weather provider
+Alarm scheduling	Screen selection doesn't establish reliable background alarm scheduling
+Events	Counts all non-deleted events rather than filtering upcoming events
+Expenses and nutrition	Totals aren't date-filtered
+Heart rate	Depends on actual sensor/provider updates
+Sleep	Depends on actual sleep tracking data
+
+
+
+
+#fasting - 9. Additional issues to fix before calling this screen production-ready
+These are important, but I wouldn't blindly replace them without checking the corresponding repository/model contracts.
+Issue	Why it matters
+Water source duplication	maxOf(repoWaterMl, loggedWaterSum) can become inconsistent if the repository and local logs diverge.
+Nutrition date filtering	Food logs are filtered for deletion, but the screen sums every remaining record. Confirm that liveState.foodLogs is already today's data before labelling totals as daily.
+Heart-rate permission	Sensor registration needs a proper runtime permission flow and lifecycle handling.
+Fasting history	Stopping a session records the current phase duration, not necessarily the total duration of the entire session.
+Weight history timestamps	currentClockStamp() stores only the time, so historical entries cannot show their actual date.
+Sound engine cleanup	stop() and the audio coroutine's finally block both stop and release the same AudioTrack. This can cause concurrent/double cleanup.
+Weight editor	The same editor is used for logging weight and editing a target, but its current-weight field is not explicitly labelled as such in the shown call.
+Program presets	The default preset descriptions such as "Autophagy boost" and "Deep ketosis" imply physiological benefits that the app does not measure or establish.
+
+
+# files - 
+7. Storage engine problems that need architectural attention
+WearFileExplorerScreen.kt
+ WearFileExplorerScreen.kt
+ WearFileExplorerScreen.kt
+
+Problem	Why it matters	Recommended fix
+FileColumns.DATA	Deprecated and unreliable under scoped storage	Use MediaStore content URIs and ContentResolver
+Hard limit of 250 files	Analytics and category results silently omit files	Add pagination using MediaStore query limits
+Repeated global MediaStore scans	Every directory navigation can trigger multiple full scans	Cache results and refresh only when necessary
+Thumbnail loading uses item.path	Content URIs are ignored	Support ContentResolver.loadThumbnail() and openInputStream()
+Audio metadata uses raw path	Fails for content-URI-only files	Use MediaMetadataRetriever.setDataSource(context, uri)
+Downloads classification	Audio/video inside Downloads is classified as Audio/Video first	Treat Downloads as a location filter, not a mutually exclusive file category
+Created date	MediaStore DATE_ADDED is not the actual filesystem creation timestamp	Label it as Added, or use filesystem metadata when available
+
+One particularly important distinction: your file model is path-based, but Android's modern storage APIs are URI-based. You currently combine MediaStore discovery with direct File operations. That works for accessible filesystem paths, but it will fail for many scoped-storage files.
+
+For a reliable explorer, migrate shared-storage operations to DocumentFile and persisted SAF permissions. Keep File operations for your own app-specific vault.
+13. Other important fixes before calling this production-ready
+Current issue	Required change
+File(item.path) in rename/delete/copy	Route by storage type: app-vault file, MediaStore URI or SAF document
+File(currentDirectoryPath) for navigation	Introduce separate filesystem and SAF navigation state
+File(item.path) in folder transfer	Enumerate children using the relevant storage provider
+File(item.path) in text preview/checksum	Use ContentResolver streams
+File(item.path) in thumbnails	Use loadThumbnail() or URI-aware decoders
+File(item.path) in MediaPlayer	Use setDataSource(context, uri)
+MediaStore cache invalidation	Refresh after writes, deletes and media changes; do not cache indefinitely
+isScanning	Reset in finally, and use a separate loaded-state flag
+MANAGE_EXTERNAL_STORAGE	Avoid making broad all-files access a requirement when MediaStore and SAF satisfy the feature
+
+One more important point: the existing hasMediaOrStoragePermissions() requires all three Android 13 media permissions. That is overly restrictive for partial access. Permission state should be evaluated per media type, and the UI should report which categories are actually accessible. Also, MANAGE_EXTERNAL_STORAGE is a restricted permission on Google Play, not a routine shortcut for a file manager.
+
+
+
+# focus - 12. Other issues worth fixing
+Location	Problem	Recommended correction
+selectedType initialization	Always starts as Pomodoro, even when the selected preset is Deep Work	Initialize from activeTopic.type
+customTopics initialization	remember does not reload if repository seed topics change	Add an explicit synchronization strategy
+startSessionWithParams()	Adds repository topic on every start	Avoid duplicate topic entries
+onStartTopicSession	Always starts FocusType.Custom	Use preset.type
+previousOrRestartSession()	Uses current focus.totalSeconds, but can restart with stale or invalid session state	Validate duration and active state
+stopAndLogCurrentSession()	A stopped session may be logged both locally and by the repository	Keep one authoritative history writer
+M3FocusTopicRow()	Swipe delete currently maps to edit	Separate delete callback
+history.take(15)	Only displays 15 entries without an explicit pagination or history filter	Add a load-more/history view
+FocusDashboardTransformingPage()	totalFocusedMinutes is calculated but unused	Remove or display it
+WearFocusScreen()	state and mediaViewModel are unused	Remove if call sites permit
+drawFocusWavyRing()	Function is present but unused by the current timer canvas	Remove or integrate deliberately
+AnimatedVisibility	Fade imports are unused	Remove unused imports
+
+Two things to verify before considering this fixed:
+1. Check the implementation of repository.stopFocusSession(). It must actually persist the stopped session for the single-writer change to work.
+2. Check the implementation of repository.deleteFocusHistory(). Your dashboard currently calls it, but the UI should also refresh from the updated repository.state.
+
+
+# habit - 
+Remaining issues that need a data-model or repository change
+| Priority | Issue | Why a small UI patch isn't enough |
+|---|---|---|
+| High
+ | Habit and timetable persistence use | and ;; delimiters | Names or metadata containing delimiters can corrupt saved records. Move to JSON with migration. |
+| High
+ | Timetable timer resets on process recreation | Needs persisted absolute timestamps and timer restoration. |
+| High
+ | Historical habit tracking is absent | Requires dated completion records, not a fixed bitmask. |
+| Medium
+ | Weekly/monthly views are cosmetic | Requires aggregation over dated records. |
+| Medium
+ | Timed-session completion mode isn't a complete timer workflow | Metadata mode selection doesn't itself establish a duration or completion lifecycle. |
+| Medium
+ | Mood and satisfaction are stored locally | No dated mood history exists in this screen. |
+| Medium
+ | Habit reminder settings aren't scheduled | Requires an actual AlarmManager/WorkManager scheduling implementation. |
+| Medium
+ | metaFor() default metadata isn't persisted until edited | Fine for display, but metadata changes should be saved independently when needed. |
+11. Fix misleading snooze and reminder behavior
+These features are currently incomplete:
+Feature	Actual behavior
+Habit snooze	Saves an expiry timestamp and displays SNOOZED; doesn't schedule a notification or suppress the habit
+Timetable snooze	Saves snoozedMinutes; doesn't store an expiry timestamp or schedule a reminder
+Habit reminder time	Saved as metadata but never scheduled
+Reminder enabled	Saved as metadata but never used
+Test Watch Alert	Sends an immediate notification only
+4. Reminder scheduling needs a real implementation
+Currently, the screen only has:
+HabitReminderNotifier.fireReminder(...)
+8. Additional issues I found
+Priority	Location	Problem	Correction
+High	historyBitmask28	Read by the streak grid, not updated by completion handlers	Replace with dated completion records
+High	loadTimetableSlots()	Forces restored timers to stopped	Persist and restore absolute timestamps
+High	advanceHabitProgress()	Does not check snooze expiry	Block completion while snoozed
+High	onTimerToggleHabit	Does not check snooze expiry	Block timer start while snoozed
+Medium	M3LiquidFillHabitCard()	Snooze indicator can remain stale until recomposition	Update UI when snooze expires
+Medium	M3HabitAndTimetableControlModal()	Mood modal saves only the latest reflection	Append dated reflection records
+Medium	saveHabitFromEditor()	No reminder-enabled setting is edited	Add a reminder toggle and schedule updates
+Medium	TimetableSlotMeta	snoozedMinutes has no expiry semantics	Persist snoozedUntilEpochMs
+Medium	HabitReminderNotifier	Notification ID uses a timestamp modulo 10,000	Use stable IDs per habit/slot
+Medium	sameTimetableEveryDay	Local and repository routines can diverge	Reconcile routine changes without overwriting local state
+Low	selectedDate	LocalDate.now() is only recalculated when the offset changes	Refresh date state across midnight
+
+That immediately posts a notification. It does not schedule one.
+
+There are three separate requirements:
+Feature	Required implementation
+Daily habit reminder	Schedule at reminderTime
+Habit snooze	Schedule a one-time reminder at snoozedUntilEpochMs
+Timetable snooze	Schedule a one-time reminder at snoozedUntilEpochMs
+
+For Android Wear, I recommend:
+- AlarmManager for precise, one-time reminder times.
+- BroadcastReceiver for delivering scheduled notifications.
+- Rescheduling after device reboot and time changes.
+- POST_NOTIFICATIONS permission handling where required.
+- PendingIntent IDs based on habit/slot IDs so rescheduling replaces the previous alarm.
+A repeating WorkManager task is not appropriate if you need a reminder at an exact HH:mm time. WorkManager is intentionally inexact.
+
+Your current reminderEnabled and reminderTime fields are persisted, but I found no scheduling implementation consuming them. The editor also needs a reminder-enabled control, not just a time field.
+
+Do not label a reminder as scheduled until the actual alarm has been registered.
+
+
+
+
+# settings - 
+
+3. Issues that need changes beyond these two files
+Issue	Why it matters
+Smart Wake scheduling	Currently only a stored preference
+Alarm lead time	Must be consumed by actual alarm creation
+Event reminder default	Must be consumed by event scheduling
+Task default priority	No selector in this settings screen
+Audio preferences	Constants exist, but no audio controls are shown here
+Backup and restore	Requires actual repository serialization and a restore path
+Cloud sync	Requires worker completion/error reporting, not just enqueue confirmation
+Account state	Needs observable authentication state
+Reset confirmation	Should use a real confirmation dialog
+
+4. Final priority order
+Critical
+Fix first
+
+1. Remove fake backup export.
+2. Restore actual cloud sync invocation and report queue status honestly.
+3. Fix signed-in/signed-out account display.
+4. Add reset confirmation.
+   
+   Important
+   Next
+5. Replace hardcoded black with Material theme colors.
+6. Respect haptics preference in all callbacks.
+7. Implement task priority selector.
+8. Connect Smart Wake and reminder preferences to their actual features.
+   
+   Cleanup
+   Later
+9. Harden preference getters and setters.
+10. Remove unused imports and stale state.
+8. Connect the saved timing preferences to their consumers
+These controls already save values:
+- KEY_QUICK_ALARM_LEAD_MINUTES
+- KEY_EVENT_DEFAULT_REMINDER_MINUTES
+But changing this screen cannot change existing alarms or events automatically.
+
+The actual creation flows need to consume these preferences:
+Feature	Required integration
+Quick alarm	Read alarm lead time when calculating its trigger time
+Event creation	Use the default reminder when creating the event's reminder
+Smart Wake	Schedule/cancel the appropriate alarm when the preference changes
+Task creation	Read default priority when creating a new task
+
+For Smart Wake, also handle disabling it, device reboot, time changes, and permission failures. Scheduling only when the toggle is clicked is not sufficient.
+9. Haptics handling
+Your existing central helpers are a good approach:
+fun click() {
+    if (hapticsEnabled) haptic.click()
+}
+
+fun setBoolean(key: String, value: Boolean) {
+    click()
+    WearAppPreferences.setBoolean(context, key, value)
+    feedbackOverlay = "Setting Updated" to false
+}
+
+fun adjustInt(key: String, value: Int) {
+    click()
+    WearAppPreferences.setInt(context, key, value)
+    feedbackOverlay = "Setting Updated" to false
+}
+
+
+Keep all preference-changing callbacks routed through these helpers. The reset dialog snippets above also call click() before performing the operation.
+
+One expected behavior: when haptics are disabled, turning them back on won't produce a haptic for that toggle. That's consistent with the saved preference.
+10. Audio preferences, backup and sync: remaining work
+These cannot be fully implemented from this screen alone.
+Feature	What is missing
+Audio preferences	Actual preference keys and the audio/player service that consumes them
+Backup	Repository export/import serialization and a restore flow
+Cloud sync completion	Observable WorkManager state and worker result reporting
+Account state	Fixed above with an auth-state listener
+
+# audio
+12. Additional UI and state issues
+Area	Problem	Recommended change
+Album artwork	Cache keyed by album name can show the wrong cover for artists with identically named albums.	Key album art by artist + album, and track art by track ID.
+Folder browser	Clicking a folder both navigates into it and starts playing its tracks.	Separate folder navigation from Play Folder.
+EQ graph	Manual gain changes leave the selected preset name unchanged.	Display Custom after manual adjustment.
+Volume	volumeLevel only reflects changes made inside this screen.	Refresh it when system volume changes externally.
+Phone controls	phoneMediaPlaying is only locally toggled, not confirmed by the phone.	Receive actual playback state from the companion.
+Confirmation overlay	The feedback overlay blocks the whole screen for 1.8 seconds.	Keep feedback non-blocking where possible.
+Touch targets	MiniCircleIconBtn is only 22 dp. Several player controls are around 25-30 dp high.	Increase interactive hit areas to at least 40-48 dp where layout permits.
+Pager indicator	It remains visible over the lyrics and modal overlays.	Hide it when lyrics or another full-screen overlay is open.
+Main-thread work	Cached library JSON parsing and folder enumeration happen during composition.	Move disk work to IO/ViewModel initialization.
+API design	state, repository and mediaViewModel are unused parameters.	Remove them or connect the screen to the intended shared architecture.
+9. Fix playlist editing
+Location: AudioLibraryTab.PLAYLISTS.
+
+You currently have:
+WearSwipeableActionCard(
+    onCardClick = { onLoadPlaylist(pl) },
+    onEditClick = { onLoadPlaylist(pl) },
+    onDeleteClick = { onDeletePlaylist(pl.id) },
+
+
+The Edit action plays the playlist. That is not editing, despite the button apparently believing otherwise.
+
+You need:
+- editingPlaylistId state.
+- A prefilled editor for the selected playlist.
+- An update callback that replaces the existing playlist.
+- A save operation that preserves its ID and track IDs.
+Until that editor exists, remove the Edit swipe action from the playlist card. Do not route it to onLoadPlaylist().
+
+Also, playlist persistence currently uses custom delimiters:
+" name | description | accent | ids "
+
+
+Characters such as ;; and | can corrupt the stored data. Migrate playlist persistence to JSON, preferably with kotlinx.serialization.
+
+10. Fix library scanning and folder access
+Location: triggerLibraryRescan() and scanAudioLibrary().
+Problems
+- triggerLibraryRescan() has no try/finally. An unexpected exception can leave isRescanningLibrary = true indefinitely.
+- The UI replaces allTracks only when scanned.isNotEmpty(). A successful empty scan therefore leaves old tracks visible.
+- saveCachedLibrary() is also only called when results are nonempty. Old cached tracks can reappear after a later restart.
+- File(root).listFiles() in M3LibraryFolderScanManagerModal runs during composition, meaning filesystem work happens on the UI thread.
+- Your folder manager only presents guessed directories and top-level folders. It is not a proper arbitrary-folder picker.
+- File.walkTopDown().maxDepth(4) misses deeper folders.
+- Excluded directories are checked for individual files, but traversal is not pruned early.
+Required improvement
+Have the scanner return a result that distinguishes a successful empty library from a failed scan:
+data class AudioScanResult(
+    val tracks: List<WearTrack>,
+    val successful: Boolean,
+    val errorMessage: String? = null
+)
+
+
+Only replace the current library and cached snapshot when successful is true. If the scan succeeds with zero tracks, clear the old list and cache.
+
+For folder selection, use Android's Storage Access Framework with ACTION_OPEN_DOCUMENT_TREE and persist URI permissions. Your current guessed-path picker is unreliable under scoped storage.
+
+Also wrap the scan lifecycle in try/finally:
+scope.launch {
+    try {
+        // Run scan and update library state.
+    } catch (cancel: kotlinx.coroutines.CancellationException) {
+        throw cancel
+    } catch (error: Exception) {
+        feedbackOverlay =
+            (error.message ?: "Library scan failed") to true
+    } finally {
+        isRescanningLibrary = false
+    }
+}
+
+
+This does not replace the need to distinguish a failed scan from a successful empty scan.
+
+11. Fix lyrics persistence and fake synchronization
+There are two separate problems.
+
+A. Fetched lyrics are only updated in Compose state.
+
+In onFetchLrcLibNow, you update queue and allTracks, but do not persist the fetched lyrics. They can disappear after restarting.
+
+Add a dedicated lyrics cache that stores both:
+- Lyrics content.
+- Actual source, such as LRCLIB Synced, LRCLIB Plain or Local .LRC File.
+Do not reuse the existing BurnedLyrics label for fetched lyrics. Your current loading logic labels cached lyrics "Burned in File", even when they came from LRCLIB.
+
+B. Plain lyrics are given fabricated timestamps.
+
+In fetchLyricsFromLrcLib(), you distribute plain lyrics evenly across the track duration:
+val stepSec =
+    track.durationSeconds.coerceAtLeast(30).toFloat() /
+        lines.size.coerceAtLeast(1)
+
+
+This produces artificial synchronization. A song does not distribute its lyric lines evenly like a spreadsheet.
+
+Keep plain lyrics separate from synchronized LRC and display them as ordinary text. Only seek and highlight lines when genuine timestamps exist.
+
+Also, rethrow CancellationException in the network function rather than swallowing it inside catch (_: Exception).
+
+12. Additional UI and state issues
+Area	Problem	Recommended change
+Album artwork	Cache keyed by album name can show the wrong cover for artists with identically named albums.	Key album art by artist + album, and track art by track ID.
+Folder browser	Clicking a folder both navigates into it and starts playing its tracks.	Separate folder navigation from Play Folder.
+EQ graph	Manual gain changes leave the selected preset name unchanged.	Display Custom after manual adjustment.
+Volume	volumeLevel only reflects changes made inside this screen.	Refresh it when system volume changes externally.
+Phone controls	phoneMediaPlaying is only locally toggled, not confirmed by the phone.	Receive actual playback state from the companion.
+Confirmation overlay	The feedback overlay blocks the whole screen for 1.8 seconds.	Keep feedback non-blocking where possible.
+Touch targets	MiniCircleIconBtn is only 22 dp. Several player controls are around 25-30 dp high.	Increase interactive hit areas to at least 40-48 dp where layout permits.
+Pager indicator	It remains visible over the lyrics and modal overlays.	Hide it when lyrics or another full-screen overlay is open.
+Main-thread work	Cached library JSON parsing and folder enumeration happen during composition.	Move disk work to IO/ViewModel initialization.
+API design	state, repository and mediaViewModel are unused parameters.	Remove them or connect the screen to the intended shared architecture.
+
+For the pager indicator, replace its unconditional rendering with:
+if (
+    !showLyricsOverlay &&
+    activeModalOverlay == AudioModalOverlay.NONE
+) {
+    VerticalPagerIndicator(
+        currentPage = pagerState.currentPage,
+        pageCount = 3,
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .padding(end = adaptiveSpec.screenWidth * 0.02f)
+    )
+}
+
+
+For MiniCircleIconBtn, the 22 dp container is too small for reliable watch interaction. Keep the icon visually small but enlarge its clickable parent:
+Box(
+    modifier = Modifier
+        .size(40.dp)
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .clickable(onClick = onClick),
+    contentAlignment = Alignment.Center
+) {
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+        tint = tint
+    )
+}
+
+
+
+Recommended fixing order
+Priority	Work
+P0	Shuffle navigation, lyrics tap handling, Bluetooth permission, stale disposal state
+P0	Correct track duration and empty-queue persistence
+P1	Equalizer session lifecycle and real frequency mapping
+P1	Actual media output routing through the playback service
+P1	Library scan result handling and folder access
+P2	Playlist editing, lyrics persistence and album-art cache
+P2	Touch targets, pager overlays and UI responsiveness
+
+
+
+
+
+
+
+
+
+
+# workout -
+
+| Area | Issue | Recommended fix |
+|---|---|---|
+| Workout persistence | Active session disappears on process death | Persist session state and absolute timestamps |
+| Program persistence | ;;, | and ~ delimiters can corrupt user input | Migrate to JSON |
+| Workout history | Only 30 records are retained | Make retention configurable or use Room |
+| History timestamps | Only EEE HH:mm is saved | Store epoch milliseconds |
+| Weekly analytics | Static fake chart | Derive from dated workout records |
+| PR editor | Invalid values silently fall back to 65/90% defaults | Validate before saving |
+| Running presets | Repository errors aren't surfaced | Add error handling around preset loading |
+| Music mute | Stored preference isn't connected to playback | Integrate with shared media player |
+| Program selection | Can replace an active workout | Confirm or block selection while a session is active |
+| Touch targets | Several controls are only 26–30dp | Prefer 36dp or larger where layout permits |
+| Training plan | Completion is recorded only on explicit stop or final-set completion | Use one shared completion function |
+
+**One architectural warning:** the workout screen currently owns session state, history, PR persistence, repository logging, and analytics. It has grown beyond what a single composable should manage. After these correctness fixes, move workout state transitions into a `WorkoutSessionViewModel` and persistence into repositories. That will make process restoration, testing, and future workout features substantially less fragile.

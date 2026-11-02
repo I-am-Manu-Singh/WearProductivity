@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.MaterialTheme
 
 enum class WearListMode {
     LIST,
@@ -39,7 +40,7 @@ fun <T> WearReusableListGridView(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             LazyVerticalGrid(
@@ -61,7 +62,7 @@ fun <T> WearReusableListGridView(
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 24.dp),
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(3.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
