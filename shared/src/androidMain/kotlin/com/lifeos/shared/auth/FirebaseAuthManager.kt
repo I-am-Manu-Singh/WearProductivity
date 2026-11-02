@@ -20,16 +20,24 @@ object FirebaseAuthManager {
 
     val currentUser: LifeAuthUser?
         get() {
-            val user: FirebaseUser = FirebaseAuth.getInstance().currentUser ?: return null
-            return LifeAuthUser(
-                uid = user.uid,
-                email = user.email ?: "user@gmail.com",
-                displayName = user.displayName ?: "LifeOS User",
-                photoUrl = user.photoUrl?.toString()
-            )
+            return try {
+                val user: FirebaseUser = FirebaseAuth.getInstance().currentUser ?: return null
+                LifeAuthUser(
+                    uid = user.uid,
+                    email = user.email ?: "user@gmail.com",
+                    displayName = user.displayName ?: "LifeOS User",
+                    photoUrl = user.photoUrl?.toString()
+                )
+            } catch (_: Exception) {
+                null
+            }
         }
 
-    fun isUserSignedIn(): Boolean = FirebaseAuth.getInstance().currentUser != null
+    fun isUserSignedIn(): Boolean = try {
+        FirebaseAuth.getInstance().currentUser != null
+    } catch (_: Exception) {
+        false
+    }
 
     suspend fun signInWithGoogle(context: Context, webClientId: String): Result<LifeAuthUser> {
         return try {

@@ -31,12 +31,12 @@ fun MobileSettingsScreen(repository: LifeRepository) {
     var showResetDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
-        val auth = FirebaseAuth.getInstance()
+        val auth = try { FirebaseAuth.getInstance() } catch (_: Exception) { null }
         val listener = FirebaseAuth.AuthStateListener { _ ->
             user = FirebaseAuthManager.currentUser
         }
-        auth.addAuthStateListener(listener)
-        onDispose { auth.removeAuthStateListener(listener) }
+        auth?.addAuthStateListener(listener)
+        onDispose { auth?.removeAuthStateListener(listener) }
     }
 
     Scaffold(

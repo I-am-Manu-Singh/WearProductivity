@@ -6,6 +6,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.ScalingLazyRow
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import org.json.JSONArray
 import org.json.JSONObject
 import androidx.compose.animation.core.LinearEasing
@@ -2244,17 +2247,65 @@ private fun HabitsStaggeredAndListDeckPage(
                 }
 
                 item {
+                    val habitUnitOptions = listOf("times", "ml", "cups", "steps", "mins", "pages")
+                    val initialTargetInt = remember(draftTargetValue) {
+                        draftTargetValue.filter { it.isDigit() }.toIntOrNull() ?: 8
+                    }
+                    val initialStepInt = remember(draftUnitAndStep) {
+                        draftUnitAndStep.substringAfter("+", "").filter { it.isDigit() }.toIntOrNull() ?: 1
+                    }
+                    val detectedUnit = remember(draftUnitAndStep) {
+                        habitUnitOptions.firstOrNull { draftUnitAndStep.contains(it, ignoreCase = true) } ?: "times"
+                    }
+
+                    var habitTarget by remember { mutableStateOf(initialTargetInt) }
+                    var habitStep by remember { mutableStateOf(initialStepInt) }
+                    var selectedUnitIdx by remember {
+                        mutableStateOf(habitUnitOptions.indexOf(detectedUnit).let { if (it < 0) 0 else it })
+                    }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "HABIT",
                         initialTitle = draftName,
                         initialTimeOrDate = draftTargetValue,
                         initialSubtitle = draftUnitAndStep,
                         isEditingExisting = isEditingHabit,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Target Amount",
-                        subtitleFieldLabel = "Unit & Tap Step (ml · +250)",
-                        onSave = onSaveHabit,
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = habitUnitOptions,
+                        selectedChipIndex = selectedUnitIdx,
+                        onChipSelected = { selectedUnitIdx = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "target",
+                                label = "Daily Target",
+                                initialValue = initialTargetInt,
+                                minimum = 1,
+                                maximum = 10000,
+                                step = if (selectedUnitIdx == 1 || selectedUnitIdx == 3) 250 else 1,
+                                unitSuffix = habitUnitOptions[selectedUnitIdx],
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "step",
+                                label = "Tap Increment",
+                                initialValue = initialStepInt,
+                                minimum = 1,
+                                maximum = 1000,
+                                step = if (selectedUnitIdx == 1 || selectedUnitIdx == 3) 50 else 1,
+                                unitSuffix = "+/${habitUnitOptions[selectedUnitIdx]}",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["target"]?.let { habitTarget = it }
+                            values["step"]?.let { habitStep = it }
+                        },
+                        onSave = { name, _, _ ->
+                            val chosenUnit = habitUnitOptions[selectedUnitIdx]
+                            val formattedSubtitle = "$chosenUnit · +$habitStep"
+                            onSaveHabit(name, habitTarget.toString(), formattedSubtitle)
+                        },
                         onCancel = onCancelHabitEditor,
                         onDelete = null,
                         modifier = Modifier
@@ -2836,17 +2887,55 @@ private fun TimetableTabularSchedulePage(
                     CatalogM3ListHeaderSample(title = if (isEditingSlot) "EDIT TIME BLOCK" else "NEW TIME BLOCK")
                 }
                 item {
+                    val initialDuration = remember(draftSlotCategoryAndEst) {
+                        draftSlotCategoryAndEst.substringAfter("·", "").replace("m", "").filter { it.isDigit() }.toIntOrNull() ?: 60
+                    }
+                    var slotDurationMins by remember { mutableStateOf(initialDuration) }
+
+                    val slotTagChips = listOf("Focus", "Meeting", "Deep Work", "Break", "Gym", "Study")
+                    val detectedTag = remember(draftSlotCategoryAndEst) {
+                        slotTagChips.firstOrNull { draftSlotCategoryAndEst.contains(it, ignoreCase = true) } ?: "Focus"
+                    }
+                    var selectedTagIdx by remember {
+                        mutableStateOf(slotTagChips.indexOf(detectedTag).let { if (it < 0) 0 else it })
+                    }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "TIME SLOT",
                         initialTitle = draftSlotTitle,
-                        initialTimeOrDate = draftSlotTimeRange,
-                        initialSubtitle = draftSlotCategoryAndEst,
+                        initialTimeOrDate = draftSlotTimeRange.substringBefore("-").trim().ifBlank { "09:00" },
+                        initialSubtitle = "",
                         isEditingExisting = isEditingSlot,
                         showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Start-End (e.g. 09:00-10:30)",
-                        subtitleFieldLabel = "Tag & Est Mins (Focus · 90m)",
-                        onSave = onSaveSlot,
+                        showSubtitleField = false,
+                        timeFieldLabel = "Block Start Time",
+                        timeFieldType = UniversalEditorFieldType.TIME,
+                        chipOptions = slotTagChips,
+                        selectedChipIndex = selectedTagIdx,
+                        onChipSelected = { selectedTagIdx = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "duration",
+                                label = "Estimated Duration",
+                                initialValue = initialDuration,
+                                minimum = 15,
+                                maximum = 240,
+                                step = 15,
+                                unitSuffix = "min",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["duration"]?.let { slotDurationMins = it }
+                        },
+                        onSave = { title, startTime, _ ->
+                            val chosenTag = slotTagChips[selectedTagIdx]
+                            val parsedStart = runCatching { LocalTime.parse(startTime.trim()) }.getOrElse { LocalTime.of(9, 0) }
+                            val parsedEnd = parsedStart.plusMinutes(slotDurationMins.toLong())
+                            val timeRangeStr = "$parsedStart-$parsedEnd"
+                            val subtitleStr = "$chosenTag · ${slotDurationMins}m"
+                            onSaveSlot(title, timeRangeStr, subtitleStr)
+                        },
                         onCancel = onCancelSlotEditor,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3236,63 +3325,68 @@ private fun HabitsMonthlySummaryAndScorePage(
 }
     }
 }
-
-// =============================================================================
-// HORIZONTAL SCROLLABLE DATE CHIP SELECTOR (DAILY / WEEKLY / MONTHLY)
-// =============================================================================
 @Composable
 private fun HorizontalDateChipBar(
     selectedOffset: Int,
-    onSelectOffset: (Int) -> Unit
+    onSelectOffset: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val scrollState = rememberScrollState()
+    // 1. Use ScalingLazyListState to manage center-snapping and scaling behaviors
+    val listState = rememberScalingLazyListState(
+        initialCenterItemIndex = selectedOffset + 3 // Centers 'TODAY' initially (offset 0 is index 3)
+    )
     val today = remember { LocalDate.now() }
     val dayFmt = remember { DateTimeFormatter.ofPattern("EEE", Locale.getDefault()) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(scrollState)
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    // 2. Replace Row with ScalingLazyRow to handle circular screen scaling automatically
+    ScalingLazyRow(
+        modifier = modifier.fillMaxWidth(),
+        state = listState,
+        // Provides breathing room on the left/right edges so items aren't clipped instantly
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        autoCentering = AutoCenteringParams(itemIndex = 0), 
         verticalAlignment = Alignment.CenterVertically
     ) {
-        for (offset in -3..5) {
+        // Use items loop construct appropriate for ScalingLazyRow
+        items(9) { index -> 
+            val offset = index - 3 // Maps 0..8 to -3..5
             val date = today.plusDays(offset.toLong())
             val isSelected = offset == selectedOffset
             val dayName = if (offset == 0) "TODAY" else date.format(dayFmt).uppercase(Locale.getDefault())
 
             Column(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
+                    // 3. Fix width & meet minimum 48dp touch target requirements for Wear OS
+                    .width(52.dp) 
                     .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceContainerHigh
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = RoundedCornerShape(14.dp)
                     )
                     .clickable { onSelectOffset(offset) }
-//                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ,
+                    // 4. Ensure internal text padding is balanced
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = dayName,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.labelMedium.tabularNums(),
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Black,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
     }
 }
-
 // =============================================================================
 // MODAL OVERLAY FOR SNOOZE DURATION, STOP/TODAY ONLY, BACKLOG & MOOD LOGGING
 // =============================================================================

@@ -2788,17 +2788,55 @@ private fun UnifiedAgendaAndSubtasksPage(
                 }
 
                 item {
+                    val initialEstMins = remember(draftSubtitleAndMeta) {
+                        draftSubtitleAndMeta.substringAfter("Est ", "").substringBefore("m").filter { it.isDigit() }.toIntOrNull() ?: 30
+                    }
+                    var itemEstMins by remember { mutableStateOf(initialEstMins) }
+
+                    val plannerTags = listOf("Sprint", "Deep Work", "Meeting", "Review", "Personal")
+                    val detectedTag = remember(draftSubtitleAndMeta) {
+                        plannerTags.firstOrNull { draftSubtitleAndMeta.contains(it, ignoreCase = true) } ?: "Sprint"
+                    }
+                    var selectedTagIdx by remember {
+                        mutableStateOf(plannerTags.indexOf(detectedTag).let { if (it < 0) 0 else it })
+                    }
+
+                    val isDateField = editorKind == PlannerItemKind.BIRTHDAY || editorKind == PlannerItemKind.IMPORTANT_DATE
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = editorKind.badge,
                         initialTitle = draftTitle,
                         initialTimeOrDate = draftTimeOrDate,
-                        initialSubtitle = draftSubtitleAndMeta,
+                        initialSubtitle = "",
                         isEditingExisting = isEditing,
                         showTimePickerField = true,
                         showSubtitleField = true,
-                        timeFieldLabel = if (editorKind == PlannerItemKind.BIRTHDAY || editorKind == PlannerItemKind.IMPORTANT_DATE) "Date (YYYY-MM-DD)" else "Time (HH:mm)",
-                        subtitleFieldLabel = "Tag · Est Mins · Subtasks/Notes",
-                        onSave = onSaveUniversalItem,
+                        timeFieldLabel = if (isDateField) "Scheduled Date" else "Scheduled Time",
+                        timeFieldType = if (isDateField) UniversalEditorFieldType.DATE else UniversalEditorFieldType.TIME,
+                        subtitleFieldLabel = "Bullet Notes / Description",
+                        chipOptions = plannerTags,
+                        selectedChipIndex = selectedTagIdx,
+                        onChipSelected = { selectedTagIdx = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "est_mins",
+                                label = "Estimated Duration",
+                                initialValue = initialEstMins,
+                                minimum = 5,
+                                maximum = 240,
+                                step = 5,
+                                unitSuffix = "min",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["est_mins"]?.let { itemEstMins = it }
+                        },
+                        onSave = { title, timeOrDateVal, notes ->
+                            val chosenTag = plannerTags[selectedTagIdx]
+                            val metaFormatted = if (notes.isNotBlank()) "$chosenTag · Est ${itemEstMins}m · $notes" else "$chosenTag · Est ${itemEstMins}m"
+                            onSaveUniversalItem(title, timeOrDateVal, metaFormatted)
+                        },
                         onCancel = onCancelUniversalEditor,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -3484,18 +3522,27 @@ private fun BirthdaysCallsAndAlarmsPage(
 
             if (showNewListCreator) {
                 item {
+                    val birthdayTags = listOf("Family", "Friend", "Colleague", "VIP", "Anniversary")
+                    var selectedTagIdx by remember { mutableStateOf(0) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "BIRTHDAY LIST",
                         initialTitle = "",
                         initialTimeOrDate = today.plusDays(10).toString(),
-                        initialSubtitle = "Person Birthday Name",
+                        initialSubtitle = "",
                         isEditingExisting = false,
                         showTimePickerField = true,
                         showSubtitleField = true,
-                        timeFieldLabel = "Date (YYYY-MM-DD)",
-                        subtitleFieldLabel = "Birthday / Milestone Title",
+                        timeFieldLabel = "Celebration Date",
+                        timeFieldType = UniversalEditorFieldType.DATE,
+                        subtitleFieldLabel = "Person / Milestone Title",
+                        chipOptions = birthdayTags,
+                        selectedChipIndex = selectedTagIdx,
+                        onChipSelected = { selectedTagIdx = it },
                         onSave = { listName, dateIso, bdayTitle ->
-                            onSaveNewCountdownList(listName, bdayTitle, dateIso)
+                            val tag = birthdayTags[selectedTagIdx]
+                            val fullTitle = if (bdayTitle.isNotBlank()) "$bdayTitle ($tag)" else tag
+                            onSaveNewCountdownList(listName, fullTitle, dateIso)
                         },
                         onCancel = onToggleNewListCreator,
                         modifier = Modifier.fillMaxWidth()
@@ -3618,6 +3665,9 @@ private fun BirthdaysCallsAndAlarmsPage(
                     }
                 }
                 item {
+                    val alarmTags = listOf("Morning", "Workout", "Meds", "Habit", "Meeting")
+                    var selectedAlarmTagIdx by remember { mutableStateOf(0) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "ALARM",
                         initialTitle = alarmDraftTitle,
@@ -3626,10 +3676,16 @@ private fun BirthdaysCallsAndAlarmsPage(
                         isEditingExisting = false,
                         showTimePickerField = true,
                         showSubtitleField = true,
-                        timeFieldLabel = "Alarm Time (HH:mm)",
-                        subtitleFieldLabel = "Bullet Points (Separate with •)",
+                        timeFieldLabel = "Alarm Time",
+                        timeFieldType = UniversalEditorFieldType.TIME,
+                        subtitleFieldLabel = "Bullet Notes (Separate with •)",
+                        chipOptions = alarmTags,
+                        selectedChipIndex = selectedAlarmTagIdx,
+                        onChipSelected = { selectedAlarmTagIdx = it },
                         onSave = { title, timeStr, bullets ->
-                            onSaveQuickAlarm(title, timeStr, bullets)
+                            val chosenTag = alarmTags[selectedAlarmTagIdx]
+                            val effectiveTitle = if (title.isBlank()) "$chosenTag Alarm" else title
+                            onSaveQuickAlarm(effectiveTitle, timeStr, bullets)
                         },
                         onCancel = onToggleAlarmCreator,
                         modifier = Modifier.fillMaxWidth()

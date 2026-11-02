@@ -644,7 +644,13 @@ fun CatalogHorologistMediaPlayerScreenSample() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FilledTonalIconButton(onClick = {}) { Text("⏮") }
+                FilledTonalIconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Icons.Default.SkipPrevious,
+                        contentDescription = "Previous",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(progress = { 0.65f }, modifier = Modifier.size(44.dp))
                     FilledIconButton(
@@ -658,7 +664,13 @@ fun CatalogHorologistMediaPlayerScreenSample() {
                         )
                     }
                 }
-                FilledTonalIconButton(onClick = {}) { Text("⏭") }
+                FilledTonalIconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "Next",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
             CatalogHorologistMediaFooterButtonsSample(embedded = true)
         }

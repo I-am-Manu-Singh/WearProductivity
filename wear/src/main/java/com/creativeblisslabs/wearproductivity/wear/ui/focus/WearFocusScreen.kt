@@ -1530,18 +1530,59 @@ private fun FocusDashboardTransformingPage(
 
             if (showTopicEditor) {
                 item {
+                    val initialFocus = remember(draftTopicFocusMins) {
+                        draftTopicFocusMins.toIntOrNull() ?: 25
+                    }
+                    val initialBreak = remember(draftTopicBreakMins) {
+                        draftTopicBreakMins.toIntOrNull() ?: 5
+                    }
+                    var focusMins by remember { mutableStateOf(initialFocus) }
+                    var breakMins by remember { mutableStateOf(initialBreak) }
+
+                    val topicChips = listOf("Work", "Study", "Code", "Read", "Writing", "Design")
+                    var selectedTopicChip by remember { mutableStateOf(0) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "TOPIC TIMER",
                         initialTitle = draftTopicName,
                         initialTimeOrDate = draftTopicFocusMins,
                         initialSubtitle = draftTopicBreakMins,
                         isEditingExisting = isEditingTopic,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Focus Minutes (1-240)",
-                        subtitleFieldLabel = "Break Minutes (1-90)",
-                        onSave = { title, focusMins, brkMins ->
-                            onSaveTopic(title, focusMins, brkMins)
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = topicChips,
+                        selectedChipIndex = selectedTopicChip,
+                        onChipSelected = { selectedTopicChip = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "focus",
+                                label = "Focus Time",
+                                initialValue = initialFocus,
+                                minimum = 5,
+                                maximum = 180,
+                                step = 5,
+                                unitSuffix = "min",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "break",
+                                label = "Break Time",
+                                initialValue = initialBreak,
+                                minimum = 1,
+                                maximum = 45,
+                                step = 1,
+                                unitSuffix = "min",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["focus"]?.let { focusMins = it }
+                            values["break"]?.let { breakMins = it }
+                        },
+                        onSave = { title, _, _ ->
+                            val chosenCategory = topicChips.getOrElse(selectedTopicChip) { "Work" }
+                            val effectiveTitle = if (title.isBlank()) chosenCategory else title
+                            onSaveTopic(effectiveTitle, focusMins.toString(), breakMins.toString())
                         },
                         onCancel = onCancelTopicEditor,
                         onDelete = if (isEditingTopic) onDeleteTopicFromEditor else null,

@@ -22,7 +22,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -2203,22 +2205,22 @@ private fun ActiveWorkoutBoundaryCanvasPage(
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 10.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .padding(start = 14.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(scheme.primaryContainer.copy(alpha = 0.92f))
                     .clickable(onClick = onResetReps)
-                    .padding(horizontal = 7.dp, vertical = 5.dp),
+                    .padding(horizontal = 5.dp, vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "REPS",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.5.sp),
                     color = scheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = currentRepOrLapCount.coerceAtLeast(0).toString(),
-                    style = MaterialTheme.typography.labelMedium.tabularNums(),
+                    style = MaterialTheme.typography.labelMedium.tabularNums().copy(fontSize = 11.sp),
                     color = scheme.onPrimaryContainer,
                     fontWeight = FontWeight.Black
                 )
@@ -2252,10 +2254,10 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        top = spec.screenHeight * 0.08f,
-                        bottom = spec.screenHeight * 0.04f,
-                        start = spec.screenWidth * 0.06f,
-                        end = spec.screenWidth * 0.06f
+                        top = spec.screenHeight * 0.09f,
+                        bottom = spec.screenHeight * 0.08f,
+                        start = spec.screenWidth * 0.08f,
+                        end = spec.screenWidth * 0.08f
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
@@ -2266,8 +2268,8 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "EXERCISE ${currentExerciseIndex + 1} OF ${totalExercisesCount.coerceAtLeast(1)}",
-                        style = MaterialTheme.typography.labelSmall.compactLineHeight().copy(fontSize = 9.sp),
+                        text = "EXERCISE ${currentExerciseIndex + 1}/${totalExercisesCount.coerceAtLeast(1)}",
+                        style = MaterialTheme.typography.labelSmall.compactLineHeight().copy(fontSize = 8.5.sp),
                         color = primaryAccent,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -2278,19 +2280,19 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             .clip(CircleShape)
                             .background(scheme.surfaceContainerHigh.copy(alpha = 0.88f))
                             .clickable(onClick = onCycleDisciplineOrProgram)
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                            .padding(horizontal = 7.dp, vertical = 1.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Icon(
                             imageVector = activeProgram.discipline.icon,
                             contentDescription = null,
-                            modifier = Modifier.size(11.dp),
+                            modifier = Modifier.size(10.dp),
                             tint = primaryAccent
                         )
                         Text(
                             text = activeProgram.name,
-                            style = MaterialTheme.typography.labelSmall.compactLineHeight(),
+                            style = MaterialTheme.typography.labelSmall.compactLineHeight().copy(fontSize = 9.sp),
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                             maxLines = 1,
@@ -2309,7 +2311,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
 
                     Text(
                         text = mainReadout,
-                        style = MaterialTheme.typography.displaySmall.tabularNums(),
+                        style = MaterialTheme.typography.titleLarge.tabularNums(),
                         fontWeight = FontWeight.Black,
                         color = Color.White,
                         maxLines = 1,
@@ -2325,17 +2327,13 @@ private fun ActiveWorkoutBoundaryCanvasPage(
 
                     Text(
                         text = if (isRestingBreak) {
-                            "UP NEXT: SET $currentSetNumber/$targetSetsCount · $musclesLabel"
+                            "SET $currentSetNumber/$targetSetsCount · $musclesLabel"
                         } else {
-                            "SET $currentSetNumber/$targetSetsCount · $musclesLabel · " +
-                                    if (displayedHeartRate > 0) {
-                                        "$displayedHeartRate BPM"
-                                    } else {
-                                        "HR unavailable"
-                                    }
+                            "SET $currentSetNumber/$targetSetsCount · $musclesLabel" +
+                                    if (displayedHeartRate > 0) " · ${displayedHeartRate}BPM" else ""
                         },
-                        style = MaterialTheme.typography.labelSmall.compactLineHeight().copy(fontSize = 9.sp),
-                        color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.labelSmall.compactLineHeight().copy(fontSize = 8.sp),
+                        color = Color.White.copy(alpha = 0.82f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -2350,157 +2348,127 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                     onNext = onNextWorkOrRestSwitch
                 )
 
-                // Bottom Guided & Utility Action Rows (Info, Tips, Replay/Reset, +1R, Prev/Next Exercise, TTS, Stop)
+                // Bottom Guided & Utility Action Rows (Info, Tips, Replay/Reset, +1R, TTS, Prev/Next)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 2.dp)
                 ) {
-                    val pillBtnSize = (spec.screenHeight * 0.11f).coerceIn(24.dp, 28.dp)
+                    val quickBtnSize = 28.dp
 
-                    // Row 1: Quick Actions (Info, Tips, Reps, +1R/+15s, Voice Coach)
+                    // Row 1: Quick Secondary Utility Icons (Instructions, Tips, Reset, +1, Voice Coach)
                     Row(
-                        modifier = Modifier.fillMaxWidth(0.92f),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // HOW TO / Instructions Button
-                        Button(
+                        // 1. Instructions
+                        FilledTonalIconButton(
                             onClick = { overlayMode = GuidedOverlayMode.INSTRUCTIONS },
-                            modifier = Modifier
-                                .size(pillBtnSize)
-                                .semantics { contentDescription = "Instructions" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(quickBtnSize),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = scheme.surfaceContainerHigh,
                                 contentColor = scheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp)
+                            )
                         ) {
-                            Icon(Icons.Default.Info, contentDescription = "Instructions", modifier = Modifier.size(13.dp))
+                            Icon(Icons.Default.Info, contentDescription = "Instructions", modifier = Modifier.size(14.dp))
                         }
 
-                        // FORM TIPS Button
-                        Button(
+                        // 2. Form Tips
+                        FilledTonalIconButton(
                             onClick = { overlayMode = GuidedOverlayMode.TIPS },
-                            modifier = Modifier
-                                .size(pillBtnSize)
-                                .semantics { contentDescription = "Form tips" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(quickBtnSize),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = scheme.surfaceContainerHigh,
                                 contentColor = scheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp)
+                            )
                         ) {
-                            Icon(Icons.Default.Lightbulb, contentDescription = "Form tips", modifier = Modifier.size(13.dp))
+                            Icon(Icons.Default.Lightbulb, contentDescription = "Form tips", modifier = Modifier.size(14.dp))
                         }
 
-                        // Reset Reps Button
-                        Button(
+                        // 3. Reset Reps
+                        FilledTonalIconButton(
                             onClick = onResetReps,
-                            modifier = Modifier
-                                .size(pillBtnSize)
-                                .semantics { contentDescription = "Reset repetitions" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(quickBtnSize),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = scheme.secondaryContainer,
                                 contentColor = scheme.onSecondaryContainer
-                            ),
-                            contentPadding = PaddingValues(0.dp)
+                            )
                         ) {
-                            Icon(Icons.Default.Replay, contentDescription = "Reset repetitions", modifier = Modifier.size(13.dp))
+                            Icon(Icons.Default.Replay, contentDescription = "Reset repetitions", modifier = Modifier.size(14.dp))
                         }
 
-                        // +1 Rep or +15s Rest Button
-                        Button(
+                        // 4. +1 Increment / +15s Rest
+                        FilledTonalIconButton(
                             onClick = onIncrementRepOrRest,
-                            modifier = Modifier
-                                .height(pillBtnSize)
-                                .semantics { contentDescription = if (isRestingBreak) "Add 15 Seconds Rest" else "Add 1 Rep" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(quickBtnSize),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = scheme.tertiaryContainer,
                                 contentColor = scheme.onTertiaryContainer
-                            ),
-                            contentPadding = PaddingValues(horizontal = 5.dp, vertical = 0.dp)
+                            )
                         ) {
-                            Text(
-                                text = if (isRestingBreak) "+15s" else "+1R",
-                                style = MaterialTheme.typography.labelSmall.tabularNums().copy(fontSize = 8.sp),
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = if (isRestingBreak) Icons.Rounded.Timer else Icons.Default.Add,
+                                contentDescription = if (isRestingBreak) "+15s" else "+1 Rep",
+                                modifier = Modifier.size(15.dp)
                             )
                         }
 
-                        // TTS Mute Button
-                        Button(
+                        // 5. Voice Coach Mute/Unmute
+                        FilledTonalIconButton(
                             onClick = onToggleTtsMute,
-                            modifier = Modifier
-                                .size(pillBtnSize)
-                                .semantics { contentDescription = if (isTtsMuted) "Enable Voice Coach" else "Mute Voice Coach" },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(quickBtnSize),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = if (!isTtsMuted) scheme.secondaryContainer else scheme.errorContainer,
                                 contentColor = if (!isTtsMuted) scheme.onSecondaryContainer else scheme.onSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(0.dp)
+                            )
                         ) {
                             Icon(
                                 imageVector = if (!isTtsMuted) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeOff,
-                                contentDescription = null,
-                                modifier = Modifier.size(13.dp)
+                                contentDescription = if (isTtsMuted) "Enable Voice Coach" else "Mute Voice Coach",
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                     }
 
-                    // Row 2: Navigation - Prev Exercise | Next / Finish Routine
+                    // Row 2: Routine Navigation - Prev Exercise | Next / Finish Routine (Pure Icons with Clean Containers)
                     Row(
-                        modifier = Modifier.fillMaxWidth(0.72f),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                        modifier = Modifier.fillMaxWidth(0.58f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
+                        FilledTonalIconButton(
                             onClick = onPreviousExercise,
                             enabled = !isFirstExercise,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(24.dp),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = scheme.secondaryContainer,
-                                contentColor = scheme.onSecondaryContainer,
-                                disabledContainerColor = scheme.surfaceContainerLow,
-                                disabledContentColor = scheme.onSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(0.dp)
+                            modifier = Modifier.size(32.dp),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = scheme.surfaceContainerHigh,
+                                contentColor = scheme.onSurface,
+                                disabledContainerColor = scheme.surfaceContainerLow.copy(alpha = 0.5f),
+                                disabledContentColor = scheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
                         ) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Previous exercise", modifier = Modifier.size(13.dp))
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Previous exercise",
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
 
-                        Button(
+                        FilledTonalIconButton(
                             onClick = if (isLastExercise && hasStarted) onStopAndSave else onNextExercise,
-                            modifier = Modifier
-                                .weight(1.5f)
-                                .height(24.dp),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
+                            modifier = Modifier.size(32.dp),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = if (isLastExercise) scheme.errorContainer else scheme.primary,
                                 contentColor = if (isLastExercise) scheme.onErrorContainer else scheme.onPrimary
-                            ),
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                            )
                         ) {
                             Icon(
                                 imageVector = if (isLastExercise) Icons.Default.Check else Icons.Default.ArrowForward,
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(Modifier.width(2.dp))
-                            Text(
-                                text = if (isLastExercise) "FINISH" else "NEXT",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                                fontWeight = FontWeight.Bold
+                                contentDescription = if (isLastExercise) "Finish" else "Next exercise",
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
@@ -2903,18 +2871,76 @@ private fun WorkoutProgramsAndEditorPage(
                     )
                 }
                 item {
+                    val initialSets = remember(draftSetsRepsRest) {
+                        draftSetsRepsRest.substringBefore("x", "").trim().toIntOrNull() ?: 4
+                    }
+                    val initialReps = remember(draftSetsRepsRest) {
+                        draftSetsRepsRest.substringAfter("x", "").substringBefore("·").substringBefore(" ").trim().toIntOrNull() ?: 10
+                    }
+                    val initialRest = remember(draftSetsRepsRest) {
+                        draftSetsRepsRest.substringAfter("·", "").replace("s", "").trim().toIntOrNull() ?: 60
+                    }
+                    var currentSets by remember { mutableStateOf(initialSets) }
+                    var currentReps by remember { mutableStateOf(initialReps) }
+                    var currentRest by remember { mutableStateOf(initialRest) }
+
+                    val workoutChips = listOf("Full Body", "Upper", "Lower", "Push", "Pull", "Core")
+                    var selectedMuscleChip by remember { mutableStateOf(0) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = selectedDiscipline.shortLabel.uppercase(Locale.getDefault()),
                         initialTitle = draftProgramName,
                         initialTimeOrDate = draftSetsRepsRest,
                         initialSubtitle = draftWeightAndZone,
                         isEditingExisting = isEditingProgram,
-                        showTimePickerField = true,
+                        showTimePickerField = false,
                         showSubtitleField = true,
-                        timeFieldLabel = "Sets x Reps · Rest (4x10 60s)",
-                        subtitleFieldLabel = "Load/Dist & Muscle/Zone",
-                        onSave = { name, setsReps, weightZone ->
-                            onSaveProgram(name, setsReps, weightZone)
+                        subtitleFieldLabel = "Load / Zone Notes",
+                        chipOptions = workoutChips,
+                        selectedChipIndex = selectedMuscleChip,
+                        onChipSelected = { selectedMuscleChip = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "sets",
+                                label = "Sets",
+                                initialValue = initialSets,
+                                minimum = 1,
+                                maximum = 20,
+                                step = 1,
+                                unitSuffix = "sets",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "reps",
+                                label = "Reps / Set",
+                                initialValue = initialReps,
+                                minimum = 1,
+                                maximum = 50,
+                                step = 1,
+                                unitSuffix = "reps",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "rest",
+                                label = "Rest Seconds",
+                                initialValue = initialRest,
+                                minimum = 15,
+                                maximum = 180,
+                                step = 5,
+                                unitSuffix = "s",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["sets"]?.let { currentSets = it }
+                            values["reps"]?.let { currentReps = it }
+                            values["rest"]?.let { currentRest = it }
+                        },
+                        onSave = { name, _, weightZone ->
+                            val combinedSetsRepsRest = "${currentSets}x${currentReps} · ${currentRest}s"
+                            val chosenCategory = workoutChips.getOrElse(selectedMuscleChip) { "Full Body" }
+                            val fullSubtitle = if (weightZone.isNotBlank()) "$weightZone · $chosenCategory" else chosenCategory
+                            onSaveProgram(name, combinedSetsRepsRest, fullSubtitle)
                         },
                         onCancel = onCancelProgramEditor,
                         onDelete = if (isEditingProgram) { { onDeleteProgram(activeProgram.id) } } else null,
@@ -3219,23 +3245,79 @@ private fun WorkoutAnalyticsAndPrPage(
                             )
                         }
                     }
+                    val initialCurrentVal = remember(editingPrEntry) {
+                        editingPrEntry?.currentValue?.roundToInt() ?: 70
+                    }
+                    val initialPrevVal = remember(editingPrEntry) {
+                        editingPrEntry?.previousBest?.roundToInt() ?: 65
+                    }
+                    val initialTargetVal = remember(editingPrEntry) {
+                        editingPrEntry?.targetGoal?.roundToInt() ?: 85
+                    }
+                    var prCurrent by remember { mutableStateOf(initialCurrentVal) }
+                    var prPrev by remember { mutableStateOf(initialPrevVal) }
+                    var prTarget by remember { mutableStateOf(initialTargetVal) }
+
+                    val prUnits = listOf("kg", "lbs", "km", "reps", "secs")
+                    var selectedPrUnitIdx by remember {
+                        mutableStateOf(
+                            prUnits.indexOf(editingPrEntry?.unit ?: "kg").let { if (it < 0) 0 else it }
+                        )
+                    }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "PR RECORD",
                         initialTitle = editingPrEntry?.exerciseName ?: "",
-                        initialTimeOrDate = editingPrEntry
-                            ?.let { "${it.currentValue}/${it.previousBest}" }
-                            ?: "",
-
-                        initialSubtitle = editingPrEntry
-                            ?.let { "${it.targetGoal} ${it.unit}" }
-                            ?: "",
+                        initialTimeOrDate = "",
+                        initialSubtitle = "",
                         isEditingExisting = editingPrEntry != null,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Current / Prev Best (e.g. 70/65)",
-                        subtitleFieldLabel = "PR Target Goal & Unit (85 kg)",
-                        onSave = { name, curPrev, targetUnit ->
-                            onSavePrEntry(name, curPrev, targetUnit)
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = prUnits,
+                        selectedChipIndex = selectedPrUnitIdx,
+                        onChipSelected = { selectedPrUnitIdx = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "current",
+                                label = "Current Best",
+                                initialValue = initialCurrentVal,
+                                minimum = 1,
+                                maximum = 500,
+                                step = 1,
+                                unitSuffix = prUnits.getOrElse(selectedPrUnitIdx) { "kg" },
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "prev",
+                                label = "Previous Best",
+                                initialValue = initialPrevVal,
+                                minimum = 1,
+                                maximum = 500,
+                                step = 1,
+                                unitSuffix = prUnits.getOrElse(selectedPrUnitIdx) { "kg" },
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "target",
+                                label = "Goal Target",
+                                initialValue = initialTargetVal,
+                                minimum = 1,
+                                maximum = 500,
+                                step = 1,
+                                unitSuffix = prUnits.getOrElse(selectedPrUnitIdx) { "kg" },
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["current"]?.let { prCurrent = it }
+                            values["prev"]?.let { prPrev = it }
+                            values["target"]?.let { prTarget = it }
+                        },
+                        onSave = { name, _, _ ->
+                            val unitStr = prUnits.getOrElse(selectedPrUnitIdx) { "kg" }
+                            val curPrevStr = "$prCurrent/$prPrev"
+                            val targetUnitStr = "$prTarget $unitStr"
+                            onSavePrEntry(name, curPrevStr, targetUnitStr)
                         },
                         onCancel = onClosePrEditor,
                         modifier = Modifier.fillMaxWidth()

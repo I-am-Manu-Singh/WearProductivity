@@ -2289,18 +2289,68 @@ private fun FastingAndHydrationStudioPage(
 
             if (showProgramEditor) {
                 item {
+                    val initialFast = remember(draftFastHours) {
+                        draftFastHours.toIntOrNull() ?: 16
+                    }
+                    val initialEat = remember(draftEatHours) {
+                        draftEatHours.toIntOrNull() ?: 8
+                    }
+                    var fastHours by remember { mutableStateOf(initialFast) }
+                    var eatHours by remember { mutableStateOf(initialEat) }
+
+                    val protocolChips = listOf("16:8 Lean", "18:6 Inter", "20:4 Warrior", "OMAD 23:1", "Circadian 13:11")
+                    var selectedProtocolChip by remember { mutableStateOf(0) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "FASTING PLAN",
                         initialTitle = draftProgramName,
                         initialTimeOrDate = draftFastHours,
                         initialSubtitle = draftEatHours,
                         isEditingExisting = isEditingProgram,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Fasting Hours (1-72)",
-                        subtitleFieldLabel = "Eating Window Hours (1-24)",
-                        onSave = { name, fastHrs, eatHrs ->
-                            onSaveProgram(name, fastHrs, eatHrs)
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = protocolChips,
+                        selectedChipIndex = selectedProtocolChip,
+                        onChipSelected = { idx ->
+                            selectedProtocolChip = idx
+                            when (idx) {
+                                0 -> { fastHours = 16; eatHours = 8 }
+                                1 -> { fastHours = 18; eatHours = 6 }
+                                2 -> { fastHours = 20; eatHours = 4 }
+                                3 -> { fastHours = 23; eatHours = 1 }
+                                4 -> { fastHours = 13; eatHours = 11 }
+                            }
+                        },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "fast",
+                                label = "Fasting Window",
+                                initialValue = initialFast,
+                                minimum = 8,
+                                maximum = 72,
+                                step = 1,
+                                unitSuffix = "hrs",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "eat",
+                                label = "Eating Window",
+                                initialValue = initialEat,
+                                minimum = 1,
+                                maximum = 16,
+                                step = 1,
+                                unitSuffix = "hrs",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["fast"]?.let { fastHours = it }
+                            values["eat"]?.let { eatHours = it }
+                        },
+                        onSave = { name, _, _ ->
+                            val defaultName = protocolChips.getOrElse(selectedProtocolChip) { "Fast $fastHours:$eatHours" }
+                            val effectiveName = if (name.isBlank()) defaultName else name
+                            onSaveProgram(effectiveName, fastHours.toString(), eatHours.toString())
                         },
                         onCancel = onCancelProgramEditor,
                         onDelete = if (isEditingProgram) onDeleteProgram else null,
@@ -2617,17 +2667,83 @@ private fun DietAndNutritionPage(
 
             if (showDietTargetEditor) {
                 item {
+                    val initialKcal = remember(activeDietPlan) { activeDietPlan.targetCalories }
+                    val initialP = remember(activeDietPlan) { activeDietPlan.targetProteinG }
+                    val initialC = remember(activeDietPlan) { activeDietPlan.targetCarbsG }
+                    val initialF = remember(activeDietPlan) { activeDietPlan.targetFatG }
+
+                    var kcalTarget by remember { mutableStateOf(initialKcal) }
+                    var proteinTarget by remember { mutableStateOf(initialP) }
+                    var carbsTarget by remember { mutableStateOf(initialC) }
+                    var fatTarget by remember { mutableStateOf(initialF) }
+
+                    val dietGoalChips = listOf("Cut (-20%)", "Maintain", "Bulk (+15%)", "Keto", "High Protein")
+                    var selectedGoalIdx by remember { mutableStateOf(1) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = "DIET PLAN",
                         initialTitle = activeDietPlan.name,
-                        initialTimeOrDate = activeDietPlan.targetCalories.toString(),
-                        initialSubtitle = "${activeDietPlan.targetProteinG}/${activeDietPlan.targetCarbsG}/${activeDietPlan.targetFatG}",
+                        initialTimeOrDate = "",
+                        initialSubtitle = "",
                         isEditingExisting = false,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Daily Calorie Goal",
-                        subtitleFieldLabel = "Macros P/C/F (e.g. 150/200/70)",
-                        onSave = { name, kcal, macros -> onSaveCustomDietPlan(name, kcal, macros) },
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = dietGoalChips,
+                        selectedChipIndex = selectedGoalIdx,
+                        onChipSelected = { selectedGoalIdx = it },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "kcal",
+                                label = "Calories Target",
+                                initialValue = initialKcal,
+                                minimum = 800,
+                                maximum = 5000,
+                                step = 50,
+                                unitSuffix = "kcal",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "protein",
+                                label = "Protein Target",
+                                initialValue = initialP,
+                                minimum = 20,
+                                maximum = 350,
+                                step = 5,
+                                unitSuffix = "g",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "carbs",
+                                label = "Carbs Target",
+                                initialValue = initialC,
+                                minimum = 10,
+                                maximum = 600,
+                                step = 5,
+                                unitSuffix = "g",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "fat",
+                                label = "Fat Target",
+                                initialValue = initialF,
+                                minimum = 10,
+                                maximum = 200,
+                                step = 5,
+                                unitSuffix = "g",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["kcal"]?.let { kcalTarget = it }
+                            values["protein"]?.let { proteinTarget = it }
+                            values["carbs"]?.let { carbsTarget = it }
+                            values["fat"]?.let { fatTarget = it }
+                        },
+                        onSave = { name, _, _ ->
+                            val macrosCombined = "$proteinTarget/$carbsTarget/$fatTarget"
+                            val effectiveName = if (name.isBlank()) dietGoalChips[selectedGoalIdx] else name
+                            onSaveCustomDietPlan(effectiveName, kcalTarget.toString(), macrosCombined)
+                        },
                         onCancel = onToggleDietTargetEditor,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -2647,18 +2763,85 @@ private fun DietAndNutritionPage(
                     )
                 }
                 item {
+                    var mealKcal by remember { mutableStateOf(450) }
+                    var mealP by remember { mutableStateOf(30) }
+                    var mealC by remember { mutableStateOf(45) }
+                    var mealF by remember { mutableStateOf(14) }
+
+                    val mealPortionChips = listOf("Snack", "Regular", "Large Feast")
+                    var selectedPortionIdx by remember { mutableStateOf(1) }
+
                     WearExpressiveUniversalEditorCard(
                         itemTypeTitle = selectedMealType.name.uppercase(Locale.getDefault()),
                         initialTitle = "",
-                        initialTimeOrDate = "450",
-                        initialSubtitle = "35/45/14",
+                        initialTimeOrDate = "",
+                        initialSubtitle = "",
                         isEditingExisting = false,
-                        showTimePickerField = true,
-                        showSubtitleField = true,
-                        timeFieldLabel = "Calories (kcal)",
-                        subtitleFieldLabel = "Macros P/C/F g (e.g. 35/45/14)",
-                        onSave = { mealName, kcalStr, macrosStr ->
-                            onSaveMeal(mealName, kcalStr, macrosStr)
+                        showTimePickerField = false,
+                        showSubtitleField = false,
+                        chipOptions = mealPortionChips,
+                        selectedChipIndex = selectedPortionIdx,
+                        onChipSelected = { idx ->
+                            selectedPortionIdx = idx
+                            when (idx) {
+                                0 -> { mealKcal = 250; mealP = 15; mealC = 25; mealF = 8 }
+                                1 -> { mealKcal = 500; mealP = 35; mealC = 50; mealF = 15 }
+                                2 -> { mealKcal = 900; mealP = 60; mealC = 95; mealF = 28 }
+                            }
+                        },
+                        discreteSubFields = listOf(
+                            DiscreteNumberSubField(
+                                key = "meal_kcal",
+                                label = "Calories",
+                                initialValue = mealKcal,
+                                minimum = 50,
+                                maximum = 2500,
+                                step = 25,
+                                unitSuffix = "kcal",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "meal_p",
+                                label = "Protein",
+                                initialValue = mealP,
+                                minimum = 0,
+                                maximum = 150,
+                                step = 2,
+                                unitSuffix = "g",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "meal_c",
+                                label = "Carbs",
+                                initialValue = mealC,
+                                minimum = 0,
+                                maximum = 250,
+                                step = 5,
+                                unitSuffix = "g",
+                                useSlider = true
+                            ),
+                            DiscreteNumberSubField(
+                                key = "meal_f",
+                                label = "Fat",
+                                initialValue = mealF,
+                                minimum = 0,
+                                maximum = 100,
+                                step = 2,
+                                unitSuffix = "g",
+                                useSlider = true
+                            )
+                        ),
+                        onSubFieldsChanged = { values ->
+                            values["meal_kcal"]?.let { mealKcal = it }
+                            values["meal_p"]?.let { mealP = it }
+                            values["meal_c"]?.let { mealC = it }
+                            values["meal_f"]?.let { mealF = it }
+                        },
+                        onSave = { mealName, _, _ ->
+                            val defaultName = "${selectedMealType.name.lowercase().replaceFirstChar { it.uppercase() }} (${mealPortionChips[selectedPortionIdx]})"
+                            val effectiveName = if (mealName.isBlank()) defaultName else mealName
+                            val macrosStr = "$mealP/$mealC/$mealF"
+                            onSaveMeal(effectiveName, mealKcal.toString(), macrosStr)
                         },
                         onCancel = onToggleMealEditor,
                         modifier = Modifier.fillMaxWidth()
@@ -3018,27 +3201,58 @@ private fun BodyVitalsAndSensorsPage(
                             color = MaterialTheme.colorScheme.primary
                         )
 
+                        val currentKgInt = remember(currentWeightKg) { currentWeightKg.roundToInt() }
+                        val targetKgInt = remember(weightTargetKg) { weightTargetKg.roundToInt() }
+                        var currentWeightVal by remember { mutableStateOf(currentKgInt) }
+                        var targetWeightVal by remember { mutableStateOf(targetKgInt) }
+
+                        val moodChips = listOf("⚡ High Energy", "😊 Great", "😐 Balanced", "🥱 Tired", "🔥 Fasted High")
+                        var selectedMoodIdx by remember { mutableStateOf(1) }
+
                         WearExpressiveUniversalEditorCard(
-                            itemTypeTitle = "WEIGHT GOAL",
-                            initialTitle = "%.1f".format(
-                                Locale.ROOT,
-                                currentWeightKg
-                            ),
-                            initialTimeOrDate = "%.1f".format(
-                                Locale.ROOT,
-                                weightTargetKg
-                            ),
+                            itemTypeTitle = "WEIGHT & VITALS",
+                            initialTitle = "Daily Weigh-in",
+                            initialTimeOrDate = "",
                             initialSubtitle = mood,
                             isEditingExisting = false,
-                            showTimePickerField = true,
+                            showTimePickerField = false,
                             showSubtitleField = true,
-                            timeFieldLabel = "Target Weight (kg)",
-                            subtitleFieldLabel = "Mood / Vitals Note",
-                            onSave = { currentWeight, targetWeight, moodNote ->
+                            subtitleFieldLabel = "Notes / Symptoms",
+                            chipOptions = moodChips,
+                            selectedChipIndex = selectedMoodIdx,
+                            onChipSelected = { selectedMoodIdx = it },
+                            discreteSubFields = listOf(
+                                DiscreteNumberSubField(
+                                    key = "current_wt",
+                                    label = "Current Weight",
+                                    initialValue = currentKgInt,
+                                    minimum = 30,
+                                    maximum = 200,
+                                    step = 1,
+                                    unitSuffix = "kg",
+                                    useSlider = true
+                                ),
+                                DiscreteNumberSubField(
+                                    key = "target_wt",
+                                    label = "Goal Weight",
+                                    initialValue = targetKgInt,
+                                    minimum = 30,
+                                    maximum = 200,
+                                    step = 1,
+                                    unitSuffix = "kg",
+                                    useSlider = true
+                                )
+                            ),
+                            onSubFieldsChanged = { values ->
+                                values["current_wt"]?.let { currentWeightVal = it }
+                                values["target_wt"]?.let { targetWeightVal = it }
+                            },
+                            onSave = { _, _, moodNote ->
+                                val finalMood = if (moodNote.isNotBlank()) "$moodNote (${moodChips[selectedMoodIdx]})" else moodChips[selectedMoodIdx]
                                 onSaveWeightAndTarget(
-                                    currentWeight,
-                                    targetWeight,
-                                    moodNote
+                                    currentWeightVal.toString(),
+                                    targetWeightVal.toString(),
+                                    finalMood
                                 )
                             },
                             onCancel = onToggleWeightEditor,

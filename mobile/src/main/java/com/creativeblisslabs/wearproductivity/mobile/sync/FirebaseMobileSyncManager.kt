@@ -16,7 +16,11 @@ class FirebaseMobileSyncManager(
     private val repository: LifeRepository,
     private val scope: CoroutineScope
 ) {
-    private val firestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore? = try {
+        FirebaseFirestore.getInstance()
+    } catch (e: Exception) {
+        null
+    }
     private val json = Json { ignoreUnknownKeys = true }
     private var snapshotListener: ListenerRegistration? = null
     private val isSyncing = AtomicBoolean(false)
@@ -24,8 +28,9 @@ class FirebaseMobileSyncManager(
     private var isSyncingFromFirebase = AtomicBoolean(false)
 
     fun startListening() {
-        val user = FirebaseAuth.getInstance().currentUser ?: return
-        val docRef = firestore.collection("users").document(user.uid)
+        val fs = firestore ?: return
+        val user = try { FirebaseAuth.getInstance().currentUser } catch (_: Exception) { null } ?: return
+        val docRef = fs.collection("users").document(user.uid)
 
         snapshotListener?.remove()
         snapshotListener = docRef.addSnapshotListener { snapshot, error ->
@@ -66,17 +71,18 @@ class FirebaseMobileSyncManager(
     }
 
     private fun pushLocalStateToFirebase() {
+        val fs = firestore ?: return
         if (!isSyncing.compareAndSet(false, true)) return
 
         scope.launch(Dispatchers.IO) {
             try {
-                val user = FirebaseAuth.getInstance().currentUser
+                val user = try { FirebaseAuth.getInstance().currentUser } catch (_: Exception) { null }
                 if (user != null) {
                     val currentState = repository.current()
                     val packet = SyncPacket(deviceId = "mobile", state = currentState)
                     val jsonStr = json.encodeToString(packet)
 
-                    firestore.collection("users").document(user.uid).set(
+                    fs.collection("users").document(user.uid).set(
                         mapOf("syncPacketJson" to jsonStr, "lastSyncedAt" to System.currentTimeMillis())
                     )
                 }

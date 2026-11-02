@@ -9,12 +9,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,40 +31,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.*
 import androidx.wear.compose.material3.lazy.TransformationSpec
-import androidx.wear.compose.material3.lazy.rememberTransformationSpec
-import androidx.wear.compose.material3.lazy.transformedHeight
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import java.util.Locale
-import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.FilledTonalButton
-import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.Text
+import kotlin.math.roundToInt
+
 /**
  * Field behavior for [WearExpressiveUniversalEditorCard].
  */
 enum class UniversalEditorFieldType {
-    TEXT, TIME, DATE, NUMBER, WEEKDAYS, CHOICE
+    TEXT,
+    TIME,
+    DATE,
+    NUMBER,
+    WEEKDAYS,
+    CHOICE,
+    SLIDER,
+    CHIPS
 }
+
+/**
+ * Configuration descriptor for a discrete number sub-field (e.g. Sets, Reps, Rest, Macros, etc.)
+ */
+data class DiscreteNumberSubField(
+    val key: String,
+    val label: String,
+    val initialValue: Int,
+    val minimum: Int,
+    val maximum: Int,
+    val step: Int = 1,
+    val unitSuffix: String = "",
+    val useSlider: Boolean = true
+)
 
 private val editorWeekdays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-
-
 /**
- * Fully native Wear OS 7 expressive editor card supporting full-screen curved pickers for Time and Date.
+ * In-line editor card that renders natively inside a TransformingLazyColumn.
+ * Contains Material 3 Wear OS Sliders, Chips, Time & Date Pickers, and unbundled discrete controls.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -89,6 +106,12 @@ fun WearExpressiveUniversalEditorCard(
     subtitleNumberMinimum: Int = 0,
     subtitleNumberMaximum: Int = 100,
     subtitleNumberStep: Int = 1,
+    // Discrete sub-fields and chips for unbundled parameters
+    discreteSubFields: List<DiscreteNumberSubField> = emptyList(),
+    onSubFieldsChanged: ((Map<String, Int>) -> Unit)? = null,
+    chipOptions: List<String> = emptyList(),
+    selectedChipIndex: Int = 0,
+    onChipSelected: ((Int) -> Unit)? = null,
     saveLabel: String = "Save",
     isSaving: Boolean = false,
     validationMessage: String? = null,
@@ -98,7 +121,13 @@ fun WearExpressiveUniversalEditorCard(
     var timeOrDate by remember { mutableStateOf(initialTimeOrDate) }
     var subtitle by remember { mutableStateOf(initialSubtitle) }
 
-    // Full-screen native picker overlay states
+    var localSelectedChip by remember { mutableStateOf(selectedChipIndex) }
+    val subFieldValues = remember {
+        mutableStateMapOf<String, Int>().apply {
+            discreteSubFields.forEach { put(it.key, it.initialValue) }
+        }
+    }
+
     var activeFullScreenPicker by remember { mutableStateOf<UniversalEditorFieldType?>(null) }
 
     LaunchedEffect(initialTitle, initialTimeOrDate, initialSubtitle) {
@@ -107,7 +136,11 @@ fun WearExpressiveUniversalEditorCard(
         subtitle = initialSubtitle
     }
 
-    // Full-Screen Native Picker Handling
+    LaunchedEffect(selectedChipIndex) {
+        localSelectedChip = selectedChipIndex
+    }
+
+    // Native curved full-screen pickers
     when (activeFullScreenPicker) {
         UniversalEditorFieldType.TIME -> {
             NativeFullScreenTimePicker(
@@ -149,130 +182,249 @@ fun WearExpressiveUniversalEditorCard(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        WearExpressiveHeader(
-            title = if (isEditingExisting) "EDIT ${itemTypeTitle.uppercase(Locale.ROOT)}" else "NEW ${itemTypeTitle.uppercase(Locale.ROOT)}",
-            badgeText = "EDITOR"
+    Card(
+        onClick = {},
+        enabled = false,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
-
-        Card(
-            onClick = {},
-            enabled = false,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                UniversalEditorInputField(
-                    value = title,
-                    onValueChange = { title = it.take(64) },
-                    label = "$itemTypeTitle Title",
-                    placeholder = "Enter name...",
-                    keyboardType = KeyboardType.Text
-                )
+            WearExpressiveHeader(
+                title = if (isEditingExisting) "EDIT ${itemTypeTitle.uppercase(Locale.ROOT)}" else "NEW ${itemTypeTitle.uppercase(Locale.ROOT)}",
+                badgeText = "EDITOR"
+            )
 
-                if (showTimePickerField) {
-                    UniversalEditorField(
-                        value = timeOrDate,
-                        onValueChange = { timeOrDate = it },
-                        label = timeFieldLabel,
-                        placeholder = "Enter value",
-                        type = timeFieldType,
-                        choices = timeOrDateChoices,
-                        numberMinimum = numberMinimum,
-                        numberMaximum = numberMaximum,
-                        numberStep = numberStep,
-                        onLaunchFullScreenPicker = {
-                            if (timeFieldType == UniversalEditorFieldType.TIME || timeFieldType == UniversalEditorFieldType.DATE) {
-                                activeFullScreenPicker = timeFieldType
-                            }
-                        }
-                    )
-                }
+            // 1. Text Title
+            UniversalEditorInputField(
+                value = title,
+                onValueChange = { title = it.take(64) },
+                label = "$itemTypeTitle Title",
+                placeholder = "Enter name...",
+                keyboardType = KeyboardType.Text
+            )
 
-                if (showSubtitleField) {
-                    UniversalEditorField(
-                        value = subtitle,
-                        onValueChange = { subtitle = it },
-                        label = subtitleFieldLabel,
-                        placeholder = "Optional details",
-                        type = subtitleFieldType,
-                        choices = subtitleChoices,
-                        numberMinimum = subtitleNumberMinimum,
-                        numberMaximum = subtitleNumberMaximum,
-                        numberStep = subtitleNumberStep,
-                        onLaunchFullScreenPicker = {
-                            if (subtitleFieldType == UniversalEditorFieldType.TIME || subtitleFieldType == UniversalEditorFieldType.DATE) {
-                                activeFullScreenPicker = subtitleFieldType
-                            }
-                        }
-                    )
-                }
-
-                if (!validationMessage.isNullOrBlank()) {
+            // 2. Selectable Chips (Categories, Presets, Tags)
+            if (chipOptions.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
-                        text = validationMessage,
+                        "Options / Category",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        chipOptions.forEachIndexed { index, option ->
+                            val isSelected = index == localSelectedChip
+                            CompactButton(
+                                onClick = {
+                                    localSelectedChip = index
+                                    onChipSelected?.invoke(index)
+                                },
+                                colors = if (isSelected) {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            ) {
+                                Text(
+                                    text = option,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Discrete Unbundled Sub-Fields (Sliders / Steppers for Sets, Reps, Rest, Macros)
+            if (discreteSubFields.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    discreteSubFields.forEach { subField ->
+                        val currentVal = subFieldValues[subField.key] ?: subField.initialValue
+                        Card(
+                            onClick = {},
+                            enabled = false,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = subField.label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "$currentVal ${subField.unitSuffix}".trim(),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                if (subField.useSlider) {
+                                    val steps = ((subField.maximum - subField.minimum) / subField.step.coerceAtLeast(1)) - 1
+                                    Slider(
+                                        value = currentVal.toFloat(),
+                                        onValueChange = { newVal ->
+                                            val rounded = (newVal / subField.step).roundToInt() * subField.step
+                                            val coerced = rounded.coerceIn(subField.minimum, subField.maximum)
+                                            subFieldValues[subField.key] = coerced
+                                            onSubFieldsChanged?.invoke(subFieldValues.toMap())
+                                        },
+                                        steps = steps.coerceAtLeast(0),
+                                        valueRange = subField.minimum.toFloat()..subField.maximum.toFloat(),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    NumberValueControl(
+                                        value = currentVal.toString(),
+                                        onValueChange = { newValStr ->
+                                            val coerced = (newValStr.toIntOrNull() ?: currentVal).coerceIn(subField.minimum, subField.maximum)
+                                            subFieldValues[subField.key] = coerced
+                                            onSubFieldsChanged?.invoke(subFieldValues.toMap())
+                                        },
+                                        minimum = subField.minimum,
+                                        maximum = subField.maximum,
+                                        step = subField.step
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Primary Time / Date Field (With Curved Fullscreen Launchers)
+            if (showTimePickerField) {
+                UniversalEditorField(
+                    value = timeOrDate,
+                    onValueChange = { timeOrDate = it },
+                    label = timeFieldLabel,
+                    placeholder = "Enter value",
+                    type = timeFieldType,
+                    choices = timeOrDateChoices,
+                    numberMinimum = numberMinimum,
+                    numberMaximum = numberMaximum,
+                    numberStep = numberStep,
+                    onLaunchFullScreenPicker = {
+                        if (timeFieldType == UniversalEditorFieldType.TIME || timeFieldType == UniversalEditorFieldType.DATE) {
+                            activeFullScreenPicker = timeFieldType
+                        }
+                    }
+                )
+            }
+
+            // 5. Subtitle Field
+            if (showSubtitleField) {
+                UniversalEditorField(
+                    value = subtitle,
+                    onValueChange = { subtitle = it },
+                    label = subtitleFieldLabel,
+                    placeholder = "Optional details",
+                    type = subtitleFieldType,
+                    choices = subtitleChoices,
+                    numberMinimum = subtitleNumberMinimum,
+                    numberMaximum = subtitleNumberMaximum,
+                    numberStep = subtitleNumberStep,
+                    onLaunchFullScreenPicker = {
+                        if (subtitleFieldType == UniversalEditorFieldType.TIME || subtitleFieldType == UniversalEditorFieldType.DATE) {
+                            activeFullScreenPicker = subtitleFieldType
+                        }
+                    }
+                )
+            }
+
+            if (!validationMessage.isNullOrBlank()) {
+                Text(
+                    text = validationMessage,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 6. Action Buttons (Cancel, Save, Delete)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f).heightIn(min = 38.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text(
+                        text = "Cancel",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Button(
+                    onClick = onPerformSave,
+                    modifier = Modifier.weight(1f).heightIn(min = 38.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Button(
-                        onClick = onCancel,
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 36.dp),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Cancel", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
+                    Text(
+                        text = if (isSaving) "Saving…" else saveLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-                    Button(
-                        onClick = { onPerformSave() },
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 36.dp),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(0.dp)
+                if (isEditingExisting && onDelete != null) {
+                    FilledTonalIconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(38.dp)
                     ) {
-                        Text(if (isSaving) "Saving…" else saveLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
-
-                    if (isEditingExisting && onDelete != null) {
-                        FilledTonalIconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                        }
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -294,7 +446,9 @@ private fun UniversalEditorField(
     onLaunchFullScreenPicker: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (label.isNotBlank()) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
 
         when (type) {
             UniversalEditorFieldType.TEXT -> UniversalEditorInputField(
@@ -307,9 +461,30 @@ private fun UniversalEditorField(
             UniversalEditorFieldType.TIME, UniversalEditorFieldType.DATE -> {
                 PickerLaunchField(
                     value = value.ifBlank { if (type == UniversalEditorFieldType.TIME) "09:00" else LocalDate.now().toString() },
-                    hint = "Tap to open full-screen native picker",
+                    hint = "Tap for native curved picker",
+                    icon = if (type == UniversalEditorFieldType.TIME) Icons.Rounded.Schedule else Icons.Rounded.CalendarMonth,
                     onClick = onLaunchFullScreenPicker
                 )
+            }
+            UniversalEditorFieldType.SLIDER -> {
+                val num = value.toIntOrNull()?.coerceIn(minOf(numberMinimum, numberMaximum), maxOf(numberMinimum, numberMaximum)) ?: numberMinimum
+                val steps = ((numberMaximum - numberMinimum) / numberStep.coerceAtLeast(1)) - 1
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "$num",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Slider(
+                        value = num.toFloat(),
+                        onValueChange = { onValueChange(it.roundToInt().toString()) },
+                        steps = steps.coerceAtLeast(0),
+                        valueRange = numberMinimum.toFloat()..numberMaximum.toFloat(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
             UniversalEditorFieldType.NUMBER -> NumberValueControl(
                 value = value,
@@ -318,8 +493,46 @@ private fun UniversalEditorField(
                 maximum = numberMaximum,
                 step = numberStep
             )
+            UniversalEditorFieldType.CHIPS, UniversalEditorFieldType.CHOICE -> {
+                if (choices.isNotEmpty()) {
+                    val currentIdx = choices.indexOf(value).let { if (it < 0) 0 else it }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        choices.forEachIndexed { index, option ->
+                            val isSelected = index == currentIdx
+                            CompactButton(
+                                onClick = { onValueChange(option) },
+                                colors = if (isSelected) {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            ) {
+                                Text(
+                                    text = option,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    ChoiceValueControl(value = value, onValueChange = onValueChange, choices = choices)
+                }
+            }
             UniversalEditorFieldType.WEEKDAYS -> WeekdaySelectionControl(value = value, onValueChange = onValueChange)
-            UniversalEditorFieldType.CHOICE -> ChoiceValueControl(value = value, onValueChange = onValueChange, choices = choices)
         }
     }
 }
@@ -424,7 +637,7 @@ private fun NativeFullScreenDatePicker(
     val initialLocalDate = remember(initialDate) {
         runCatching { LocalDate.parse(initialDate.trim()) }.getOrElse { LocalDate.now() }
     }
-    val yearState = rememberPickerState(initialNumberOfOptions = 10, initiallySelectedIndex = 5) // e.g. current year +/- 5
+    val yearState = rememberPickerState(initialNumberOfOptions = 10, initiallySelectedIndex = 5)
     val monthState = rememberPickerState(initialNumberOfOptions = 12, initiallySelectedIndex = initialLocalDate.monthValue - 1)
     val dayState = rememberPickerState(initialNumberOfOptions = 31, initiallySelectedIndex = initialLocalDate.dayOfMonth - 1)
 
@@ -455,7 +668,6 @@ private fun NativeFullScreenDatePicker(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Year Picker
                 Picker(
                     state = yearState,
                     contentDescription = { "Year" },
@@ -468,7 +680,6 @@ private fun NativeFullScreenDatePicker(
                     }
                 }
                 Text("-", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                // Month Picker
                 Picker(
                     state = monthState,
                     contentDescription = { "Month" },
@@ -480,7 +691,6 @@ private fun NativeFullScreenDatePicker(
                     }
                 }
                 Text("-", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                // Day Picker
                 Picker(
                     state = dayState,
                     contentDescription = { "Day" },
@@ -517,28 +727,43 @@ private fun NativeFullScreenDatePicker(
 private fun PickerLaunchField(
     value: String,
     hint: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = value.ifBlank { "Not set" },
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = hint,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-            color = MaterialTheme.colorScheme.primary
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = value.ifBlank { "Not set" },
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        FilledTonalIconButton(
+            onClick = onClick,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = "Pick",
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
@@ -562,14 +787,13 @@ private fun NumberValueControl(
         FilledTonalIconButton(
             onClick = { onValueChange((number - safeStep).coerceAtLeast(minValue).toString()) },
             enabled = number > minValue,
-            // Wear OS M3 uses "shapes" (plural). Defaults to a perfect circular variant.
             shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(48.dp) // Accessible watch size
+            modifier = Modifier.size(44.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Remove,
                 contentDescription = "Decrease",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
 
@@ -584,12 +808,12 @@ private fun NumberValueControl(
             onClick = { onValueChange((number + safeStep).coerceAtMost(maxValue).toString()) },
             enabled = number < maxValue,
             shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(44.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Increase",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -652,19 +876,19 @@ private fun ChoiceValueControl(value: String, onValueChange: (String) -> Unit, c
     ) {
         FilledTonalIconButton(
             onClick = { onValueChange(safeChoices[(index - 1 + safeChoices.size) % safeChoices.size]) },
-            shapes = IconButtonDefaults.shapes(), // Fixes the shape parameter error
-            modifier = Modifier.size(48.dp)       // Safe minimum touch target size for watch screens
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.size(44.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Remove,
                 contentDescription = "Previous option",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
 
         Text(
             text = safeChoices[index],
-            style = MaterialTheme.typography.labelMedium, // Pulls from Wear M3 theme tokens
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
@@ -674,13 +898,13 @@ private fun ChoiceValueControl(value: String, onValueChange: (String) -> Unit, c
 
         FilledTonalIconButton(
             onClick = { onValueChange(safeChoices[(index + 1) % safeChoices.size]) },
-            shapes = IconButtonDefaults.shapes(), // Fixes the shape parameter error
-            modifier = Modifier.size(48.dp)       // Safe minimum touch target size for watch screens
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.size(44.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Next option",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -750,7 +974,7 @@ private fun validateUniversalValue(
         if (parseTimeOrNull(value) == null) "Use 24-hour time, HH:mm" else null
     UniversalEditorFieldType.DATE ->
         if (parseIsoDate(value) == null) "Use date format YYYY-MM-DD" else null
-    UniversalEditorFieldType.NUMBER -> {
+    UniversalEditorFieldType.NUMBER, UniversalEditorFieldType.SLIDER -> {
         val number = value.toIntOrNull()
         if (number == null || number !in minOf(minimum, maximum)..maxOf(minimum, maximum)) {
             "Enter a number from ${minOf(minimum, maximum)} to ${maxOf(minimum, maximum)}"

@@ -27,6 +27,10 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.TimeText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.wear.compose.material3.Icon
 import com.creativeblisslabs.wearproductivity.wear.ui.components.core.WearActionButtonGroup
 import com.creativeblisslabs.wearproductivity.wear.ui.components.core.WearExpressiveHeader
 import com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository
@@ -106,9 +110,19 @@ fun WearExerciseSetupScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Session length", style = MaterialTheme.typography.labelMedium)
                             Text("$duration minutes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { duration = (duration - 5).coerceAtLeast(5) }) { Text("-5") }
-                                Button(onClick = { duration = (duration + 5).coerceAtMost(60) }) { Text("+5") }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                androidx.wear.compose.material3.FilledTonalIconButton(
+                                    onClick = { duration = (duration - 5).coerceAtLeast(5) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.Remove, contentDescription = "Decrease 5 minutes", modifier = Modifier.size(18.dp))
+                                }
+                                androidx.wear.compose.material3.FilledTonalIconButton(
+                                    onClick = { duration = (duration + 5).coerceAtMost(60) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = "Increase 5 minutes", modifier = Modifier.size(18.dp))
+                                }
                             }
                         }
                     }
