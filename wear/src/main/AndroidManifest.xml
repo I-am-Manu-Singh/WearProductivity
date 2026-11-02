@@ -244,13 +244,13 @@
             android:name=".complications.TodayComplicationService"
             android:exported="true"
             android:label="LifeOS Today"
-            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            android:permission="androidx.wear.watchface.complications.datasource.permission.BIND_COMPLICATION_DATA_SOURCE">
             <intent-filter>
-                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+                <action android:name="androidx.wear.watchface.complications.datasource.ACTION_COMPLICATION_REQUEST" />
             </intent-filter>
             <meta-data
-                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
-                android:value="SHORT_TEXT" />
+                android:name="androidx.wear.watchface.complications.datasource.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,RANGED_VALUE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="300" />

@@ -166,6 +166,22 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
     val initUpperLeft = rememberWearStringPreference(ComplicationSlot.UPPER_LEFT.key, "HEART")
     val initUpperRight = rememberWearStringPreference(ComplicationSlot.UPPER_RIGHT.key, "FOCUS")
 
+    val prefFaceStyle = rememberWearStringPreference(WearAppPreferences.KEY_WATCH_FACE_TYPE, WatchFaceStyle.MODULAR_COMPACT.id)
+    val prefFaceFont = rememberWearStringPreference(WearAppPreferences.KEY_WATCH_FACE_FONT, WatchFaceFont.GOOGLE_SANS.id)
+    val prefFacePalette = rememberWearStringPreference(WearAppPreferences.KEY_WATCH_FACE_ACCENT_COLOR, WatchFacePalette.COBALT.id)
+    val prefShowAmPm = rememberWearBooleanPreference(WearAppPreferences.KEY_SHOW_AM_PM, true)
+    val prefShowDateText = rememberWearBooleanPreference(WearAppPreferences.KEY_SHOW_DATE_TEXT, true)
+    val prefShowStatusIcons = rememberWearBooleanPreference(WearAppPreferences.KEY_SHOW_STATUS_ICONS, true)
+    val prefShowActiveMediaPill = rememberWearBooleanPreference(WearAppPreferences.KEY_SHOW_ACTIVE_MEDIA_PILL, true)
+
+    var watchFaceStyle by remember(prefFaceStyle) { mutableStateOf(WatchFaceStyle.fromId(prefFaceStyle)) }
+    var watchFaceFont by remember(prefFaceFont) { mutableStateOf(WatchFaceFont.fromId(prefFaceFont)) }
+    var watchFacePalette by remember(prefFacePalette) { mutableStateOf(WatchFacePalette.fromId(prefFacePalette)) }
+    var showAmPm by remember(prefShowAmPm) { mutableStateOf(prefShowAmPm) }
+    var showDateText by remember(prefShowDateText) { mutableStateOf(prefShowDateText) }
+    var showStatusIcons by remember(prefShowStatusIcons) { mutableStateOf(prefShowStatusIcons) }
+    var showActiveMediaPill by remember(prefShowActiveMediaPill) { mutableStateOf(prefShowActiveMediaPill) }
+
     var use24HourClock by remember(pref24Hour) { mutableStateOf(pref24Hour) }
     var compactCards by remember(prefCompact) { mutableStateOf(prefCompact) }
     var faceTop by remember(initTop) { mutableStateOf(initTop) }
@@ -923,6 +939,13 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                         isWatchCharging = isWatchCharging,
                         phoneBatteryPercent = phoneBatteryPercent,
                         weatherTempText = weatherTempText,
+                        watchFaceStyle = watchFaceStyle,
+                        watchFaceFont = watchFaceFont,
+                        watchFacePalette = watchFacePalette,
+                        showAmPm = showAmPm,
+                        showDateText = showDateText,
+                        showStatusIcons = showStatusIcons,
+                        showActiveMediaPill = showActiveMediaPill,
                         top = metricFor(faceTop),
                         upperLeft = metricFor(faceUpperLeft),
                         upperRight = metricFor(faceUpperRight),
@@ -962,6 +985,59 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                         spec = adaptiveSpec,
                         use24HourClock = use24HourClock,
                         compactRing = compactCards,
+                        watchFaceStyle = watchFaceStyle,
+                        watchFaceFont = watchFaceFont,
+                        watchFacePalette = watchFacePalette,
+                        showAmPm = showAmPm,
+                        showDateText = showDateText,
+                        showStatusIcons = showStatusIcons,
+                        showActiveMediaPill = showActiveMediaPill,
+                        onSelectStyle = { style ->
+                            watchFaceStyle = style
+                            WearAppPreferences.setString(appContext, WearAppPreferences.KEY_WATCH_FACE_TYPE, style.id)
+                            click()
+                            statusMessage = "Style: ${style.displayName}"
+                        },
+                        onSelectFont = { font ->
+                            watchFaceFont = font
+                            WearAppPreferences.setString(appContext, WearAppPreferences.KEY_WATCH_FACE_FONT, font.id)
+                            click()
+                            statusMessage = "Font: ${font.label}"
+                        },
+                        onSelectPalette = { palette ->
+                            watchFacePalette = palette
+                            WearAppPreferences.setString(appContext, WearAppPreferences.KEY_WATCH_FACE_ACCENT_COLOR, palette.id)
+                            click()
+                            statusMessage = "Theme: ${palette.label}"
+                        },
+                        onToggleShowAmPm = {
+                            val next = !showAmPm
+                            showAmPm = next
+                            WearAppPreferences.setBoolean(appContext, WearAppPreferences.KEY_SHOW_AM_PM, next)
+                            click()
+                            statusMessage = if (next) "AM/PM Enabled" else "AM/PM Hidden"
+                        },
+                        onToggleShowDate = {
+                            val next = !showDateText
+                            showDateText = next
+                            WearAppPreferences.setBoolean(appContext, WearAppPreferences.KEY_SHOW_DATE_TEXT, next)
+                            click()
+                            statusMessage = if (next) "Date Enabled" else "Date Hidden"
+                        },
+                        onToggleShowStatusIcons = {
+                            val next = !showStatusIcons
+                            showStatusIcons = next
+                            WearAppPreferences.setBoolean(appContext, WearAppPreferences.KEY_SHOW_STATUS_ICONS, next)
+                            click()
+                            statusMessage = if (next) "Status Badges Enabled" else "Status Badges Hidden"
+                        },
+                        onToggleShowMediaPill = {
+                            val next = !showActiveMediaPill
+                            showActiveMediaPill = next
+                            WearAppPreferences.setBoolean(appContext, WearAppPreferences.KEY_SHOW_ACTIVE_MEDIA_PILL, next)
+                            click()
+                            statusMessage = if (next) "Media Pill Enabled" else "Media Pill Hidden"
+                        },
                         getSlotMetric = { slot -> metricFor(getSlotTypeId(slot)) },
                         onSelectSlotToEdit = { slot ->
                             click()
@@ -1001,7 +1077,7 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                             isWatchFaceEditMode = !isWatchFaceEditMode
                             statusMessage = if (isWatchFaceEditMode) "Tap any slot to edit" else "Watch Face Locked"
                         }
-                        )
+                    )
 
                     2 -> M3DashboardStatsDeckPage(
                         spec = adaptiveSpec,
@@ -1132,12 +1208,19 @@ private fun M3WatchFacePage(
     isWatchCharging: Boolean,
     phoneBatteryPercent: Int,
     weatherTempText: String,
+    watchFaceStyle: WatchFaceStyle,
+    watchFaceFont: WatchFaceFont,
+    watchFacePalette: WatchFacePalette,
+    showAmPm: Boolean,
+    showDateText: Boolean,
+    showStatusIcons: Boolean,
+    showActiveMediaPill: Boolean,
     top: FaceMetric,
     upperLeft: FaceMetric,
     upperRight: FaceMetric,
     bottomLeft: FaceMetric,
     bottomRight: FaceMetric,
-    left: FaceMetric, // Available if needed, or can use bottomLeft/bottomRight
+    left: FaceMetric,
     right: FaceMetric,
     bottom: FaceMetric,
     ringMetric: FaceMetric,
@@ -1168,10 +1251,11 @@ private fun M3WatchFacePage(
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            // 1. Outer Bezel Progress Ring
-            if (ringEnabled) {
-                val ringDiameter = (minOf(spec.screenWidth, spec.screenHeight) * 0.97f)
-                    .coerceAtLeast(160.dp)
+            val ringDiameter = (minOf(spec.screenWidth, spec.screenHeight) * 0.97f).coerceAtLeast(160.dp)
+
+            // 1. Outer Bezel Progress Ring (Styled with selected Palette)
+            if (ringEnabled && watchFaceStyle != WatchFaceStyle.DIGITAL_BIG) {
+                val indicatorColor = watchFacePalette.primary
                 if (compact) {
                     CircularProgressIndicator(
                         progress = { ringMetric.progress.coerceIn(0f, 1f) },
@@ -1180,7 +1264,7 @@ private fun M3WatchFacePage(
                         modifier = Modifier.size(ringDiameter),
                         strokeWidth = 4.dp,
                         colors = ProgressIndicatorDefaults.colors(
-                            indicatorColor = ringMetric.type.accent,
+                            indicatorColor = indicatorColor,
                             trackColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.45f)
                         )
                     )
@@ -1191,206 +1275,535 @@ private fun M3WatchFacePage(
                         modifier = Modifier.size(ringDiameter),
                         strokeWidth = 4.dp,
                         colors = ProgressIndicatorDefaults.colors(
-                            indicatorColor = ringMetric.type.accent,
+                            indicatorColor = indicatorColor,
                             trackColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.45f)
                         )
                     )
                 }
             }
 
-            // 2. Watch Face Multi-Complication Grid with Safe Insets for Round Screens
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        top = spec.screenHeight * 0.07f,
-                        bottom = spec.screenHeight * 0.07f,
-                        start = spec.screenWidth * 0.095f,
-                        end = spec.screenWidth * 0.095f
-                    ),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Row 1: Top Complication + Quick Edit Face Toggle
+            // 2. Render Layout by WatchFaceStyle
+            when (watchFaceStyle) {
+                WatchFaceStyle.DIGITAL_BIG -> {
+                    // Big Stacked Numerals Layout (Hours on top, Minutes below)
+                    val parts = clockText.split(":")
+                    val hourPart = parts.getOrNull(0) ?: "12"
+                    val minPart = parts.getOrNull(1) ?: "00"
 
-                    M3ComplicationPill(
-                        metric = top,
-                        isEditMode = isEditMode,
-                        onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
-                    )
-
-
-                // Row 2: Upper Left & Upper Right Complication Slots
-                if (upperLeft.visible || upperRight.visible || isEditMode) {
-                    Row(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxSize()
+                            .padding(horizontal = spec.screenWidth * 0.1f, vertical = spec.screenHeight * 0.08f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // Top Pill
                         M3ComplicationPill(
-                            metric = upperLeft,
+                            metric = top,
                             isEditMode = isEditMode,
-                            onClick = { onComplicationClick(ComplicationSlot.UPPER_LEFT, upperLeft) }
+                            onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
                         )
+
+                        // Center Huge Stacked Numerals
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { onComplicationClick(ComplicationSlot.RING, ringMetric) }
+                        ) {
+                            Text(
+                                text = hourPart,
+                                style = MaterialTheme.typography.numeralExtraLarge.copy(
+                                    fontSize = 54.sp,
+                                    lineHeight = 48.sp,
+                                    fontFamily = watchFaceFont.fontFamily,
+                                    fontWeight = FontWeight.Black
+                                ),
+                                color = watchFacePalette.primary
+                            )
+                            Text(
+                                text = minPart,
+                                style = MaterialTheme.typography.numeralExtraLarge.copy(
+                                    fontSize = 54.sp,
+                                    lineHeight = 48.sp,
+                                    fontFamily = watchFaceFont.fontFamily,
+                                    fontWeight = FontWeight.Black
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            if (showDateText && dateText.isNotBlank()) {
+                                Text(
+                                    text = dateText.uppercase(Locale.getDefault()),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = watchFacePalette.secondary
+                                )
+                            }
+                        }
+
+                        // Bottom Pill
                         M3ComplicationPill(
-                            metric = upperRight,
+                            metric = bottom,
                             isEditMode = isEditMode,
-                            onClick = { onComplicationClick(ComplicationSlot.UPPER_RIGHT, upperRight) }
+                            onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
                         )
                     }
                 }
 
-                // Row 3: Center Expressive Time, Date & Ring Metric Indicator
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(
-                            onClick = {
-                                if (isEditMode) {
-                                    onComplicationClick(
-                                        ComplicationSlot.RING,
-                                        ringMetric
-                                    )
-                                } else {
-                                    onComplicationClick(
-                                        ComplicationSlot.RING,
-                                        ringMetric
+                WatchFaceStyle.ANALOG_CHRONO -> {
+                    // Chrono Layout with Analog Clock Hands Canvas + Flanking Complications
+                    val now = LocalTime.now()
+                    val hourAngle = ((now.hour % 12) + now.minute / 60f) * 30f
+                    val minuteAngle = (now.minute + now.second / 60f) * 6f
+
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        // Analog Hands Canvas
+                        androidx.compose.foundation.Canvas(modifier = Modifier.size(spec.screenWidth * 0.78f)) {
+                            val centerOffset = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+                            val radius = size.minDimension / 2f
+
+                            // Hour markers
+                            for (i in 0 until 12) {
+                                val angleRad = Math.toRadians((i * 30).toDouble())
+                                val startX = centerOffset.x + (radius - 8.dp.toPx()) * Math.sin(angleRad).toFloat()
+                                val startY = centerOffset.y - (radius - 8.dp.toPx()) * Math.cos(angleRad).toFloat()
+                                val endX = centerOffset.x + radius * Math.sin(angleRad).toFloat()
+                                val endY = centerOffset.y - radius * Math.cos(angleRad).toFloat()
+                                drawLine(
+                                    color = if (i % 3 == 0) watchFacePalette.primary else Color.Gray.copy(alpha = 0.5f),
+                                    start = androidx.compose.ui.geometry.Offset(startX, startY),
+                                    end = androidx.compose.ui.geometry.Offset(endX, endY),
+                                    strokeWidth = if (i % 3 == 0) 3.dp.toPx() else 1.5.dp.toPx()
+                                )
+                            }
+
+                            // Hour Hand
+                            val hourRad = Math.toRadians(hourAngle.toDouble())
+                            val hourLength = radius * 0.48f
+                            drawLine(
+                                color = Color.White,
+                                start = centerOffset,
+                                end = androidx.compose.ui.geometry.Offset(
+                                    centerOffset.x + hourLength * Math.sin(hourRad).toFloat(),
+                                    centerOffset.y - hourLength * Math.cos(hourRad).toFloat()
+                                ),
+                                strokeWidth = 4.dp.toPx(),
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+
+                            // Minute Hand
+                            val minRad = Math.toRadians(minuteAngle.toDouble())
+                            val minLength = radius * 0.72f
+                            drawLine(
+                                color = watchFacePalette.primary,
+                                start = centerOffset,
+                                end = androidx.compose.ui.geometry.Offset(
+                                    centerOffset.x + minLength * Math.sin(minRad).toFloat(),
+                                    centerOffset.y - minLength * Math.cos(minRad).toFloat()
+                                ),
+                                strokeWidth = 2.5.dp.toPx(),
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+
+                            // Center Pivot Dot
+                            drawCircle(color = watchFacePalette.secondary, radius = 4.dp.toPx(), center = centerOffset)
+                        }
+
+                        // Sub-dial Complications Overlay
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = spec.screenHeight * 0.08f,
+                                    bottom = spec.screenHeight * 0.08f,
+                                    start = spec.screenWidth * 0.08f,
+                                    end = spec.screenWidth * 0.08f
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            M3ComplicationPill(
+                                metric = top,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                M3ComplicationPill(
+                                    metric = upperLeft,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.UPPER_LEFT, upperLeft) }
+                                )
+                                M3ComplicationPill(
+                                    metric = upperRight,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.UPPER_RIGHT, upperRight) }
+                                )
+                            }
+
+                            M3ComplicationPill(
+                                metric = bottom,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
+                            )
+                        }
+                    }
+                }
+
+                WatchFaceStyle.PIXEL_CONCENTRIC -> {
+                    // Concentric Circular Design with Centered Radial Numerals
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { ringMetric.progress.coerceIn(0f, 1f) },
+                            startAngle = 0f,
+                            endAngle = 360f,
+                            modifier = Modifier.size(ringDiameter * 0.82f),
+                            strokeWidth = 3.dp,
+                            colors = ProgressIndicatorDefaults.colors(
+                                indicatorColor = watchFacePalette.secondary.copy(alpha = 0.7f),
+                                trackColor = Color.Transparent
+                            )
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = spec.screenHeight * 0.07f,
+                                    bottom = spec.screenHeight * 0.07f,
+                                    start = spec.screenWidth * 0.095f,
+                                    end = spec.screenWidth * 0.095f
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            M3ComplicationPill(
+                                metric = top,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
+                            )
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(1.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { onComplicationClick(ComplicationSlot.RING, ringMetric) }
+                            ) {
+                                Text(
+                                    text = clockText,
+                                    style = MaterialTheme.typography.numeralExtraLarge.tabularNums().copy(
+                                        fontFamily = watchFaceFont.fontFamily,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 42.sp
+                                    ),
+                                    color = watchFacePalette.primary,
+                                    maxLines = 1
+                                )
+                                if (showDateText && dateText.isNotBlank()) {
+                                    Text(
+                                        text = dateText.uppercase(Locale.getDefault()),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1
                                     )
                                 }
                             }
-                        )
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = clockText,
-                            style = MaterialTheme.typography.numeralExtraLarge.tabularNums(),
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1
-                        )
-                        if (amPmText.isNotBlank()) {
-                            Spacer(Modifier.width(3.dp))
-                            Text(
-                                text = amPmText,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 4.dp)
+
+                            M3ComplicationPill(
+                                metric = bottom,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
                             )
                         }
                     }
+                }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                WatchFaceStyle.SAMSUNG_SPORT -> {
+                    // Galaxy Sport Gauge Layout with dual vertical/arc gauges
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = spec.screenHeight * 0.07f,
+                                bottom = spec.screenHeight * 0.07f,
+                                start = spec.screenWidth * 0.095f,
+                                end = spec.screenWidth * 0.095f
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.CalendarToday,
-                            contentDescription = null,
-                            modifier = Modifier.size(10.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                        M3ComplicationPill(
+                            metric = top,
+                            isEditMode = isEditMode,
+                            onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
                         )
-                        Text(
-                            text = dateText.uppercase(Locale.getDefault()),
-                            style = MaterialTheme.typography.labelMedium.compactLineHeight(),
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1
-                        )
-                    }
 
-                    // Dynamic Active Media / Focus / Fast / Workout Live Pill
-                    val mediaVm: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = runCatching { androidx.lifecycle.viewmodel.compose.viewModel<com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel>() }.getOrNull()
-                    val isMediaPlaying = mediaVm?.isPlaying?.collectAsState()?.value ?: false
-                    val currentTrackTitle = mediaVm?.trackTitle?.collectAsState()?.value ?: ""
-
-                    if (isMediaPlaying && currentTrackTitle.isNotBlank()) {
                         Row(
                             modifier = Modifier
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                .padding(horizontal = 8.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.MusicNote,
-                                contentDescription = null,
-                                modifier = Modifier.size(10.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                            M3ComplicationPill(
+                                metric = upperLeft,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.UPPER_LEFT, upperLeft) }
                             )
-                            Text(
-                                text = currentTrackTitle.take(16),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
+                            M3ComplicationPill(
+                                metric = upperRight,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.UPPER_RIGHT, upperRight) }
                             )
                         }
-                    }
 
-                    // Telemetry Status Bar
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        WearStatusBadge(
-                            text = watchBatteryPercent
-                                .takeIf { it in 0..100 }
-                                ?.let { "$it%" } ?: "—",
-                            icon = if (isWatchCharging) {
-                                Icons.Default.BatteryChargingFull
-                            } else {
-                                Icons.Default.Watch
+                        // Center Digital Big Time with Palette Accent
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { onComplicationClick(ComplicationSlot.RING, ringMetric) }
+                        ) {
+                            Text(
+                                text = clockText,
+                                style = MaterialTheme.typography.numeralExtraLarge.tabularNums().copy(
+                                    fontFamily = watchFaceFont.fontFamily,
+                                    fontWeight = FontWeight.Black
+                                ),
+                                color = watchFacePalette.primary,
+                                maxLines = 1
+                            )
+                            if (showAmPm && amPmText.isNotBlank()) {
+                                Text(
+                                    text = amPmText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = watchFacePalette.secondary
+                                )
                             }
-                        )
-                        WearStatusBadge(
-                            text = "$phoneBatteryPercent%",
-                            icon = Icons.Default.Smartphone
-                        )
-                        WearStatusBadge(
-                            text = weatherTempText,
-                            icon = Icons.Default.WbSunny
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            M3ComplicationPill(
+                                metric = bottomLeft,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.BOTTOM_LEFT, bottomLeft) }
+                            )
+                            M3ComplicationPill(
+                                metric = bottomRight,
+                                isEditMode = isEditMode,
+                                onClick = { onComplicationClick(ComplicationSlot.BOTTOM_RIGHT, bottomRight) }
+                            )
+                        }
+
+                        M3ComplicationPill(
+                            metric = bottom,
+                            isEditMode = isEditMode,
+                            onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
                         )
                     }
                 }
 
-                // Row 4: Bottom-Left & Bottom-Right Complication Slots
-                if (bottomLeft.visible || bottomRight.visible || isEditMode) {
-                    Row(
+                WatchFaceStyle.MODULAR_COMPACT -> {
+                    // Standard 6-Slot Modular Grid
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxSize()
+                            .padding(
+                                top = spec.screenHeight * 0.07f,
+                                bottom = spec.screenHeight * 0.07f,
+                                start = spec.screenWidth * 0.095f,
+                                end = spec.screenWidth * 0.095f
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // Row 1: Top Complication
                         M3ComplicationPill(
-                            metric = bottomLeft,
+                            metric = top,
                             isEditMode = isEditMode,
-                            onClick = { onComplicationClick(ComplicationSlot.BOTTOM_LEFT, bottomLeft) }
+                            onClick = { onComplicationClick(ComplicationSlot.TOP, top) }
                         )
+
+                        // Row 2: Upper Left & Upper Right Complication Slots
+                        if (upperLeft.visible || upperRight.visible || isEditMode) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                M3ComplicationPill(
+                                    metric = upperLeft,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.UPPER_LEFT, upperLeft) }
+                                )
+                                M3ComplicationPill(
+                                    metric = upperRight,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.UPPER_RIGHT, upperRight) }
+                                )
+                            }
+                        }
+
+                        // Row 3: Center Expressive Time, Date & Ring Metric Indicator
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { onComplicationClick(ComplicationSlot.RING, ringMetric) }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = clockText,
+                                    style = MaterialTheme.typography.numeralExtraLarge.tabularNums().copy(
+                                        fontFamily = watchFaceFont.fontFamily
+                                    ),
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    maxLines = 1
+                                )
+                                if (showAmPm && amPmText.isNotBlank()) {
+                                    Spacer(Modifier.width(3.dp))
+                                    Text(
+                                        text = amPmText,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = watchFacePalette.primary,
+                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    )
+                                }
+                            }
+
+                            if (showDateText && dateText.isNotBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CalendarToday,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(10.dp),
+                                        tint = watchFacePalette.primary
+                                    )
+                                    Text(
+                                        text = dateText.uppercase(Locale.getDefault()),
+                                        style = MaterialTheme.typography.labelMedium.compactLineHeight(),
+                                        color = watchFacePalette.primary,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+
+                            // Dynamic Active Media Live Pill
+                            if (showActiveMediaPill) {
+                                val mediaVm: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = runCatching {
+                                    androidx.lifecycle.viewmodel.compose.viewModel<com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel>()
+                                }.getOrNull()
+                                val isMediaPlaying = mediaVm?.isPlaying?.collectAsState()?.value ?: false
+                                val currentTrackTitle = mediaVm?.trackTitle?.collectAsState()?.value ?: ""
+
+                                if (isMediaPlaying && currentTrackTitle.isNotBlank()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.MusicNote,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(10.dp),
+                                            tint = watchFacePalette.primary
+                                        )
+                                        Text(
+                                            text = currentTrackTitle.take(16),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                            color = watchFacePalette.primary,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Telemetry Status Bar
+                            if (showStatusIcons) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    WearStatusBadge(
+                                        text = watchBatteryPercent
+                                            .takeIf { it in 0..100 }
+                                            ?.let { "$it%" } ?: "—",
+                                        icon = if (isWatchCharging) Icons.Default.BatteryChargingFull else Icons.Default.Watch
+                                    )
+                                    WearStatusBadge(
+                                        text = "$phoneBatteryPercent%",
+                                        icon = Icons.Default.Smartphone
+                                    )
+                                    WearStatusBadge(
+                                        text = weatherTempText,
+                                        icon = Icons.Default.WbSunny
+                                    )
+                                }
+                            }
+                        }
+
+                        // Row 4: Bottom-Left & Bottom-Right Complication Slots
+                        if (bottomLeft.visible || bottomRight.visible || isEditMode) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                M3ComplicationPill(
+                                    metric = bottomLeft,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.BOTTOM_LEFT, bottomLeft) }
+                                )
+                                M3ComplicationPill(
+                                    metric = bottomRight,
+                                    isEditMode = isEditMode,
+                                    onClick = { onComplicationClick(ComplicationSlot.BOTTOM_RIGHT, bottomRight) }
+                                )
+                            }
+                        }
+
+                        // Row 5: Bottom Slot Complication
                         M3ComplicationPill(
-                            metric = bottomRight,
+                            metric = bottom,
                             isEditMode = isEditMode,
-                            onClick = { onComplicationClick(ComplicationSlot.BOTTOM_RIGHT, bottomRight) }
+                            onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
                         )
                     }
                 }
-
-                // Row 5: Bottom Slot Complication (Above EdgeButton)
-                M3ComplicationPill(
-                    metric = bottom,
-                    isEditMode = isEditMode,
-                    onClick = { onComplicationClick(ComplicationSlot.BOTTOM, bottom) }
-                )
             }
         }
     }
@@ -1460,6 +1873,20 @@ private fun M3WatchFaceCustomizerPage(
     spec: WearAdaptiveSpec,
     use24HourClock: Boolean,
     compactRing: Boolean,
+    watchFaceStyle: WatchFaceStyle,
+    watchFaceFont: WatchFaceFont,
+    watchFacePalette: WatchFacePalette,
+    showAmPm: Boolean,
+    showDateText: Boolean,
+    showStatusIcons: Boolean,
+    showActiveMediaPill: Boolean,
+    onSelectStyle: (WatchFaceStyle) -> Unit,
+    onSelectFont: (WatchFaceFont) -> Unit,
+    onSelectPalette: (WatchFacePalette) -> Unit,
+    onToggleShowAmPm: () -> Unit,
+    onToggleShowDate: () -> Unit,
+    onToggleShowStatusIcons: () -> Unit,
+    onToggleShowMediaPill: () -> Unit,
     getSlotMetric: (ComplicationSlot) -> FaceMetric,
     onSelectSlotToEdit: (ComplicationSlot) -> Unit,
     onCycleSlotQuick: (ComplicationSlot) -> Unit,
@@ -1470,7 +1897,7 @@ private fun M3WatchFaceCustomizerPage(
     onOpenStatsDeck: () -> Unit,
     isEditMode: Boolean,
     onToggleEditMode: () -> Unit,
-    ) {
+) {
     val columnState = rememberTransformingLazyColumnState()
 
     ScreenScaffold(
@@ -1499,13 +1926,246 @@ private fun M3WatchFaceCustomizerPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Interactive Complication Locations List
+            // 1. WATCH FACE STYLE PICKER
+            item {
+                CatalogM3ListHeaderSample(title = "WATCH FACE STYLE")
+            }
+
+            items(WatchFaceStyle.entries.size) { index ->
+                val style = WatchFaceStyle.entries[index]
+                val isSelected = style == watchFaceStyle
+
+                Card(
+                    onClick = { onSelectStyle(style) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isSelected) Icons.Rounded.Check else Icons.Rounded.Watch,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = style.displayName,
+                                style = MaterialTheme.typography.labelSmall.compactLineHeight(),
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = style.description,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. COLOR PALETTE PICKER
+            item {
+                CatalogM3ListHeaderSample(title = "ACCENT PALETTE")
+            }
+
+            items(WatchFacePalette.entries.size) { index ->
+                val palette = WatchFacePalette.entries[index]
+                val isSelected = palette == watchFacePalette
+
+                Card(
+                    onClick = { onSelectPalette(palette) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(palette.primary)
+                                .border(1.dp, palette.secondary, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = palette.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            // 3. FONT CUSTOMIZATION
+            item {
+                CatalogM3ListHeaderSample(title = "TYPOGRAPHY")
+            }
+
+            items(WatchFaceFont.entries.size) { index ->
+                val font = WatchFaceFont.entries[index]
+                val isSelected = font == watchFaceFont
+
+                Card(
+                    onClick = { onSelectFont(font) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "12:34",
+                            style = MaterialTheme.typography.labelMedium.copy(fontFamily = font.fontFamily),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = font.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Rounded.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 4. DISPLAY ELEMENTS & TOGGLES
+            item {
+                CatalogM3ListHeaderSample(title = "ELEMENTS & TOGGLES")
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "24-Hour Clock",
+                    checked = use24HourClock,
+                    onCheckedChange = { onToggle24Hour() },
+                    icon = Icons.Rounded.Schedule,
+                    subtitle = if (use24HourClock) "Format 14:30" else "Format 2:30 PM"
+                )
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "AM / PM Marker",
+                    checked = showAmPm,
+                    onCheckedChange = { onToggleShowAmPm() },
+                    icon = Icons.Rounded.AccessTime,
+                    subtitle = if (showAmPm) "Visible on 12-hour clock" else "Hidden"
+                )
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "Date Display",
+                    checked = showDateText,
+                    onCheckedChange = { onToggleShowDate() },
+                    icon = Icons.Rounded.CalendarToday,
+                    subtitle = if (showDateText) "Shows day & date" else "Hidden"
+                )
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "Status Badges",
+                    checked = showStatusIcons,
+                    onCheckedChange = { onToggleShowStatusIcons() },
+                    icon = Icons.Rounded.BatteryChargingFull,
+                    subtitle = if (showStatusIcons) "Battery & weather icons" else "Hidden"
+                )
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "Active Media Pill",
+                    checked = showActiveMediaPill,
+                    onCheckedChange = { onToggleShowMediaPill() },
+                    icon = Icons.Rounded.MusicNote,
+                    subtitle = if (showActiveMediaPill) "Now playing track" else "Hidden"
+                )
+            }
+
+            item {
+                WearExpressiveSwitchRow(
+                    label = "Continuous Bezel Ring",
+                    checked = compactRing,
+                    onCheckedChange = { onToggleCompactRing() },
+                    icon = Icons.Rounded.DataUsage,
+                    subtitle = if (compactRing) "Smooth arc ring" else "8-segment expressive ring"
+                )
+            }
+
+            // 5. COMPLICATION SLOTS
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
                 ) {
-                CatalogM3ListHeaderSample(title = "COMPLICATION SLOTS")
+                    CatalogM3ListHeaderSample(title = "COMPLICATION SLOTS")
 
                     Box(
                         modifier = Modifier
@@ -1596,28 +2256,6 @@ private fun M3WatchFaceCustomizerPage(
                     }
                 }
             }
-
-
-            item {
-                WearExpressiveSwitchRow(
-                    label = "24-Hour Clock",
-                    checked = use24HourClock,
-                    onCheckedChange = { onToggle24Hour() },
-                    icon = Icons.Rounded.Schedule,
-                    subtitle = if (use24HourClock) "Format 14:30" else "Format 2:30 PM"
-                )
-            }
-
-            item {
-                WearExpressiveSwitchRow(
-                    label = "Continuous Bezel Ring",
-                    checked = compactRing,
-                    onCheckedChange = { onToggleCompactRing() },
-                    icon = Icons.Rounded.DataUsage,
-                    subtitle = if (compactRing) "Smooth arc ring" else "8-segment expressive ring"
-                )
-            }
-
         }
     }
 }

@@ -6,9 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.wear.compose.foundation.lazy.AutoCenteringParams
-import androidx.wear.compose.foundation.lazy.ScalingLazyRow
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import org.json.JSONArray
 import org.json.JSONObject
 import androidx.compose.animation.core.LinearEasing
@@ -3331,47 +3328,38 @@ private fun HorizontalDateChipBar(
     onSelectOffset: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1. Use ScalingLazyListState to manage center-snapping and scaling behaviors
-    val listState = rememberScalingLazyListState(
-        initialCenterItemIndex = selectedOffset + 3 // Centers 'TODAY' initially (offset 0 is index 3)
-    )
+    val scrollState = rememberScrollState()
     val today = remember { LocalDate.now() }
     val dayFmt = remember { DateTimeFormatter.ofPattern("EEE", Locale.getDefault()) }
 
-    // 2. Replace Row with ScalingLazyRow to handle circular screen scaling automatically
-    ScalingLazyRow(
-        modifier = modifier.fillMaxWidth(),
-        state = listState,
-        // Provides breathing room on the left/right edges so items aren't clipped instantly
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(scrollState)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
-        autoCentering = AutoCenteringParams(itemIndex = 0), 
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Use items loop construct appropriate for ScalingLazyRow
-        items(9) { index -> 
-            val offset = index - 3 // Maps 0..8 to -3..5
+        for (offset in -3..5) {
             val date = today.plusDays(offset.toLong())
             val isSelected = offset == selectedOffset
             val dayName = if (offset == 0) "TODAY" else date.format(dayFmt).uppercase(Locale.getDefault())
 
             Column(
                 modifier = Modifier
-                    // 3. Fix width & meet minimum 48dp touch target requirements for Wear OS
-                    .width(52.dp) 
+                    .width(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
                     .background(
                         color = if (isSelected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = RoundedCornerShape(14.dp)
+                                else MaterialTheme.colorScheme.surfaceContainerHigh
                     )
                     .clickable { onSelectOffset(offset) }
-                    // 4. Ensure internal text padding is balanced
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = dayName,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.5.sp),
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant

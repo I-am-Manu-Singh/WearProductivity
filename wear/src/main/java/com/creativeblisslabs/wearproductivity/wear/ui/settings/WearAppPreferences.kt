@@ -37,6 +37,16 @@ object WearAppPreferences {
     const val KEY_FACE_BOTTOM_COMPLICATION = "face_bottom_complication"
     const val KEY_FACE_RING_METRIC = "face_ring_metric"
 
+    // Watch Face Customization: Types, Fonts, Texts & Colors
+    const val KEY_WATCH_FACE_TYPE = "watch_face_type" // MODULAR, MINIMAL_ANALOG, DIVER_CHRONO, DIGITAL_BIG, RETRO_LCD
+    const val KEY_WATCH_FACE_FONT = "watch_face_font" // GOOGLE_SANS, SYSTEM_ROBOTO, MONOSPACE, SERIF, CONDENSED
+    const val KEY_WATCH_FACE_ACCENT_COLOR = "watch_face_accent_color" // MINT, CORAL, COBALT, AMBER, PURPLE, MONO
+    const val KEY_SHOW_AM_PM = "watch_face_show_am_pm"
+    const val KEY_SHOW_DATE_TEXT = "watch_face_show_date_text"
+    const val KEY_SHOW_STATUS_ICONS = "watch_face_show_status_icons"
+    const val KEY_SHOW_ACTIVE_MEDIA_PILL = "watch_face_show_active_media_pill"
+    const val KEY_SHOW_SECONDS_TICK = "watch_face_show_seconds_tick"
+
     fun getBoolean(context: Context, key: String, defaultValue: Boolean): Boolean =
         runCatching {
             prefs(context).getBoolean(key, defaultValue)

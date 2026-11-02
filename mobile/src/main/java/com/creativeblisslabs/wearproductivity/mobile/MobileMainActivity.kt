@@ -128,7 +128,7 @@ fun MobileAppNavigation(repository: LifeRepository) {
             composable(MobileRoute.FOCUS.name) { com.creativeblisslabs.wearproductivity.mobile.ui.focus.MobileFocusScreen(repository) }
             composable(MobileRoute.FASTING.name) { com.creativeblisslabs.wearproductivity.mobile.ui.fasting.MobileFastingScreen(repository) }
             composable(MobileRoute.HEALTH.name) { com.creativeblisslabs.wearproductivity.mobile.ui.dashboard.MobileHealthScreen(repository) }
-            composable(MobileRoute.WORKOUT.name) { com.creativeblisslabs.wearproductivity.mobile.ui.dashboard.MobileWorkoutScreen(repository) }
+            composable(MobileRoute.WORKOUT.name) { com.creativeblisslabs.wearproductivity.mobile.ui.workout.MobileWorkoutScreen(repository) }
             composable(MobileRoute.FILES.name) { com.creativeblisslabs.wearproductivity.mobile.ui.files.MobileFileExplorerScreen(repository) }
             composable(MobileRoute.SETTINGS.name) { com.creativeblisslabs.wearproductivity.mobile.ui.settings.MobileSettingsScreen(repository) }
         }

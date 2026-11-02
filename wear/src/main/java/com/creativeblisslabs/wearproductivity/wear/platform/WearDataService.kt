@@ -160,6 +160,44 @@ class WearDataService : WearableListenerService() {
                     "pong".toByteArray(Charsets.UTF_8)
                 )
             } catch (_: Exception) {}
+        } else if (path == "/lifeos/find_watch") {
+            try {
+                val reminderIntent = android.content.Intent(this, WearReminderReceiver::class.java).apply {
+                    putExtra("title", "Find My Watch")
+                    putExtra("message", "Ring signal received from companion phone")
+                    putExtra("type", "alarm")
+                }
+                sendBroadcast(reminderIntent)
+            } catch (_: Exception) {}
+        } else if (path == "/lifeos/complication_update") {
+            try {
+                val payload = String(messageEvent.data, Charsets.UTF_8)
+                val parts = payload.split(":")
+                if (parts.size >= 2) {
+                    val key = parts[0]
+                    val value = parts[1]
+                    com.creativeblisslabs.wearproductivity.wear.ui.settings.WearAppPreferences.setString(this, key, value)
+                }
+            } catch (_: Exception) {}
+        } else if (path == "/lifeos/wear_preference_update") {
+            try {
+                val payload = String(messageEvent.data, Charsets.UTF_8)
+                val parts = payload.split(":")
+                if (parts.size >= 3) {
+                    val type = parts[0]
+                    val key = parts[1]
+                    val value = parts[2]
+                    when (type) {
+                        "bool" -> com.creativeblisslabs.wearproductivity.wear.ui.settings.WearAppPreferences.setBoolean(this, key, value.toBoolean())
+                        "int" -> com.creativeblisslabs.wearproductivity.wear.ui.settings.WearAppPreferences.setInt(this, key, value.toIntOrNull() ?: 0)
+                        else -> com.creativeblisslabs.wearproductivity.wear.ui.settings.WearAppPreferences.setString(this, key, value)
+                    }
+                }
+            } catch (_: Exception) {}
+        } else if (path == "/lifeos/reset_wear_preferences") {
+            try {
+                com.creativeblisslabs.wearproductivity.wear.ui.settings.WearAppPreferences.reset(this)
+            } catch (_: Exception) {}
         } else if (path.startsWith("/lifeos/workout/")) {
             val cmd = path.removePrefix("/lifeos/workout/")
             // Broadcast intent or trigger WearReminderReceiver / launch workout activity
