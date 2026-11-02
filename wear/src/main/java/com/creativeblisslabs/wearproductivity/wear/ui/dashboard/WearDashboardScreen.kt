@@ -901,11 +901,12 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
     )
 
     val adaptiveSpec = LocalWearAdaptiveSpec.current
-        Box(
+       Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primary),
+                .background(MaterialTheme.colorScheme.background)
         ) {
+    
             VerticalPager(
                 state = pagerState,
                 flingBehavior = pagerFlingBehavior,

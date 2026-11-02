@@ -134,154 +134,144 @@ fun WearExpressiveUniversalEditorCard(
         else -> {}
     }
 
-    val columnState = rememberTransformingLazyColumnState()
-    val transformationSpec = rememberTransformationSpec()
-
-    ScreenScaffold(
-        scrollState = columnState,
-        timeText = { TimeText() },
-        edgeButton = {
-            WearAnchoredEdgeButton(
-                onClick = {
-                    val cleanTitle = title.trim()
-                    if (cleanTitle.isBlank()) {
-                        onValidationError?.invoke("Enter a title")
-                        return@WearAnchoredEdgeButton
-                    }
-                    val validation = validateUniversalValue(timeOrDate, timeFieldType, numberMinimum, numberMaximum)
-                        .takeIf { showTimePickerField }
-                        ?: validateUniversalValue(subtitle, subtitleFieldType, subtitleNumberMinimum, subtitleNumberMaximum)
-                            .takeIf { showSubtitleField }
-                    if (validation != null) {
-                        onValidationError?.invoke(validation)
-                        return@WearAnchoredEdgeButton
-                    }
-                    onSave(cleanTitle, timeOrDate.trim(), subtitle.trim())
-                },
-                label = if (isSaving) "Saving…" else saveLabel,
-                icon = Icons.Default.Save
-            )
-        }
-    ) { contentPadding ->
-        TransformingLazyColumn(
-            state = columnState,
-            contentPadding = PaddingValues(
-                top = contentPadding.calculateTopPadding(),
-                bottom = contentPadding.calculateBottomPadding(),
-                start = 12.dp,
-                end = 12.dp
-            ),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                WearExpressiveHeader(
-                    title = if (isEditingExisting) "EDIT ${itemTypeTitle.uppercase(Locale.ROOT)}" else "NEW ${itemTypeTitle.uppercase(Locale.ROOT)}",
-                    badgeText = "EDITOR"
-                )
+    val onPerformSave: () -> Unit = {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) {
+            onValidationError?.invoke("Enter a title")
+        } else {
+            val validation = (if (showTimePickerField) validateUniversalValue(timeOrDate, timeFieldType, numberMinimum, numberMaximum) else null)
+                ?: (if (showSubtitleField) validateUniversalValue(subtitle, subtitleFieldType, subtitleNumberMinimum, subtitleNumberMaximum) else null)
+            if (validation != null) {
+                onValidationError?.invoke(validation)
+            } else {
+                onSave(cleanTitle, timeOrDate.trim(), subtitle.trim())
             }
+        }
+    }
 
-            item {
-                Card(
-                    onClick = {},
-                    enabled = false,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        WearExpressiveHeader(
+            title = if (isEditingExisting) "EDIT ${itemTypeTitle.uppercase(Locale.ROOT)}" else "NEW ${itemTypeTitle.uppercase(Locale.ROOT)}",
+            badgeText = "EDITOR"
+        )
+
+        Card(
+            onClick = {},
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                UniversalEditorInputField(
+                    value = title,
+                    onValueChange = { title = it.take(64) },
+                    label = "$itemTypeTitle Title",
+                    placeholder = "Enter name...",
+                    keyboardType = KeyboardType.Text
+                )
+
+                if (showTimePickerField) {
+                    UniversalEditorField(
+                        value = timeOrDate,
+                        onValueChange = { timeOrDate = it },
+                        label = timeFieldLabel,
+                        placeholder = "Enter value",
+                        type = timeFieldType,
+                        choices = timeOrDateChoices,
+                        numberMinimum = numberMinimum,
+                        numberMaximum = numberMaximum,
+                        numberStep = numberStep,
+                        onLaunchFullScreenPicker = {
+                            if (timeFieldType == UniversalEditorFieldType.TIME || timeFieldType == UniversalEditorFieldType.DATE) {
+                                activeFullScreenPicker = timeFieldType
+                            }
+                        }
                     )
+                }
+
+                if (showSubtitleField) {
+                    UniversalEditorField(
+                        value = subtitle,
+                        onValueChange = { subtitle = it },
+                        label = subtitleFieldLabel,
+                        placeholder = "Optional details",
+                        type = subtitleFieldType,
+                        choices = subtitleChoices,
+                        numberMinimum = subtitleNumberMinimum,
+                        numberMaximum = subtitleNumberMaximum,
+                        numberStep = subtitleNumberStep,
+                        onLaunchFullScreenPicker = {
+                            if (subtitleFieldType == UniversalEditorFieldType.TIME || subtitleFieldType == UniversalEditorFieldType.DATE) {
+                                activeFullScreenPicker = subtitleFieldType
+                            }
+                        }
+                    )
+                }
+
+                if (!validationMessage.isNullOrBlank()) {
+                    Text(
+                        text = validationMessage,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
+                    Button(
+                        onClick = onCancel,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                            .weight(1f)
+                            .heightIn(min = 36.dp),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        UniversalEditorInputField(
-                            value = title,
-                            onValueChange = { title = it.take(64) },
-                            label = "$itemTypeTitle Title",
-                            placeholder = "Enter name...",
-                            keyboardType = KeyboardType.Text
-                        )
+                        Text("Cancel", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    }
 
-                        if (showTimePickerField) {
-                            UniversalEditorField(
-                                value = timeOrDate,
-                                onValueChange = { timeOrDate = it },
-                                label = timeFieldLabel,
-                                placeholder = "Enter value",
-                                type = timeFieldType,
-                                choices = timeOrDateChoices,
-                                numberMinimum = numberMinimum,
-                                numberMaximum = numberMaximum,
-                                numberStep = numberStep,
-                                onLaunchFullScreenPicker = {
-                                    if (timeFieldType == UniversalEditorFieldType.TIME || timeFieldType == UniversalEditorFieldType.DATE) {
-                                        activeFullScreenPicker = timeFieldType
-                                    }
-                                }
-                            )
-                        }
+                    Button(
+                        onClick = { onPerformSave() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 36.dp),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(if (isSaving) "Saving…" else saveLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    }
 
-                        if (showSubtitleField) {
-                            UniversalEditorField(
-                                value = subtitle,
-                                onValueChange = { subtitle = it },
-                                label = subtitleFieldLabel,
-                                placeholder = "Optional details",
-                                type = subtitleFieldType,
-                                choices = subtitleChoices,
-                                numberMinimum = subtitleNumberMinimum,
-                                numberMaximum = subtitleNumberMaximum,
-                                numberStep = subtitleNumberStep,
-                                onLaunchFullScreenPicker = {
-                                    if (subtitleFieldType == UniversalEditorFieldType.TIME || subtitleFieldType == UniversalEditorFieldType.DATE) {
-                                        activeFullScreenPicker = subtitleFieldType
-                                    }
-                                }
-                            )
-                        }
-
-                        if (!validationMessage.isNullOrBlank()) {
-                            Text(
-                                text = validationMessage,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    if (isEditingExisting && onDelete != null) {
+                        FilledTonalIconButton(
+                            onClick = onDelete,
+                            modifier = Modifier.size(36.dp)
                         ) {
-                            Button(
-                                onClick = onCancel,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .heightIn(min = 36.dp),
-                                shape = CircleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                contentPadding = PaddingValues(0.dp)
-                            ) {
-                                Text("Cancel", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            }
-                            if (isEditingExisting && onDelete != null) {
-                                FilledTonalIconButton(
-                                    onClick = onDelete,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                                }
-                            }
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

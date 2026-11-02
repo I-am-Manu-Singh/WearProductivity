@@ -125,7 +125,7 @@ enum class FileSortOption(val label: String) {
 
 enum class TransferTransportProtocol(val label: String, val subtitle: String, val icon: ImageVector) {
     DATA_LAYER("DataLayer", "Wearable ChannelClient stream", Icons.Rounded.Watch),
-    WIFI("Wi-Fi Direct", "High-speed local LAN socket", Icons.Rounded.Wifi),
+    WIFI("Watch P2P", "Direct Wi-Fi Watch-to-Watch", Icons.Rounded.Wifi),
     BLUETOOTH("Bluetooth", "OPP / RFCOMM companion link", Icons.Rounded.Bluetooth),
     MOBILE_CLOUD("Mobile Data", "Cloud relay sync to phone", Icons.Rounded.CloudUpload)
 }
@@ -802,6 +802,16 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
     var connectedNodeName by remember { mutableStateOf("Companion Phone") }
     var isQueueProcessorRunning by remember { mutableStateOf(false) }
 
+    val p2pManager = remember { com.creativeblisslabs.wearproductivity.wear.p2p.WatchP2PManager(context) }
+    val discoveredPeers by p2pManager.discoveredPeers.collectAsState()
+
+    DisposableEffect(Unit) {
+        p2pManager.startP2PService()
+        onDispose {
+            p2pManager.stop()
+        }
+    }
+
     var feedbackOverlay by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var storageRefreshKey by remember {
         mutableIntStateOf(0)
@@ -960,73 +970,99 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
                                 }
                                 when (job.protocol) {
                                     TransferTransportProtocol.DATA_LAYER, TransferTransportProtocol.BLUETOOTH -> {
+                                        val transferId = java.util.UUID.randomUUID().toString().take(8)
+                                        val channelPath = com.creativeblisslabs.wearproductivity.shared.FileTransferProtocol.buildChannelPath(
+                                            transferId = transferId,
+                                            fileSize = totalBytes,
+                                            fileName = job.fileItem.name
+                                        )
+                                        val ackDeferred = com.creativeblisslabs.wearproductivity.shared.FileTransferAckRegistry.register(transferId)
                                         val channelClient = Wearable.getChannelClient(context)
-                                        val channel = channelClient.openChannel(
-                                            targetNode.id,
-                                            "/lifeos/file_transfer/${job.fileItem.name}"
-                                        ).await()
-                                        val outputStream =
-                                            channelClient.getOutputStream(channel).await()
-                                        val inputStream = fileItem.contentUri?.let { uri ->
-                                            context.contentResolver.openInputStream(uri)
-                                        } ?: run {
-                                            val file = File(fileItem.path)
-                                            require(file.isFile && file.canRead()) {
-                                                "File is unavailable or unreadable"
+                                        val channel = channelClient.openChannel(targetNode.id, channelPath).await()
+
+                                        var transferSucceeded = false
+                                        try {
+                                            val outputStream = channelClient.getOutputStream(channel).await()
+                                            val inputStream = fileItem.contentUri?.let { uri ->
+                                                context.contentResolver.openInputStream(uri)
+                                            } ?: run {
+                                                val file = File(fileItem.path)
+                                                require(file.isFile && file.canRead()) {
+                                                    "File is unavailable or unreadable"
+                                                }
+                                                FileInputStream(file)
                                             }
-                                            FileInputStream(file)
-                                        }
 
-                                        requireNotNull(inputStream) {
-                                            "Unable to open file content"
-                                        }
+                                            requireNotNull(inputStream) {
+                                                "Unable to open file content"
+                                            }
 
-                                        inputStream.use { stream ->
-                                            val buffer = ByteArray(32 * 1024)
-                                            var read: Int
-                                            var sent = 0L
+                                            inputStream.use { stream ->
+                                                val buffer = ByteArray(32 * 1024)
+                                                var read: Int
+                                                var sent = 0L
 
-                                            while (stream.read(buffer).also { read = it } != -1) {
-                                                currentCoroutineContext().ensureActive()
+                                                while (stream.read(buffer).also { read = it } != -1) {
+                                                    currentCoroutineContext().ensureActive()
 
-                                                outputStream.write(buffer, 0, read)
-                                                sent += read
+                                                    outputStream.write(buffer, 0, read)
+                                                    sent += read
 
-                                                val elapsedSec = (
-                                                        (System.currentTimeMillis() - startTimeMs) / 1000f
-                                                        ).coerceAtLeast(0.1f)
+                                                    val elapsedSec = ((System.currentTimeMillis() - startTimeMs) / 1000f).coerceAtLeast(0.1f)
+                                                    val kbps = ((sent / 1024f) / elapsedSec).roundToInt().coerceAtLeast(0)
+                                                    val progress = (sent.toFloat() / totalBytes.toFloat()).coerceIn(0f, 0.99f)
 
-                                                val kbps = (
-                                                        (sent / 1024f) / elapsedSec
-                                                        ).roundToInt().coerceAtLeast(0)
-
-                                                val progress = (
-                                                        sent.toFloat() / totalBytes.toFloat()
-                                                        ).coerceIn(0f, 0.99f)
-
-                                                withContext(Dispatchers.Main.immediate) {
-                                                    val index = transferQueue.indexOfFirst {
-                                                        it.id == job.id
-                                                    }
-
-                                                    if (index >= 0 &&
-                                                        transferQueue[index].status != TransferJobStatus.CANCELLED
-                                                    ) {
-                                                        transferQueue[index] = transferQueue[index].copy(
-                                                            progress = progress,
-                                                            transferredBytes = sent,
-                                                            speedKbps = kbps,
-                                                            statusDetail = "${formatByteCount(sent)} / ${formatByteCount(totalBytes)}"
-                                                        )
+                                                    withContext(Dispatchers.Main.immediate) {
+                                                        val index = transferQueue.indexOfFirst { it.id == job.id }
+                                                        if (index >= 0 && transferQueue[index].status != TransferJobStatus.CANCELLED) {
+                                                            transferQueue[index] = transferQueue[index].copy(
+                                                                progress = progress,
+                                                                transferredBytes = sent,
+                                                                speedKbps = kbps,
+                                                                statusDetail = "${formatByteCount(sent)} / ${formatByteCount(totalBytes)}"
+                                                            )
+                                                        }
                                                     }
                                                 }
+                                                outputStream.flush()
                                             }
+
+                                            // Await verification acknowledgment from the phone before closing the channel
+                                            val ackState = kotlinx.coroutines.withTimeoutOrNull(60_000) {
+                                                ackDeferred.await()
+                                            }
+                                            transferSucceeded = (ackState == com.creativeblisslabs.wearproductivity.shared.FileTransferAckState.SUCCESS)
+                                        } finally {
+                                            com.creativeblisslabs.wearproductivity.shared.FileTransferAckRegistry.unregister(transferId)
+                                            try {
+                                                channelClient.close(channel).await()
+                                            } catch (_: Exception) {}
                                         }
-                                        channelClient.close(channel).await()
-                                        realChannelDelivered = true
+                                        realChannelDelivered = transferSucceeded
                                     }
 
-                                    TransferTransportProtocol.WIFI,
+                                    TransferTransportProtocol.WIFI -> {
+                                        val peer = discoveredPeers.firstOrNull()
+                                        val srcFile = File(fileItem.path)
+                                        if (peer != null && srcFile.exists()) {
+                                            val result = p2pManager.sendFileToPeer(peer, srcFile) { pct, sent, total ->
+                                                val index = transferQueue.indexOfFirst { it.id == job.id }
+                                                if (index >= 0 && transferQueue[index].status != TransferJobStatus.CANCELLED) {
+                                                    transferQueue[index] = transferQueue[index].copy(
+                                                        progress = pct,
+                                                        transferredBytes = sent,
+                                                        statusDetail = "${formatByteCount(sent)} / ${formatByteCount(total)}"
+                                                    )
+                                                }
+                                            }
+                                            realChannelDelivered = result.isSuccess
+                                        } else if (!srcFile.exists()) {
+                                            throw java.io.FileNotFoundException("File does not exist: ${fileItem.path}")
+                                        } else {
+                                            throw java.io.IOException("No peer watch discovered on local Wi-Fi P2P")
+                                        }
+                                    }
+
                                     TransferTransportProtocol.MOBILE_CLOUD -> {
                                         throw UnsupportedOperationException(
                                             "${job.protocol.label} file transfer is not implemented"
@@ -2950,6 +2986,57 @@ private fun M3RealFilePreviewOverlay(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(8.dp)
                         )
+                    }
+                }
+            }
+
+            // Dedicated Viewer Action (PDF, Image, Text)
+            if (item.extension.equals("pdf", ignoreCase = true)) {
+                item {
+                    Button(
+                        onClick = {
+                            val intent = Intent(context, com.creativeblisslabs.wearproductivity.wear.ui.viewers.WearPdfViewerActivity::class.java).apply {
+                                putExtra("EXTRA_FILE_PATH", item.path)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Open in PDF Viewer", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            } else if (item.category == FileCategoryFilter.IMAGES) {
+                item {
+                    Button(
+                        onClick = {
+                            val intent = Intent(context, com.creativeblisslabs.wearproductivity.wear.ui.viewers.WearImageViewerActivity::class.java).apply {
+                                putExtra("EXTRA_FILE_PATH", item.path)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Fullscreen Image Viewer", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            } else if (item.category == FileCategoryFilter.DOCS || item.extension in setOf("txt", "md", "json", "log", "csv", "xml")) {
+                item {
+                    Button(
+                        onClick = {
+                            val intent = Intent(context, com.creativeblisslabs.wearproductivity.wear.ui.viewers.WearTextViewerActivity::class.java).apply {
+                                putExtra("EXTRA_FILE_PATH", item.path)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Open Fullscreen Text", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
