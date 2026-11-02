@@ -36,6 +36,11 @@ class WearMediaLibraryService : Service() {
     companion object {
         const val CHANNEL_ID = "lifeos_wear_audio_bg_channel"
         const val NOTIFICATION_ID = 888
+
+        const val ACTION_PLAY = "com.creativeblisslabs.wearproductivity.wear.media.ACTION_PLAY"
+        const val ACTION_PAUSE = "com.creativeblisslabs.wearproductivity.wear.media.ACTION_PAUSE"
+        const val ACTION_NEXT = "com.creativeblisslabs.wearproductivity.wear.media.ACTION_NEXT"
+        const val ACTION_PREV = "com.creativeblisslabs.wearproductivity.wear.media.ACTION_PREV"
     }
 
     override fun onCreate() {
@@ -53,29 +58,69 @@ class WearMediaLibraryService : Service() {
             }
         }
 
-        startForeground(NOTIFICATION_ID, buildNotification("LifeOS Audio Studio", "Ready for playback"))
+        startForeground(NOTIFICATION_ID, buildNotification("LifeOS Audio Studio", "Ready for playback", false))
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
-    private fun buildNotification(title: String, subtitle: String): Notification {
+    private fun buildNotification(title: String, subtitle: String, isPlaying: Boolean): Notification {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Background Audio Playback",
                 NotificationManager.IMPORTANCE_LOW
-            )
+            ).apply {
+                description = "Media controls and background playback status"
+                setShowBadge(false)
+            }
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        } else {
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val prevIntent = Intent(this, WearMediaLibraryService::class.java).apply { action = ACTION_PREV }
+        val prevPending = android.app.PendingIntent.getService(this, 1, prevIntent, flags)
+
+        val playPauseIntent = Intent(this, WearMediaLibraryService::class.java).apply {
+            action = if (isPlaying) ACTION_PAUSE else ACTION_PLAY
+        }
+        val playPausePending = android.app.PendingIntent.getService(this, 2, playPauseIntent, flags)
+
+        val nextIntent = Intent(this, WearMediaLibraryService::class.java).apply { action = ACTION_NEXT }
+        val nextPending = android.app.PendingIntent.getService(this, 3, nextIntent, flags)
+
+        val openAppIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            this.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val contentPending = openAppIntent?.let {
+            android.app.PendingIntent.getActivity(this, 0, it, flags)
+        }
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(subtitle)
-            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setSmallIcon(if (isPlaying) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
+            .setOngoing(isPlaying)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addAction(android.R.drawable.ic_media_previous, "Prev", prevPending)
+            .addAction(
+                if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
+                if (isPlaying) "Pause" else "Play",
+                playPausePending
+            )
+            .addAction(android.R.drawable.ic_media_next, "Next", nextPending)
+
+        if (contentPending != null) {
+            builder.setContentIntent(contentPending)
+        }
+
+        return builder.build()
     }
 
     fun playTrack(
@@ -113,7 +158,7 @@ class WearMediaLibraryService : Service() {
             }
             startForeground(
                 NOTIFICATION_ID,
-                buildNotification(if (autoStart) "Now Playing" else "Paused", title)
+                buildNotification(if (autoStart) "Now Playing" else "Paused", title, autoStart)
             )
         }
     }
@@ -128,7 +173,7 @@ class WearMediaLibraryService : Service() {
         return runCatching {
             if (mp.isPlaying) {
                 mp.pause()
-                startForeground(NOTIFICATION_ID, buildNotification("Paused", currentTrackTitle.ifBlank { fallbackTitle }))
+                startForeground(NOTIFICATION_ID, buildNotification("Paused", currentTrackTitle.ifBlank { fallbackTitle }, false))
                 false
             } else {
                 if (!isPrepared && fallbackUri != null) {
@@ -145,7 +190,7 @@ class WearMediaLibraryService : Service() {
                         mp.seekTo(fallbackPositionMs)
                     }
                     mp.start()
-                    startForeground(NOTIFICATION_ID, buildNotification("Now Playing", currentTrackTitle.ifBlank { fallbackTitle }))
+                    startForeground(NOTIFICATION_ID, buildNotification("Now Playing", currentTrackTitle.ifBlank { fallbackTitle }, true))
                     true
                 }
             }
@@ -180,6 +225,7 @@ class WearMediaLibraryService : Service() {
         runCatching {
             if (isPrepared && nativePlayer?.isPlaying == true) {
                 nativePlayer?.pause()
+                startForeground(NOTIFICATION_ID, buildNotification("Paused", currentTrackTitle.ifBlank { "LifeOS Audio" }, false))
             }
         }
     }
@@ -188,18 +234,32 @@ class WearMediaLibraryService : Service() {
         runCatching {
             if (isPrepared && nativePlayer?.isPlaying == false) {
                 nativePlayer?.start()
+                startForeground(NOTIFICATION_ID, buildNotification("Now Playing", currentTrackTitle.ifBlank { "LifeOS Audio" }, true))
             }
         }
     }
 
-    private fun playNext() {
+    fun playNext() {
         if (playlistUris.isNotEmpty()) {
             currentIndex = (currentIndex + 1) % playlistUris.size
-            playTrack(playlistUris[currentIndex], "Track ${currentIndex + 1}")
+            playTrack(playlistUris[currentIndex], "Track ${currentIndex + 1}", autoStart = true)
+        }
+    }
+
+    fun playPrevious() {
+        if (playlistUris.isNotEmpty()) {
+            currentIndex = if (currentIndex > 0) currentIndex - 1 else playlistUris.size - 1
+            playTrack(playlistUris[currentIndex], "Track ${currentIndex + 1}", autoStart = true)
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_PLAY -> resume()
+            ACTION_PAUSE -> pause()
+            ACTION_NEXT -> playNext()
+            ACTION_PREV -> playPrevious()
+        }
         return START_STICKY
     }
 

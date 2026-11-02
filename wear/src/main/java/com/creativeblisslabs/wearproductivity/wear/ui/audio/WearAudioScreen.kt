@@ -795,18 +795,13 @@ private object WearAudioMediaEngine {
                 if (arr.length() > 0) {
                     val plain = arr.getJSONObject(0).optString("plainLyrics", "")
                     if (plain.isNotBlank() && plain != "null") {
-                        val lines = plain.lines().filter { it.isNotBlank() }
-                        val stepSec = (track.durationSeconds.coerceAtLeast(30).toFloat() / lines.size.coerceAtLeast(1))
-                        val synthesizedLrc = lines.mapIndexed { idx, lineText ->
-                            val totSec = (idx * stepSec).toInt()
-                            val m = totSec / 60
-                            val s = totSec % 60
-                            "[%02d:%02d.00] %s".format(Locale.ROOT, m, s, lineText)
-                        }.joinToString("\n")
-                        return@withContext synthesizedLrc to "LRCLIB Auto-Timed"
+                        // Return authentic plain text without fake spreadsheet-like timestamps
+                        return@withContext plain to "LRCLIB Plain"
                     }
                 }
             }
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
         } catch (_: Exception) {}
         null to "Not Found"
     }
@@ -2251,10 +2246,7 @@ fun WearAudioScreen(
                             },
                             onPairBluetoothDevice = {
                                 haptic.click()
-                                onPairBluetoothDevice = {
-                                    haptic.click()
-                                    requestBluetoothPairing()
-                                }
+                                requestBluetoothPairing()
                             },
                             onPhoneRemoteCommand = { cmd ->
                                 haptic.click()
@@ -3164,7 +3156,7 @@ private fun M3AudioLibraryBrowserPage(
 
                         WearSwipeableActionCard(
                             onCardClick = { onLoadPlaylist(pl) },
-                            onEditClick = { onLoadPlaylist(pl) },
+                            onEditClick = onTogglePlaylistEditor,
                             onDeleteClick = { onDeletePlaylist(pl.id) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -4056,11 +4048,14 @@ private fun M3FullScreenLyricsOverlay(
     val lrcLines = remember(lyricsSource) {
         LrcLyricsParser.parseLrc(lyricsSource).sortedBy { it.timestampMs }
     }
+    val isSynced = remember(lrcLines) {
+        lrcLines.isNotEmpty() && lrcLines.any { it.timeLabel.isNotBlank() }
+    }
     val currentTimeMs = elapsedSeconds.coerceAtLeast(0).toLong() * 1_000L
-    val currentLineIndex = lrcLines.indexOfLast { it.timestampMs <= currentTimeMs }
+    val currentLineIndex = if (isSynced) lrcLines.indexOfLast { it.timestampMs <= currentTimeMs } else -1
 
-    LaunchedEffect(currentTrack.id, currentLineIndex, lrcLines.size) {
-        if (currentLineIndex >= 0) {
+    LaunchedEffect(currentTrack.id, currentLineIndex, lrcLines.size, isSynced) {
+        if (isSynced && currentLineIndex >= 0) {
             columnState.animateScrollToItem(currentLineIndex.coerceAtLeast(0))
         }
     }
@@ -4137,7 +4132,7 @@ private fun M3FullScreenLyricsOverlay(
             } else {
                 items(lrcLines.size) { idx ->
                     val line = lrcLines[idx]
-                    val isCurrentLine = idx == currentLineIndex
+                    val isCurrentLine = isSynced && (idx == currentLineIndex)
 
                     val animatedScale by animateFloatAsState(
                         targetValue = if (isCurrentLine) 1.08f else 0.92f,
@@ -4145,7 +4140,7 @@ private fun M3FullScreenLyricsOverlay(
                         label = "immersiveLyricScale$idx"
                     )
                     val textColor by animateColorAsState(
-                        targetValue = if (isCurrentLine) Color.White else Color.White.copy(alpha = 0.45f),
+                        targetValue = if (isCurrentLine) Color.White else if (isSynced) Color.White.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.85f),
                         label = "immersiveLyricColor$idx"
                     )
 
@@ -4161,7 +4156,7 @@ private fun M3FullScreenLyricsOverlay(
                                 if (isCurrentLine) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
                                 else Color.Transparent
                             )
-                            .clickable {
+                            .clickable(enabled = isSynced && line.timestampMs > 0L) {
                                 haptic.click()
                                 val durationMs =
                                     currentTrack.durationSeconds.coerceAtLeast(1).toFloat() * 1_000f

@@ -284,7 +284,7 @@ private object WearStorageEngine {
             )
         }
 
-        return required.all {
+        return required.any {
             ContextCompat.checkSelfPermission(
                 context,
                 it
@@ -689,6 +689,7 @@ private object WearStorageEngine {
             }
         }.getOrNull()
     }
+}
 
 // =============================================================================
 // BASELINE VIEWPORT CONTAINER
@@ -1472,6 +1473,10 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
                             activeCategoryFilter = FileCategoryFilter.ALL
                             scope.launch { pagerState.animateScrollToPage(1) }
                         },
+                        onOpenDocumentTree = {
+                            haptic.click()
+                            treePicker.launch(null)
+                        },
                         onJumpToBrowser = {
                             haptic.click()
                             scope.launch { pagerState.animateScrollToPage(1) }
@@ -1717,48 +1722,6 @@ fun WearFileExplorerScreen(state: LifeState, repository: LifeRepository) {
         }
     }
 }
-    private fun listSafDirectory(
-        context: Context,
-        treeUri: Uri,
-        relativeSegments: List<String> = emptyList()
-    ): List<WearFileItem> {
-        var directory = DocumentFile.fromTreeUri(context, treeUri)
-            ?: return emptyList()
-
-        for (segment in relativeSegments) {
-            directory = directory.findFile(segment)
-                ?.takeIf { it.isDirectory }
-                ?: return emptyList()
-        }
-
-        return runCatching {
-            directory.listFiles().map { document ->
-                val name = document.name ?: "Unnamed"
-
-                val extension = name.substringAfterLast('.', "")
-                    .lowercase(Locale.ROOT)
-
-                WearFileItem(
-                    name = name,
-                    path = document.uri.toString(),
-                    isDirectory = document.isDirectory,
-                    sizeBytes = document.length().coerceAtLeast(0L),
-                    lastModifiedMs = document.lastModified(),
-                    extension = extension,
-                    mimeType = document.type
-                        ?: if (document.isDirectory) {
-                            "inode/directory"
-                        } else {
-                            "application/octet-stream"
-                        },
-                    canRead = document.canRead(),
-                    canWrite = document.canWrite(),
-                    isHidden = name.startsWith("."),
-                    contentUri = document.uri
-                )
-            }
-        }.getOrDefault(emptyList())
-    }
 // =============================================================================
 // PAGE 0: STORAGE ANALYTICS CARDS, CATEGORY FILTER CHIPS & PERMISSIONS
 // =============================================================================
@@ -1776,6 +1739,7 @@ private fun StorageAnalyticsAndPermissionsPage(
     onRequestAllFilesAccess: () -> Unit,
     onSelectCategoryToBrowse: (FileCategoryFilter) -> Unit,
     onOpenAppVaultDirectory: () -> Unit,
+    onOpenDocumentTree: () -> Unit,
     onJumpToBrowser: () -> Unit
 ) {
     val columnState = rememberTransformingLazyColumnState()
@@ -1975,9 +1939,7 @@ private fun StorageAnalyticsAndPermissionsPage(
                     Text("Open LifeOS Sandbox Vault")
                 }
                 FilledTonalButton(
-                    onClick = {
-                        treePicker.launch(null)
-                    },
+                    onClick = onOpenDocumentTree,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
@@ -2833,29 +2795,20 @@ private fun M3RealFilePreviewOverlay(
             else -> {}
         }
         if (item.category == FileCategoryFilter.DOCS || item.extension in setOf("txt", "json", "md", "log", "xml", "csv", "kt", "py")) {
-            withContext(Dispatchers.IO) {
-                if (
-                    item.extension in setOf(
-                        "txt", "json", "md", "log",
-                        "xml", "csv", "kt", "py"
-                    )
-                ) {
-                    val content = withContext(Dispatchers.IO) {
-                        runCatching {
-                            val input = item.contentUri?.let { uri ->
-                                context.contentResolver.openInputStream(uri)
-                            } ?: File(item.path).inputStream()
+            val content = withContext(Dispatchers.IO) {
+                runCatching {
+                    val input = item.contentUri?.let { uri ->
+                        context.contentResolver.openInputStream(uri)
+                    } ?: File(item.path).inputStream()
 
-                            input.bufferedReader().use { reader ->
-                                val buffer = CharArray(2500)
-                                val count = reader.read(buffer)
-
-                                if (count > 0) String(buffer, 0, count) else ""
-                            }
-                        }.getOrDefault("Unable to read text content.")
+                    input.bufferedReader().use { reader ->
+                        val buffer = CharArray(2500)
+                        val count = reader.read(buffer)
+                        if (count > 0) String(buffer, 0, count) else ""
                     }
-                }
+                }.getOrDefault("Unable to read text content.")
             }
+            textPreviewContent = content
         }
     }
 
@@ -2881,7 +2834,7 @@ private fun M3RealFilePreviewOverlay(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+                    Color.Black.copy(alpha = 0.92f)
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -3041,6 +2994,7 @@ private fun M3ComprehensiveFileInspectorModal(
     onDeleteFile: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val columnState = rememberTransformingLazyColumnState()
     var md5Hash by remember(item.path) { mutableStateOf("Calculating...") }
 
@@ -3074,7 +3028,7 @@ private fun M3ComprehensiveFileInspectorModal(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+                    Color.Black.copy(alpha = 0.92f)
                 ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -3257,7 +3211,7 @@ private fun ViewportConstrainedFileExplorerConfirmation(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f)
+                Color.Black.copy(alpha = 0.92f)
             ).clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

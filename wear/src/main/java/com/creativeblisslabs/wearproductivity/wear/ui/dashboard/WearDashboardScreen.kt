@@ -225,10 +225,49 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
         mutableStateOf(false)
     }
 
-    val phoneBatteryPercent = -1
+    var phoneBatteryPercent by remember {
+        mutableIntStateOf(-1)
+    }
     val weatherTempText = "—"
 
+    // Wearable message listener for live companion telemetry & acks
     DisposableEffect(appContext) {
+        val messageListener = com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener { msg ->
+            if (msg.path == "/lifeos/phone_battery") {
+                try {
+                    val str = String(msg.data, Charsets.UTF_8)
+                    val parts = str.split(",")
+                    val pct = parts.firstOrNull()?.toIntOrNull()
+                    if (pct != null) {
+                        phoneBatteryPercent = pct.coerceIn(0, 100)
+                    }
+                } catch (_: Exception) {}
+            } else if (msg.path == "/lifeos/phone_control/ack") {
+                try {
+                    val ackText = String(msg.data, Charsets.UTF_8)
+                    val actionName = ackText.substringBefore(":").capitalize(java.util.Locale.getDefault())
+                    val status = ackText.substringAfter(":", "ok")
+                    statusMessage = if (status == "failed") "$actionName failed" else "$actionName confirmed"
+                } catch (_: Exception) {}
+            }
+        }
+
+        Wearable.getMessageClient(appContext).addListener(messageListener)
+
+        // Request phone battery update on entry
+        scope.launch {
+            try {
+                val nodes = Wearable.getNodeClient(appContext).connectedNodes.await()
+                nodes.firstOrNull()?.let { phoneNode ->
+                    Wearable.getMessageClient(appContext).sendMessage(
+                        phoneNode.id,
+                        "/lifeos/request_phone_battery",
+                        byteArrayOf()
+                    ).await()
+                }
+            } catch (_: Exception) {}
+        }
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(
                 context: Context?,
@@ -280,6 +319,9 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
         onDispose {
             runCatching {
                 appContext.unregisterReceiver(receiver)
+            }
+            runCatching {
+                Wearable.getMessageClient(appContext).removeListener(messageListener)
             }
         }
     }
@@ -575,14 +617,9 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
             }
             ComplicationDataType.HEART -> {
                 val bpm = uiState.wellness.currentHeartRateBpm.toInt()
-                val heartRateFresh = remember(
-                    uiState.wellness.heartRateMeasuredAtEpochMs,
-                    nowEpochMs
-                ) {
-                    uiState.wellness.heartRateMeasuredAtEpochMs?.let {
-                        nowEpochMs - it in 0..(5 * 60 * 1000L)
-                    } == true
-                }
+                val heartRateFresh = uiState.wellness.heartRateMeasuredAtEpochMs?.let {
+                    nowEpochMs - it in 0..(5 * 60 * 1000L)
+                } == true
 
                 val heartRateBpm = uiState.wellness.currentHeartRateBpm
                     .takeIf { heartRateFresh && it > 0.0 }
@@ -647,40 +684,28 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                 progress = (totalExpenseAmount / 2000f).coerceIn(0f, 1f)
             )
             ComplicationDataType.ALARM -> {
-                val nextAlarmInfo = nextScheduledAlarms
-                    .filter { it.triggerAtEpochMs > nowEpochMs }
-                    .minByOrNull { it.triggerAtEpochMs }
-
-                val nextAlarm = nextAlarmInfo?.let { info ->
-                    visibleAlarms.firstOrNull {
-                        it.stamp.id == info.alarmId
+                val nextAlarm = visibleAlarms
+                    .filter { it.enabled }
+                    .minByOrNull {
+                        parseStoredAlarmTime(it.time) ?: LocalTime.MAX
                     }
-                }
-                val nextTrigger = nextAlarmInfo?.triggerAtEpochMs
 
                 FaceMetric(
                     type = type,
                     title = "ALM",
-                    value = nextTrigger?.let {
-                        java.time.Instant.ofEpochMilli(it)
-                            .atZone(zoneId)
-                            .format(
-                                DateTimeFormatter.ofPattern(
-                                    if (use24HourClock) "HH:mm" else "h:mm a",
-                                    Locale.getDefault()
-                                )
-                            )
+                    value = nextAlarm?.let {
+                        formatStoredAlarmTime(it.time, use24HourClock)
                     } ?: "OFF",
-                    subtitle = nextAlarm?.label ?: "No upcoming alarm",
+                    subtitle = nextAlarm?.label ?: "No active alarm",
                     progress = if (nextAlarm != null) 1f else 0f
                 )
             }
             ComplicationDataType.EVENTS -> FaceMetric(
                 type = type,
                 title = "EVT",
-                value = "${activeEvents.size}",
+                value = "${upcomingEvents.size}",
                 subtitle = "${activeDates.size} important dates",
-                progress = (activeEvents.size / 5f).coerceIn(0f, 1f)
+                progress = (upcomingEvents.size / 5f).coerceIn(0f, 1f)
             )
             ComplicationDataType.ROUTINES -> FaceMetric(
                 type = type,
@@ -764,7 +789,7 @@ fun WearDashboardScreen(state: LifeState, repository: LifeRepository) {
                 "Total spent: ₹$totalExpenseAmount across ${activeExpenses.size} transactions."
             )
             ComplicationDataType.ALARM -> toggleAlarm()
-            ComplicationDataType.EVENTS -> showInfo("Agenda", "${activeEvents.size} upcoming events & ${activeDates.size} important dates.")
+            ComplicationDataType.EVENTS -> showInfo("Agenda", "${upcomingEvents.size} upcoming events & ${activeDates.size} important dates.")
             ComplicationDataType.ROUTINES -> completeNextRoutine()
             ComplicationDataType.RUNS -> completeNextWorkout()
             ComplicationDataType.BATTERY -> showInfo("Battery Status", "Watch: $watchBatteryPercent% ${if (isWatchCharging) "(Charging)" else ""}\nPhone Companion: $phoneBatteryPercent%")
@@ -1278,6 +1303,36 @@ private fun M3WatchFacePage(
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
                         )
+                    }
+
+                    // Dynamic Active Media / Focus / Fast / Workout Live Pill
+                    val mediaVm: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = runCatching { androidx.lifecycle.viewmodel.compose.viewModel<com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel>() }.getOrNull()
+                    val isMediaPlaying = mediaVm?.isPlaying?.collectAsState()?.value ?: false
+                    val currentTrackTitle = mediaVm?.trackTitle?.collectAsState()?.value ?: ""
+
+                    if (isMediaPlaying && currentTrackTitle.isNotBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.MusicNote,
+                                contentDescription = null,
+                                modifier = Modifier.size(10.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = currentTrackTitle.take(16),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                        }
                     }
 
                     // Telemetry Status Bar
@@ -2005,7 +2060,7 @@ private fun M3DashboardStatsDeckPage(
             item {
                 WearMetricCard(
                     title = "ALARMS",
-                    value = "$enabledAlarms / ${visibleAlarms.size} Enabled",
+                    value = "$enabledAlarms / $totalAlarms Enabled",
                     subtitle = "Tap to manage the next alarm",
                     icon = Icons.Rounded.Alarm,
                     onClick = onToggleAlarm

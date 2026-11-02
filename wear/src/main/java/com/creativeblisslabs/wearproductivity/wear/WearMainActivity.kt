@@ -100,7 +100,24 @@ fun MainNavigation(
     exerciseRepository: com.creativeblisslabs.wearproductivity.wear.workout.ExerciseRepository,
     mediaViewModel: com.creativeblisslabs.wearproductivity.wear.media.SharedMediaViewModel? = null
 ) {
-    val pagerState = rememberPagerState(pageCount = { 11 })
+    val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+    val initialRoute = remember {
+        activity?.intent?.getStringExtra("route")
+    }
+    val initialPage = remember(initialRoute) {
+        when (initialRoute?.lowercase()) {
+            "calendar" -> 1
+            "habits", "routine" -> 2
+            "focus", "pomodoro" -> 3
+            "fasting", "nutrition" -> 4
+            "workout" -> 5
+            "audio", "media" -> 7
+            "files" -> 8
+            "settings" -> 10
+            else -> 0
+        }
+    }
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 11 })
     val isAmbient = LocalIsAmbient.current
 
     AppScaffold {

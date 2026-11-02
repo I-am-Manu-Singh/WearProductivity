@@ -12,6 +12,9 @@ class SharedMediaViewModel(application: Application) : AndroidViewModel(applicat
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    private val _trackTitle = MutableStateFlow("Focus Ambient")
+    val trackTitle: StateFlow<String> = _trackTitle.asStateFlow()
+
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
     

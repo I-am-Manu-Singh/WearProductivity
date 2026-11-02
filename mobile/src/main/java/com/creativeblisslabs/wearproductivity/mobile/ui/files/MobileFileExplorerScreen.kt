@@ -34,34 +34,43 @@ fun MobileFileExplorerScreen(repository: LifeRepository) {
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 isSending = true
-                statusMessage = "Sending file to watch..."
+                statusMessage = "Connecting to watch..."
                 scope.launch(Dispatchers.IO) {
                     try {
                         val nodes = Wearable.getNodeClient(context).connectedNodes.await()
                         val watchNode = nodes.firstOrNull()
                         if (watchNode != null) {
                             val fileName = getFileName(context, uri) ?: "shared_file"
+                            statusMessage = "Streaming $fileName to watch..."
                             val channelClient = Wearable.getChannelClient(context)
                             val channel = channelClient.openChannel(watchNode.id, "/file_transfer/$fileName").await()
                             val outputStream = channelClient.getOutputStream(channel).await()
+
+                            val fileSize = context.contentResolver.openFileDescriptor(uri, "r")?.statSize ?: -1L
+                            var totalBytesSent = 0L
 
                             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                                 val buffer = ByteArray(8192)
                                 var bytesRead: Int
                                 while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                                     outputStream.write(buffer, 0, bytesRead)
+                                    totalBytesSent += bytesRead
+                                    if (fileSize > 0) {
+                                        val pct = ((totalBytesSent * 100) / fileSize).toInt()
+                                        statusMessage = "Sending $fileName: $pct%"
+                                    }
                                 }
                             }
                             outputStream.flush()
                             outputStream.close()
                             channelClient.close(channel)
-                            statusMessage = "File sent successfully to /sdcard/Download/$fileName"
+                            statusMessage = "File sent successfully: $fileName (Saved in Downloads on Watch)"
                         } else {
-                            statusMessage = "No paired watch found"
+                            statusMessage = "No paired watch found over Bluetooth / Wi-Fi"
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        statusMessage = "Failed to send file"
+                        statusMessage = "Transfer failed: ${e.message}"
                     } finally {
                         isSending = false
                     }
@@ -108,7 +117,20 @@ fun MobileFileExplorerScreen(repository: LifeRepository) {
 
                 statusMessage?.let {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.SendToMobile, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("Connection Transport", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Direct Wearable Data Layer over Bluetooth Low Energy & Wi-Fi LAN", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }

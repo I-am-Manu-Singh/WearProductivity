@@ -345,7 +345,10 @@ data class WellnessLog(
     val heartRateMeasuredAtEpochMs: Long? = null,
     val sleepRecordedAtEpochMs: Long? = null,
     val sleepSource: String = "Unknown"
-)
+) {
+    val targetWaterGlasses: Int
+        get() = 12
+}
 
 @Serializable
 data class TodaySummary(
@@ -392,7 +395,9 @@ data class UserSettings(
     val dailyCarbsGoalGrams: Double = 220.0,
     val dailyFatGoalGrams: Double = 65.0,
     val focusTopics: List<String> = listOf("Deep Work", "Coding & Dev", "Study / Reading", "Writing", "Design", "Admin & Planning"),
-    val themeColorPalette: String = "Mint" // Options: "Mint", "Coral", "Violet", "Gold", "Blue"
+    val themeColorPalette: String = "Mint", // Options: "Mint", "Coral", "Violet", "Gold", "Blue"
+    val use24HourClock: Boolean = false,
+    val smartWakeEnabled: Boolean = true
 )
 
 @Serializable

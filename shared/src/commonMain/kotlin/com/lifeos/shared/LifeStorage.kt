@@ -85,11 +85,7 @@ class InMemoryLifeStore(initialState: LifeState = LifeSeed.state()) : LifeStore 
     private var state = initialState
     override suspend fun load(): LifeState = state
     override suspend fun save(state: LifeState) {
-        db.withTransaction {
-            // Keep all existing insert/update operations here.
-            // Add the missing focusHistory and importantDates writes.
-            // Add the new routines/timetable/settings persistence.
-        }
+        this.state = state
     }
 }
 
@@ -152,17 +148,8 @@ object LifeSyncEngine {
             routines = mergeList(local.routines, remote.routines) { it.stamp },
             importantDates = mergeList(local.importantDates, remote.importantDates) { it.stamp },
             timetableBlocks = mergeList(local.timetableBlocks, remote.timetableBlocks) { it.stamp },
-
-            nutritionTarget = newer(
-                local.nutritionTarget,
-                remote.nutritionTarget
-            ) { it.stamp },
-
-            settings = newer(
-                local.settings,
-                remote.settings
-            ) { it.stamp }
-
+            nutritionTarget = remote.nutritionTarget,
+            settings = remote.settings
         )
         return SyncMergeResult(merged, acceptedRemoteChanges = remoteChanges, keptLocalChanges = 0)
     }

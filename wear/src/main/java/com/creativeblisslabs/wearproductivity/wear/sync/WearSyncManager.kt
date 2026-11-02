@@ -32,7 +32,7 @@ class WearSyncManager(
 
                     // Always push to Data Layer to let Mobile companion handle Firebase (Offline-First Proxy)
                     val dataClient = Wearable.getDataClient(context)
-                    val putDataReq = PutDataMapRequest.create("/lifeos/sync_path").apply {
+                    val putDataReq = PutDataMapRequest.create(com.creativeblisslabs.wearproductivity.shared.SyncPaths.LIFE_STATE).apply {
                         dataMap.putLong("timestamp", System.currentTimeMillis())
                         dataMap.putString("json", jsonStr)
                         setUrgent()

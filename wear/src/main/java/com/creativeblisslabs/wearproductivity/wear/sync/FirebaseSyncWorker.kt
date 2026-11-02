@@ -25,10 +25,10 @@ class FirebaseSyncWorker(
                 // The mobile companion app handles all Firebase transactions.
                 // We fallback immediately to WearDataLayer proxy syncing.
                 val dataClient = Wearable.getDataClient(appContext)
-                val putDataReq = PutDataMapRequest.create("/lifeos/sync_path").apply {
+                val putDataReq = PutDataMapRequest.create(com.creativeblisslabs.wearproductivity.shared.SyncPaths.LIFE_STATE).apply {
                     dataMap.putLong("timestamp", System.currentTimeMillis())
                     dataMap.putString("status", "pending")
-                    dataMap.putString("jsonPayload", jsonPayload)
+                    dataMap.putString("json", jsonPayload)
                     setUrgent()
                 }.asPutDataRequest()
 

@@ -198,6 +198,45 @@
         </service>
 
         <service
+            android:name=".tiles.FocusTileService"
+            android:exported="true"
+            android:label="LifeOS Focus &amp; Pomodoro"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+
+        <service
+            android:name=".tiles.HabitsTileService"
+            android:exported="true"
+            android:label="LifeOS Habits &amp; Routines"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+
+        <service
+            android:name=".tiles.CalendarTileService"
+            android:exported="true"
+            android:label="LifeOS Calendar &amp; Agenda"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+
+        <service
             android:name=".complications.TodayComplicationService"
             android:exported="true"
             android:label="LifeOS Today"
@@ -251,6 +290,7 @@
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/quick_capture" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/toggle_task" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/lifeos" />
             </intent-filter>
         </service>
     </application>

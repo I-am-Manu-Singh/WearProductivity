@@ -650,6 +650,14 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
     val scope = rememberCoroutineScope()
     val haptic = rememberLifeOSHapticProvider()
     val liveState by repository.state.collectAsState()
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
+    val pagerFlingBehavior = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
     var todayBounds by remember {
         mutableStateOf(todayEpochBounds())
     }
@@ -1158,6 +1166,11 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
         waterLogs.add(0, newEntry)
         FastingStudioPrefs.saveWaterLogs(context, waterLogs)
 
+        // Sync with repository
+        scope.launch {
+            repository.addWater(safeAmount)
+        }
+
         feedbackOverlay = "+${safeAmount}ml Water Logged" to false
     }
 
@@ -1244,15 +1257,6 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
         feedbackOverlay = "Program Removed" to false
         haptic.click()
     }
-
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
-    val pagerFlingBehavior = PagerDefaults.flingBehavior(
-        state = pagerState,
-        snapAnimationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        )
-    )
 
     WearBaselineViewport {
         val coreSpec = LocalWearAdaptiveSpec.current
@@ -1622,10 +1626,12 @@ fun WearFastingScreen(state: LifeState, repository: LifeRepository, mediaViewMod
                             weightTargetKg = tgtKg
                             FastingStudioPrefs.saveWeightTarget(context, tgtKg)
 
+                            val pointDateLabel = java.time.LocalDateTime.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("MM/dd HH:mm", Locale.ROOT))
                             val point = WeightLogPoint(
                                 id = "w-${System.currentTimeMillis()}",
                                 weightKg = curKg,
-                                dateLabel = currentClockStamp()
+                                dateLabel = pointDateLabel
                             )
 
                             weightHistory.add(point)
@@ -1926,13 +1932,15 @@ private fun ActiveFastingAndWaterBoundaryPage(
                     )
                 }
 
-                // Universal PlayerControlBar
+                // Universal PlayerControlBar with Snooze & Stop actions
                 com.creativeblisslabs.wearproductivity.wear.ui.components.core.PlayerControlBar(
                     isPlaying = isSessionActive && !isSessionPaused,
                     progress = animatedProgress,
                     onTogglePlay = onTogglePlayPause,
-                    onPrevious = onPreviousOrRestart,
-                    onNext = onNextPhaseSwitch
+                    onPrevious = onExtendFast,
+                    onNext = onStopSession,
+                    previousIcon = Icons.Rounded.Snooze,
+                    nextIcon = Icons.Rounded.Stop
                 )
 
                 // Bottom Slot: Mute/Sound Toggle | +250ml / +1h Action | Stop or Studio Deck

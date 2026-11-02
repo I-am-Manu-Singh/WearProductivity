@@ -2,7 +2,9 @@ package com.creativeblisslabs.wearproductivity.wear.ui.habits
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import org.json.JSONArray
 import org.json.JSONObject
@@ -229,7 +231,7 @@ private fun resolveHabitIcon(key: String, habitName: String = ""): ImageVector =
 }
 
 private object HabitReminderNotifier {
-    private const val CHANNEL_ID = "lifeos_habits_timetable_alerts"
+    private const val CHANNEL_ID = "lifeos_habits_channel"
 
     fun fireReminder(context: Context, title: String, subtitle: String) {
         runCatching {
@@ -237,20 +239,58 @@ private object HabitReminderNotifier {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "Habits & Timetable Reminders",
+                    "LifeOS Habits & Routines",
                     NotificationManager.IMPORTANCE_HIGH
-                )
+                ).apply {
+                    enableVibration(true)
+                    setShowBadge(true)
+                }
                 manager.createNotificationChannel(channel)
+            }
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pendingIntent = launchIntent?.let {
+                PendingIntent.getActivity(context, 0, it, flags)
             }
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle(title)
                 .setContentText(subtitle)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .build()
             manager.notify((System.currentTimeMillis() % 10000).toInt(), notification)
         }
+    }
+
+    fun scheduleHabitAlarm(context: Context, id: String, title: String, triggerEpochMs: Long, isSnooze: Boolean = false) {
+        if (triggerEpochMs <= System.currentTimeMillis()) return
+        val numericId = (id.hashCode() and 0x7FFFFFFF)
+        com.creativeblisslabs.wearproductivity.shared.alarms.SystemAlarmScheduler.scheduleAlarm(
+            context = context,
+            triggerAtMillis = triggerEpochMs,
+            receiverClass = com.creativeblisslabs.wearproductivity.wear.platform.WearReminderReceiver::class.java,
+            alarmId = numericId,
+            title = title,
+            message = if (isSnooze) "Snoozed habit reminder: $title" else "Time for your habit: $title",
+            isSnooze = isSnooze
+        )
+    }
+
+    fun cancelHabitAlarm(context: Context, id: String) {
+        val numericId = (id.hashCode() and 0x7FFFFFFF)
+        com.creativeblisslabs.wearproductivity.shared.alarms.SystemAlarmScheduler.cancelAllAlarmTriggers(
+            context = context,
+            receiverClass = com.creativeblisslabs.wearproductivity.wear.platform.WearReminderReceiver::class.java,
+            alarmId = numericId
+        )
     }
 }
 
@@ -419,9 +459,38 @@ private object HabitsTimetableStudioPrefs {
 
     fun loadTimetableSlots(context: Context, repoRoutines: List<RoutineTask>): List<TimetableSlotMeta> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_TIMETABLE_SLOTS, null)
-        if (raw != null) {
-            if (raw.isBlank()) return emptyList()
+        if (raw != null && raw.isNotBlank()) {
+            if (raw.trimStart().startsWith("[")) {
+                val jsonList = runCatching {
+                    val array = JSONArray(raw)
+                    (0 until array.length()).mapNotNull { i ->
+                        val item = array.optJSONObject(i) ?: return@mapNotNull null
+                        val id = item.optString("id")
+                        if (id.isBlank()) return@mapNotNull null
+                        val estMins = item.optInt("estimatedMinutes", 30).coerceIn(1, 480)
+                        val elapsed = item.optInt("elapsedSeconds", 0).coerceIn(0, estMins * 60)
+                        TimetableSlotMeta(
+                            id = id,
+                            title = item.optString("title", "Slot"),
+                            startTime = item.optString("startTime", "08:00"),
+                            endTime = item.optString("endTime", "08:30"),
+                            estimatedMinutes = estMins,
+                            elapsedSeconds = elapsed,
+                            isTimerRunning = item.optBoolean("isTimerRunning", false),
+                            status = runCatching { TimetableSlotStatus.valueOf(item.optString("status")) }.getOrDefault(TimetableSlotStatus.PENDING),
+                            dateIso = item.optString("dateIso", LocalDate.now().toString()),
+                            categoryTag = item.optString("categoryTag", "Deep Work"),
+                            orderIndex = item.optInt("orderIndex", i),
+                            snoozedMinutes = item.optInt("snoozedMinutes", 0),
+                            timerStartedAtEpochMs = item.optLong("timerStartedAtEpochMs", 0L),
+                            snoozedUntilEpochMs = item.optLong("snoozedUntilEpochMs", 0L)
+                        )
+                    }
+                }.getOrNull()
+                if (!jsonList.isNullOrEmpty()) return jsonList.sortedBy { it.orderIndex }
+            }
 
+            // Legacy delimiter fallback
             val parsed = raw.split(";;").mapNotNull { entry ->
                 val p = entry.split("|")
                 if (p.size >= 11) {
@@ -437,8 +506,8 @@ private object HabitsTimetableStudioPrefs {
                         title = p[1],
                         startTime = p[2],
                         endTime = p[3],
-                        estimatedMinutes = p[4].toIntOrNull() ?: 30,
-                        elapsedSeconds = p[5].toIntOrNull() ?: 0,
+                        estimatedMinutes = estimatedMinutes,
+                        elapsedSeconds = elapsedSeconds,
                         isTimerRunning = false,
                         status = runCatching { TimetableSlotStatus.valueOf(p[6]) }.getOrDefault(TimetableSlotStatus.PENDING),
                         dateIso = p[7],
@@ -450,7 +519,10 @@ private object HabitsTimetableStudioPrefs {
                     null
                 }
             }
-            if (parsed.isNotEmpty()) return parsed.sortedBy { it.orderIndex }
+            if (parsed.isNotEmpty()) {
+                saveTimetableSlots(context, parsed)
+                return parsed.sortedBy { it.orderIndex }
+            }
         }
 
         val todayIso = LocalDate.now().toString()
@@ -481,28 +553,33 @@ private object HabitsTimetableStudioPrefs {
     }
 
     fun saveTimetableSlots(context: Context, list: List<TimetableSlotMeta>) {
-        val encoded = list.joinToString(";;") {
-            "${it.id}|${it.title.replace("|", "")}|${it.startTime}|${it.endTime}|${it.estimatedMinutes}|${it.elapsedSeconds}|${it.status.name}|${it.dateIso}|${it.categoryTag.replace("|", "")}|${it.orderIndex}|${it.snoozedMinutes}"
+        val array = JSONArray()
+        list.forEach { slot ->
+            array.put(
+                JSONObject().apply {
+                    put("id", slot.id)
+                    put("title", slot.title)
+                    put("startTime", slot.startTime)
+                    put("endTime", slot.endTime)
+                    put("estimatedMinutes", slot.estimatedMinutes)
+                    put("elapsedSeconds", slot.elapsedSeconds)
+                    put("isTimerRunning", slot.isTimerRunning)
+                    put("timerStartedAtEpochMs", slot.timerStartedAtEpochMs)
+                    put("status", slot.status.name)
+                    put("dateIso", slot.dateIso)
+                    put("categoryTag", slot.categoryTag)
+                    put("orderIndex", slot.orderIndex)
+                    put("snoozedMinutes", slot.snoozedMinutes)
+                    put("snoozedUntilEpochMs", slot.snoozedUntilEpochMs)
+                }
+            )
         }
-
-        JSONObject().apply {
-            put("id", slot.id)
-            put("title", slot.title)
-            put("startTime", slot.startTime)
-            put("endTime", slot.endTime)
-            put("estimatedMinutes", slot.estimatedMinutes)
-            put("elapsedSeconds", slot.elapsedSeconds)
-            put("isTimerRunning", slot.isTimerRunning)
-            put("timerStartedAtEpochMs", slot.timerStartedAtEpochMs)
-            put("status", slot.status.name)
-            put("dateIso", slot.dateIso)
-            put("categoryTag", slot.categoryTag)
-            put("orderIndex", slot.orderIndex)
-            put("snoozedUntilEpochMs", slot.snoozedUntilEpochMs)
-        }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_TIMETABLE_SLOTS, encoded).apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_TIMETABLE_SLOTS, array.toString())
+            .apply()
     }
-    private fun isLocalTimetableSlot(id: String): Boolean {
+    fun isLocalTimetableSlot(id: String): Boolean {
         return id.startsWith("local-tt-") || id.startsWith("tt-")
     }
 }
@@ -749,6 +826,12 @@ fun WearHabitsScreen(
     fun advanceHabitProgress(habit: Habit, customIncrement: Double? = null) {
         haptic.click()
         val meta = metaFor(habit)
+        val now = System.currentTimeMillis()
+        if (meta.snoozedUntilEpochMs > now) {
+            val remainMin = ((meta.snoozedUntilEpochMs - now) / 60_000L).coerceAtLeast(1)
+            feedbackOverlay = "${habit.name} is snoozed (${remainMin}m left)" to true
+            return
+        }
         val step = customIncrement ?: meta.stepIncrement.coerceAtLeast(1.0)
         coroutineScope.launch {
             if (habit.targetValue <= 1.0 || meta.mode == HabitCompletionMode.SINGLE_TAP) {
@@ -832,7 +915,9 @@ fun WearHabitsScreen(
         val targetId = editingHabitId
         coroutineScope.launch {
             runCatching {
+                val finalId: String
                 if (targetId != null) {
+                    finalId = targetId
                     repository.editHabit(
                         id = targetId,
                         newName = cleanName,
@@ -859,19 +944,43 @@ fun WearHabitsScreen(
                         unit = unitStr
                     )
                     val newlyCreated = repository.current().activeHabits.firstOrNull { it.name.equals(cleanName, true) }
-                    if (newlyCreated != null) {
-                        habitMetaMap[newlyCreated.stamp.id] = HabitExtendedMeta(
-                            habitId = newlyCreated.stamp.id,
-                            tag = draftTag,
-                            iconKey = draftIconKey,
-                            colorKey = draftColorKey,
-                            mode = draftCompletionMode,
-                            stepIncrement = stepVal,
-                            reminderTime = draftReminderTime
+                    finalId = newlyCreated?.stamp?.id ?: "h_${System.currentTimeMillis()}"
+                    habitMetaMap[finalId] = HabitExtendedMeta(
+                        habitId = finalId,
+                        tag = draftTag,
+                        iconKey = draftIconKey,
+                        colorKey = draftColorKey,
+                        mode = draftCompletionMode,
+                        stepIncrement = stepVal,
+                        reminderTime = draftReminderTime
+                    )
+                }
+                persistMeta()
+
+                // Schedule habit reminder at draftReminderTime if valid
+                runCatching {
+                    val timeParts = draftReminderTime.split(":")
+                    if (timeParts.size == 2) {
+                        val h = timeParts[0].trim().toIntOrNull() ?: 8
+                        val m = timeParts[1].trim().toIntOrNull() ?: 0
+                        val targetCal = java.util.Calendar.getInstance().apply {
+                            set(java.util.Calendar.HOUR_OF_DAY, h)
+                            set(java.util.Calendar.MINUTE, m)
+                            set(java.util.Calendar.SECOND, 0)
+                            set(java.util.Calendar.MILLISECOND, 0)
+                            if (timeInMillis <= System.currentTimeMillis()) {
+                                add(java.util.Calendar.DAY_OF_YEAR, 1)
+                            }
+                        }
+                        HabitReminderNotifier.scheduleHabitAlarm(
+                            context = context,
+                            id = finalId,
+                            title = cleanName,
+                            triggerEpochMs = targetCal.timeInMillis,
+                            isSnooze = false
                         )
                     }
                 }
-                persistMeta()
             }.onSuccess {
                 showHabitEditor = false
                 editingHabitId = null
@@ -1216,7 +1325,14 @@ fun WearHabitsScreen(
                         onAdvanceHabit = { habit, inc -> advanceHabitProgress(habit, inc) },
                         onTimerToggleHabit = { habit ->
                             haptic.click()
-                            coroutineScope.launch { repository.toggleHabitTimer(habit.stamp.id) }
+                            val meta = metaFor(habit)
+                            val now = System.currentTimeMillis()
+                            if (meta.snoozedUntilEpochMs > now) {
+                                val remainMin = ((meta.snoozedUntilEpochMs - now) / 60_000L).coerceAtLeast(1)
+                                feedbackOverlay = "${habit.name} is snoozed (${remainMin}m left)" to true
+                            } else {
+                                coroutineScope.launch { repository.toggleHabitTimer(habit.stamp.id) }
+                            }
                         },
                         onOpenSnoozeForHabit = { habit ->
                             haptic.click()
@@ -1483,21 +1599,39 @@ fun WearHabitsScreen(
                     },
                     onConfirmSnooze = { mins ->
                         haptic.click()
+                        val wakeEpoch = System.currentTimeMillis() + (mins * 60_000L)
                         modalTargetHabitId?.let { hId ->
                             val existing = habitMetaMap[hId] ?: HabitExtendedMeta(habitId = hId)
                             habitMetaMap[hId] = existing.copy(
-                                snoozedUntilEpochMs = System.currentTimeMillis() + (mins * 60_000L)
+                                snoozedUntilEpochMs = wakeEpoch
                             )
                             persistMeta()
+                            val hName = habits.firstOrNull { it.stamp.id == hId }?.name ?: "Habit"
+                            HabitReminderNotifier.scheduleHabitAlarm(
+                                context = context,
+                                id = "snooze_$hId",
+                                title = "$hName (Snooze Ended)",
+                                triggerEpochMs = wakeEpoch,
+                                isSnooze = true
+                            )
                         }
                         modalTargetSlotId?.let { sId ->
                             val idx = timetableSlots.indexOfFirst { it.id == sId }
                             if (idx >= 0) {
+                                val sTitle = timetableSlots[idx].title
                                 timetableSlots[idx] = timetableSlots[idx].copy(
                                     snoozedMinutes = mins,
+                                    snoozedUntilEpochMs = wakeEpoch,
                                     isTimerRunning = false
                                 )
                                 persistTimetable()
+                                HabitReminderNotifier.scheduleHabitAlarm(
+                                    context = context,
+                                    id = "snooze_slot_$sId",
+                                    title = "$sTitle (Snooze Ended)",
+                                    triggerEpochMs = wakeEpoch,
+                                    isSnooze = true
+                                )
                             }
                         }
                         activeModal = ActiveControlModal.NONE

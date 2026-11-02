@@ -66,9 +66,39 @@ class MobileDataService : WearableListenerService() {
         } else if (messageEvent.path == "/lifeos/request_phone_media") {
             sendPhoneMediaMetadata(messageEvent.sourceNodeId)
         } else if (messageEvent.path.startsWith("/lifeos/phone_control/")) {
-            val action = messageEvent.path.removePrefix("/lifeos/phone_control/")
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            val action = if (messageEvent.path == "/lifeos/phone_control/request") {
+                try {
+                    val jsonStr = String(messageEvent.data, Charsets.UTF_8)
+                    val element = kotlinx.serialization.json.Json.parseToJsonElement(jsonStr)
+                    element.let {
+                        if (it is kotlinx.serialization.json.JsonObject) {
+                            it["action"]?.let { act ->
+                                (act as? kotlinx.serialization.json.JsonPrimitive)?.content ?: ""
+                            } ?: ""
+                        } else ""
+                    }
+                } catch (_: Exception) {
+                    ""
+                }
+            } else {
+                messageEvent.path.removePrefix("/lifeos/phone_control/")
+            }
+
+            var ackStatus = "executed"
             when (action) {
+                "lock" -> {
+                    // Lock / Screen off intent or home screen
+                    try {
+                        val intent = Intent(Intent.ACTION_MAIN).apply {
+                            addCategory(Intent.CATEGORY_HOME)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        startActivity(intent)
+                    } catch (_: Exception) {
+                        ackStatus = "failed"
+                    }
+                }
                 "unlock" -> {
                     try {
                         val intent = Intent(Intent.ACTION_MAIN).apply {
@@ -76,19 +106,31 @@ class MobileDataService : WearableListenerService() {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
                         startActivity(intent)
-                    } catch (_: Exception) {}
+                    } catch (_: Exception) {
+                        ackStatus = "failed"
+                    }
                 }
-                "ringer" -> {
+                "mute", "ringer" -> {
                     audioManager?.let {
                         val nextMode = when (it.ringerMode) {
                             AudioManager.RINGER_MODE_NORMAL -> AudioManager.RINGER_MODE_VIBRATE
                             AudioManager.RINGER_MODE_VIBRATE -> AudioManager.RINGER_MODE_SILENT
                             else -> AudioManager.RINGER_MODE_NORMAL
                         }
-                        try { it.ringerMode = nextMode } catch (_: Exception) {}
+                        try { it.ringerMode = nextMode } catch (_: Exception) { ackStatus = "failed" }
                     }
                 }
+                else -> {
+                    ackStatus = "acknowledged"
+                }
             }
+
+            // Send acknowledgement back to wear
+            try {
+                val ackPayload = "$action:$ackStatus".toByteArray(Charsets.UTF_8)
+                Wearable.getMessageClient(this).sendMessage(messageEvent.sourceNodeId, "/lifeos/phone_control/ack", ackPayload)
+            } catch (_: Exception) {}
+
             sendBatteryInfo(messageEvent.sourceNodeId)
         } else if (messageEvent.path == "/lifeos/request_phone_battery") {
             sendBatteryInfo(messageEvent.sourceNodeId)

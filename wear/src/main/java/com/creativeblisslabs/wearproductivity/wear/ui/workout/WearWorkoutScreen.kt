@@ -498,6 +498,28 @@ private object WorkoutStudioPrefs {
     fun loadPrList(context: Context): List<PersonalRecordEntry> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_PR_LIST, null)
         if (!raw.isNullOrBlank()) {
+            if (raw.trimStart().startsWith("[")) {
+                val jsonList = runCatching {
+                    val arr = JSONArray(raw)
+                    (0 until arr.length()).mapNotNull { i ->
+                        val obj = arr.optJSONObject(i) ?: return@mapNotNull null
+                        val id = obj.optString("id")
+                        if (id.isBlank()) return@mapNotNull null
+                        PersonalRecordEntry(
+                            id = id,
+                            exerciseName = obj.optString("exerciseName", "Exercise"),
+                            discipline = runCatching { WorkoutDiscipline.valueOf(obj.optString("discipline")) }.getOrDefault(WorkoutDiscipline.GYM),
+                            currentValue = obj.optDouble("currentValue", 60.0),
+                            previousBest = obj.optDouble("previousBest", 55.0),
+                            targetGoal = obj.optDouble("targetGoal", 75.0),
+                            unit = obj.optString("unit", "kg")
+                        )
+                    }
+                }.getOrNull()
+                if (!jsonList.isNullOrEmpty()) return jsonList
+            }
+
+            // Legacy delimiter fallback
             val parsed = raw.split(";;").mapNotNull { entry ->
                 val p = entry.split("|")
                 if (p.size >= 7) {
@@ -512,26 +534,68 @@ private object WorkoutStudioPrefs {
                     )
                 } else null
             }
-            if (parsed.isNotEmpty()) return parsed
+            if (parsed.isNotEmpty()) {
+                savePrList(context, parsed)
+                return parsed
+            }
         }
         return emptyList()
     }
 
     fun savePrList(context: Context, list: List<PersonalRecordEntry>) {
-        val encoded = list.joinToString(";;") {
-            "${it.id}|${it.exerciseName.replace("|", "")}|${it.discipline.name}|${it.currentValue}|${it.previousBest}|${it.targetGoal}|${it.unit}"
+        val array = JSONArray()
+        list.forEach { item ->
+            array.put(
+                JSONObject().apply {
+                    put("id", item.id)
+                    put("exerciseName", item.exerciseName)
+                    put("discipline", item.discipline.name)
+                    put("currentValue", item.currentValue)
+                    put("previousBest", item.previousBest)
+                    put("targetGoal", item.targetGoal)
+                    put("unit", item.unit)
+                }
+            )
         }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_PR_LIST, encoded).apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(KEY_PR_LIST, array.toString()).apply()
     }
 
     fun loadHistory(context: Context): List<WorkoutHistoryRecord> {
         val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_HISTORY, null)
         if (!raw.isNullOrBlank()) {
+            if (raw.trimStart().startsWith("[")) {
+                val jsonList = runCatching {
+                    val arr = JSONArray(raw)
+                    (0 until arr.length()).mapNotNull { i ->
+                        val obj = arr.optJSONObject(i) ?: return@mapNotNull null
+                        val id = obj.optString("id")
+                        if (id.isBlank()) return@mapNotNull null
+                        WorkoutHistoryRecord(
+                            id = id,
+                            title = obj.optString("title", "Workout"),
+                            discipline = runCatching { WorkoutDiscipline.valueOf(obj.optString("discipline")) }.getOrDefault(WorkoutDiscipline.GYM),
+                            setsCompleted = obj.optInt("setsCompleted", 4),
+                            totalRepsOrLaps = obj.optInt("totalRepsOrLaps", 40),
+                            totalVolumeOrDist = obj.optDouble("totalVolumeOrDist", 2400.0),
+                            durationSeconds = obj.optInt("durationSeconds", 1800),
+                            isNewPr = obj.optBoolean("isNewPr", false),
+                            timestampLabel = obj.optString("timestampLabel", ""),
+                            timestampEpochMillis = obj.optLong("timestampEpochMillis", id.removePrefix("wh-").toLongOrNull() ?: 0L)
+                        )
+                    }
+                }.getOrNull()
+                if (!jsonList.isNullOrEmpty()) return jsonList
+            }
+
+            // Legacy delimiter fallback
             val parsed = raw.split(";;").mapNotNull { entry ->
                 val p = entry.split("|")
                 if (p.size >= 9) {
+                    val id = p[0]
+                    val epochFromP9 = p.getOrNull(9)?.toLongOrNull()
+                    val epoch = epochFromP9 ?: id.removePrefix("wh-").toLongOrNull() ?: 0L
                     WorkoutHistoryRecord(
-                        id = p[0],
+                        id = id,
                         title = p[1],
                         discipline = runCatching { WorkoutDiscipline.valueOf(p[2]) }.getOrDefault(WorkoutDiscipline.GYM),
                         setsCompleted = p[3].toIntOrNull() ?: 4,
@@ -540,34 +604,40 @@ private object WorkoutStudioPrefs {
                         durationSeconds = p[6].toIntOrNull() ?: 1800,
                         isNewPr = p[7].toBoolean(),
                         timestampLabel = p[8],
-                        timestampEpochMillis = p[0]
-                            .removePrefix("wh-")
-                            .toLongOrNull()
-                            ?: 0L
+                        timestampEpochMillis = epoch
                     )
                 } else null
             }
-            if (parsed.isNotEmpty()) return parsed
+            if (parsed.isNotEmpty()) {
+                saveHistory(context, parsed)
+                return parsed
+            }
         }
         return emptyList()
     }
 
     fun saveHistory(context: Context, list: List<WorkoutHistoryRecord>) {
         val limit = getHistoryRetention(context)
-
-        val encoded = list
-            .take(limit)
-            .joinToString(";;") { record ->
-                "${record.id}|${record.title.replace("|", "")}|" +
-                        "${record.discipline.name}|${record.setsCompleted}|" +
-                        "${record.totalRepsOrLaps}|${record.totalVolumeOrDist}|" +
-                        "${record.durationSeconds}|${record.isNewPr}|" +
-                        "${record.timestampLabel}|${record.timestampEpochMillis}"
-            }
-
+        val array = JSONArray()
+        list.take(limit).forEach { record ->
+            array.put(
+                JSONObject().apply {
+                    put("id", record.id)
+                    put("title", record.title)
+                    put("discipline", record.discipline.name)
+                    put("setsCompleted", record.setsCompleted)
+                    put("totalRepsOrLaps", record.totalRepsOrLaps)
+                    put("totalVolumeOrDist", record.totalVolumeOrDist)
+                    put("durationSeconds", record.durationSeconds)
+                    put("isNewPr", record.isNewPr)
+                    put("timestampLabel", record.timestampLabel)
+                    put("timestampEpochMillis", record.timestampEpochMillis)
+                }
+            )
+        }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY_HISTORY, encoded)
+            .putString(KEY_HISTORY, array.toString())
             .apply()
     }
 
@@ -1279,7 +1349,7 @@ fun WearWorkoutScreen(
                 if (selectedDisciplineFilter == WorkoutDiscipline.RUNNING) {
                     repository.addRunWorkout(1, 1, cleanName, generatedSteps)
                 } else {
-                    repository.addGymExercise(cleanName, zoneLabel, selectedDisciplineFilter.label, "${weightMatch.toInt()}kg x $parsedReps")
+                    repository.addGymExercise(cleanName, zoneLabel, selectedDisciplineFilter.label, "${weightMatchValue.toInt()}kg x $parsedReps")
                 }
             }
             feedbackOverlay = "Created $cleanName" to false
@@ -1869,7 +1939,7 @@ fun WearWorkoutScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.95f))
+                        .background(Color.Black.copy(alpha = 0.95f))
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -2182,10 +2252,10 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        top = spec.screenHeight * 0.11f,
-                        bottom = spec.screenHeight * 0.07f,
-                        start = spec.screenWidth * 0.08f,
-                        end = spec.screenWidth * 0.08f
+                        top = spec.screenHeight * 0.08f,
+                        bottom = spec.screenHeight * 0.04f,
+                        start = spec.screenWidth * 0.06f,
+                        end = spec.screenWidth * 0.06f
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
@@ -2283,12 +2353,16 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                 // Bottom Guided & Utility Action Rows (Info, Tips, Replay/Reset, +1R, Prev/Next Exercise, TTS, Stop)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 2.dp)
                 ) {
-                    // Row 1: Guided Action Buttons (Info, Tips, Reset Reps, +1R/+15s, TTS Mute, Stop/Settings)
+                    val pillBtnSize = (spec.screenHeight * 0.11f).coerceIn(24.dp, 28.dp)
+
+                    // Row 1: Quick Actions (Info, Tips, Reps, +1R/+15s, Voice Coach)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(0.92f),
                         horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -2296,7 +2370,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                         Button(
                             onClick = { overlayMode = GuidedOverlayMode.INSTRUCTIONS },
                             modifier = Modifier
-                                .size(bottomPillHeight)
+                                .size(pillBtnSize)
                                 .semantics { contentDescription = "Instructions" },
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
@@ -2305,14 +2379,14 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             ),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Icon(Icons.Default.Info, contentDescription = "Instructions", modifier = Modifier.size(15.dp))
+                            Icon(Icons.Default.Info, contentDescription = "Instructions", modifier = Modifier.size(13.dp))
                         }
 
                         // FORM TIPS Button
                         Button(
                             onClick = { overlayMode = GuidedOverlayMode.TIPS },
                             modifier = Modifier
-                                .size(bottomPillHeight)
+                                .size(pillBtnSize)
                                 .semantics { contentDescription = "Form tips" },
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
@@ -2321,14 +2395,14 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             ),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Icon(Icons.Default.Lightbulb, contentDescription = "Form tips", modifier = Modifier.size(15.dp))
+                            Icon(Icons.Default.Lightbulb, contentDescription = "Form tips", modifier = Modifier.size(13.dp))
                         }
 
                         // Reset Reps Button
                         Button(
                             onClick = onResetReps,
                             modifier = Modifier
-                                .size(bottomPillHeight)
+                                .size(pillBtnSize)
                                 .semantics { contentDescription = "Reset repetitions" },
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
@@ -2337,25 +2411,25 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             ),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Icon(Icons.Default.Replay, contentDescription = "Reset repetitions", modifier = Modifier.size(15.dp))
+                            Icon(Icons.Default.Replay, contentDescription = "Reset repetitions", modifier = Modifier.size(13.dp))
                         }
 
                         // +1 Rep or +15s Rest Button
                         Button(
                             onClick = onIncrementRepOrRest,
                             modifier = Modifier
-                                .height(bottomPillHeight)
+                                .height(pillBtnSize)
                                 .semantics { contentDescription = if (isRestingBreak) "Add 15 Seconds Rest" else "Add 1 Rep" },
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = scheme.tertiaryContainer,
                                 contentColor = scheme.onTertiaryContainer
                             ),
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                            contentPadding = PaddingValues(horizontal = 5.dp, vertical = 0.dp)
                         ) {
                             Text(
                                 text = if (isRestingBreak) "+15s" else "+1R",
-                                style = MaterialTheme.typography.labelSmall.tabularNums().copy(fontSize = 9.sp),
+                                style = MaterialTheme.typography.labelSmall.tabularNums().copy(fontSize = 8.sp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -2364,7 +2438,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                         Button(
                             onClick = onToggleTtsMute,
                             modifier = Modifier
-                                .size(bottomPillHeight)
+                                .size(pillBtnSize)
                                 .semantics { contentDescription = if (isTtsMuted) "Enable Voice Coach" else "Mute Voice Coach" },
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
@@ -2376,15 +2450,14 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             Icon(
                                 imageVector = if (!isTtsMuted) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeOff,
                                 contentDescription = null,
-                                modifier = Modifier.size(15.dp)
+                                modifier = Modifier.size(13.dp)
                             )
                         }
                     }
 
-                    // Row 2: Prev Exercise | Next / Finish Routine | Settings
+                    // Row 2: Navigation - Prev Exercise | Next / Finish Routine
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth(0.78f),
+                        modifier = Modifier.fillMaxWidth(0.72f),
                         horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -2393,7 +2466,7 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             enabled = !isFirstExercise,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(26.dp),
+                                .height(24.dp),
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = scheme.secondaryContainer,
@@ -2403,14 +2476,14 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             ),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Previous exercise", modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Previous exercise", modifier = Modifier.size(13.dp))
                         }
 
                         Button(
                             onClick = if (isLastExercise && hasStarted) onStopAndSave else onNextExercise,
                             modifier = Modifier
-                                .weight(1.6f)
-                                .height(26.dp),
+                                .weight(1.5f)
+                                .height(24.dp),
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isLastExercise) scheme.errorContainer else scheme.primary,
@@ -2421,12 +2494,12 @@ private fun ActiveWorkoutBoundaryCanvasPage(
                             Icon(
                                 imageVector = if (isLastExercise) Icons.Default.Check else Icons.Default.ArrowForward,
                                 contentDescription = null,
-                                modifier = Modifier.size(13.dp)
+                                modifier = Modifier.size(12.dp)
                             )
                             Spacer(Modifier.width(2.dp))
                             Text(
                                 text = if (isLastExercise) "FINISH" else "NEXT",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -2844,7 +2917,7 @@ private fun WorkoutProgramsAndEditorPage(
                             onSaveProgram(name, setsReps, weightZone)
                         },
                         onCancel = onCancelProgramEditor,
-                        onDelete = if (isEditingProgram) onDeleteProgram else null,
+                        onDelete = if (isEditingProgram) { { onDeleteProgram(activeProgram.id) } } else null,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -3101,6 +3174,7 @@ private fun WorkoutAnalyticsAndPrPage(
                                 (value / maxWeeklyLoad).toFloat().coerceIn(0f, 1f)
                             }
                             val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+                            val barPrimaryColor = MaterialTheme.colorScheme.primary
                             Canvas(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -3112,7 +3186,7 @@ private fun WorkoutAnalyticsAndPrPage(
                                     val x = (index + 0.5f) * barWidth
 
                                     drawRoundRect(
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = barPrimaryColor,
                                         topLeft = Offset(x, size.height - barHeight),
                                         size = Size(barWidth, barHeight),
                                         cornerRadius = CornerRadius(
@@ -3345,7 +3419,7 @@ private fun ViewportConstrainedWorkoutConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f))
+            .background(Color.Black.copy(alpha = 0.92f))
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

@@ -105,22 +105,12 @@ fun WearSettingsScreen(state: LifeState, repository: LifeRepository) {
         feedbackOverlay = "Setting Updated" to false
     }
 
-    val auth = remember { FirebaseAuth.getInstance() }
-
-    var user by remember(auth) {
-        mutableStateOf(auth.currentUser)
+    var user by remember {
+        mutableStateOf(com.creativeblisslabs.wearproductivity.shared.auth.FirebaseAuthManager.currentUser)
     }
 
-    DisposableEffect(auth) {
-        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            user = firebaseAuth.currentUser
-        }
-
-        auth.addAuthStateListener(listener)
-
-        onDispose {
-            auth.removeAuthStateListener(listener)
-        }
+    LaunchedEffect(Unit) {
+        user = com.creativeblisslabs.wearproductivity.shared.auth.FirebaseAuthManager.currentUser
     }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
     val pagerFlingBehavior = PagerDefaults.flingBehavior(
@@ -386,7 +376,7 @@ private fun SettingsBoundaryCanvasPage(
                             colors = listOf(
                                 primaryAccent.copy(alpha = 0.22f),
                                 MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.94f),
-                                MaterialTheme.colorScheme.surfaceContainerLowest
+                                MaterialTheme.colorScheme.surfaceContainerLow
                             )
                         )
                     ),
@@ -881,17 +871,19 @@ private fun SettingsAudioAndSyncPage(
                 )
             }
 
-            WearExpressiveSwitchRow(
-                label = "Smart Wake Preference",
-                checked = smartWakeEnabled,
-                onCheckedChange = { onToggleSmartWake() },
-                icon = Icons.Rounded.Alarm,
-                subtitle = if (smartWakeEnabled) {
-                    "Enabled · Scheduling not connected"
-                } else {
-                    "Disabled"
-                }
-            )
+            item {
+                WearExpressiveSwitchRow(
+                    label = "Smart Wake Preference",
+                    checked = smartWakeEnabled,
+                    onCheckedChange = { onToggleSmartWake() },
+                    icon = Icons.Rounded.Alarm,
+                    subtitle = if (smartWakeEnabled) {
+                        "Enabled · Scheduling not connected"
+                    } else {
+                        "Disabled"
+                    }
+                )
+            }
             item {
                 CatalogM3ListHeaderSample(title = "CLOUD & DATA BACKUP")
             }
@@ -939,7 +931,7 @@ private fun ViewportConstrainedSettingsConfirmation(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.92f))
+            .background(Color.Black.copy(alpha = 0.92f))
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {

@@ -30,28 +30,6 @@ class LifeRepository(
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
-    suspend fun recordHabitCompletion(
-        habitId: String,
-        dateIso: String,
-        completedValue: Double,
-        targetValue: Double
-    )
-
-    suspend fun getHabitHistory(
-        habitId: String,
-        fromDate: String,
-        toDate: String
-    ): List<HabitCompletionRecord>
-
-    suspend fun recordHabitReflection(
-        record: HabitReflectionRecord
-    )
-
-    suspend fun getHabitReflections(
-        habitId: String,
-        fromEpochMs: Long,
-        toEpochMs: Long
-    ): List<HabitReflectionRecord>
 
 
     suspend fun load() {
@@ -152,6 +130,10 @@ class LifeRepository(
                 if (task.stamp.id == id) task.copy(complete = !task.complete, stamp = task.stamp.bump(deviceId)) else task
             })
         }
+    }
+
+    suspend fun toggleTask(id: String) {
+        completeTask(id)
     }
 
     suspend fun completeAllTasks() {
@@ -495,6 +477,16 @@ class LifeRepository(
         }
     }
 
+    suspend fun toggleRun(id: String) {
+        updateState { s ->
+            s.copy(runs = s.runs.map { run ->
+                if (run.stamp.id == id && run.stamp.deletedAt == null) {
+                    run.copy(completed = !run.completed, stamp = run.stamp.bump(deviceId))
+                } else run
+            })
+        }
+    }
+
     suspend fun toggleGymWorkout() {
         updateState { s ->
             s.copy(gymWorkout = s.gymWorkout.copy(active = !s.gymWorkout.active, stamp = s.gymWorkout.stamp.bump(deviceId)))
@@ -653,7 +645,18 @@ class LifeRepository(
         updateState { s ->
             s.copy(
                 wellness = s.wellness.copy(
-                    waterGlasses = (s.wellness.waterGlasses + (amountMl / 250)).coerceAtMost(12),
+                    waterGlasses = (s.wellness.waterGlasses + (amountMl / 250)).coerceIn(0, 20),
+                    stamp = s.wellness.stamp.bump(deviceId)
+                )
+            )
+        }
+    }
+
+    suspend fun setWaterGlasses(glasses: Int) {
+        updateState { s ->
+            s.copy(
+                wellness = s.wellness.copy(
+                    waterGlasses = glasses.coerceIn(0, 20),
                     stamp = s.wellness.stamp.bump(deviceId)
                 )
             )
@@ -665,6 +668,17 @@ class LifeRepository(
             s.copy(events = existingNoSys + systemEvents)
         }
     }
+    suspend fun logFood(
+        name: String,
+        calories: Int,
+        proteinGrams: Double = 0.0,
+        carbsGrams: Double = 0.0,
+        fatGrams: Double = 0.0,
+        mealType: MealType = MealType.Snack
+    ) {
+        quickFood(name, mealType, calories, proteinGrams, carbsGrams, fatGrams)
+    }
+
     suspend fun quickFood(
         name: String,
         mealType: MealType,
@@ -1265,6 +1279,10 @@ class LifeRepository(
 
     suspend fun updateSettings(block: (UserSettings) -> UserSettings) {
         updateState { s -> s.copy(settings = block(s.settings)) }
+    }
+
+    suspend fun resetAllData() {
+        updateState { LifeSeed.state() }
     }
 
 }

@@ -478,15 +478,12 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
     val remainingSeconds = remember(
         focus.active,
         focus.isPaused,
-        focus.endTimeEpochMs,
         focus.remainingSeconds
     ) {
         if (!focus.active) {
             0
-        } else if (focus.isPaused) {
-            focus.remainingSeconds
         } else {
-            ((focus.endTimeEpochMs - System.currentTimeMillis()) / 1000L).coerceAtLeast(0L).toInt()
+            focus.remainingSeconds
         }
     }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
@@ -554,6 +551,17 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
                 minutes = minutes,
                 type = type,
                 subject = cleanTopicName
+            )
+
+            // Schedule exact background notification on Wear
+            val triggerEpochMs = System.currentTimeMillis() + (minutes * 60_000L)
+            com.creativeblisslabs.wearproductivity.shared.alarms.SystemAlarmScheduler.scheduleAlarm(
+                context = context,
+                triggerAtMillis = triggerEpochMs,
+                receiverClass = com.creativeblisslabs.wearproductivity.wear.platform.WearReminderReceiver::class.java,
+                alarmId = 9901,
+                title = "Focus Complete!",
+                message = "$cleanTopicName (${minutes}m) completed. Time for a break!"
             )
 
             sessionNotice = "Started $cleanTopicName (${minutes}m)" to false
@@ -761,8 +769,8 @@ fun WearFocusScreen(state: LifeState, repository: LifeRepository, mediaViewModel
             val newPreset = FocusTopicPreset(
                 id = "topic-${System.currentTimeMillis()}",
                 name = cleanName,
-                focusMinutes = parsedFocus,
-                breakMinutes = parsedBreak,
+                focusMinutes = parsedFocus!!,
+                breakMinutes = parsedBreak!!,
                 type = FocusType.Custom
             )
             customTopics.add(0, newPreset)
@@ -1536,7 +1544,7 @@ private fun FocusDashboardTransformingPage(
                             onSaveTopic(title, focusMins, brkMins)
                         },
                         onCancel = onCancelTopicEditor,
-                        onDelete = if (isEditingTopic) onDeleteTopic else null,
+                        onDelete = if (isEditingTopic) onDeleteTopicFromEditor else null,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
