@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         when (currentTab) {
                             "Today" -> DashboardScreen(state = currentState, repository = repository)
-                            "Habits" -> HabitsScreen(state = currentState, repository = repository)
+                            "Habits" -> HabitsScreen(repository = repository)
                             "Tasks" -> TasksScreen(state = currentState, repository = repository)
                             else -> DashboardScreen(state = currentState, repository = repository)
                         }

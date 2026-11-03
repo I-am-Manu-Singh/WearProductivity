@@ -63,3 +63,4 @@ enum class WatchFacePalette(
             entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: COBALT
     }
 }
+

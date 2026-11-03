@@ -151,6 +151,15 @@ fun MobileDashboardScreen(repository: LifeRepository) {
     var faceBottomSlot by remember { mutableStateOf("ALARM") }
     var faceRingSlot by remember { mutableStateOf("TASKS") }
 
+    // Watch Face Customization States (Synced to Wear)
+    var faceStyle by remember { mutableStateOf("MODULAR") }
+    var faceFont by remember { mutableStateOf("GOOGLE_SANS") }
+    var facePalette by remember { mutableStateOf("COBALT") }
+    var faceShowAmPm by remember { mutableStateOf(true) }
+    var faceShowDate by remember { mutableStateOf(true) }
+    var faceShowStatusIcons by remember { mutableStateOf(true) }
+    var faceShowMediaPill by remember { mutableStateOf(true) }
+
     var selectedSlotForPicker by remember { mutableStateOf<MobileComplicationSlot?>(null) }
 
     LaunchedEffect(Unit) {
@@ -191,6 +200,24 @@ fun MobileDashboardScreen(repository: LifeRepository) {
                     lastRemoteActionStatus = "Updated ${slot.label} -> ${type.shortLabel}"
                 } catch (_: Exception) {
                     lastRemoteActionStatus = "Failed to sync complication"
+                }
+            }
+        }
+    }
+
+    fun pushWearPrefUpdate(type: String, key: String, value: String, description: String) {
+        if (watchNodeId != null) {
+            scope.launch {
+                try {
+                    val payload = "$type:$key:$value".toByteArray(Charsets.UTF_8)
+                    Wearable.getMessageClient(context).sendMessage(
+                        watchNodeId!!,
+                        "/lifeos/wear_preference_update",
+                        payload
+                    ).await()
+                    lastRemoteActionStatus = "Synced: $description"
+                } catch (_: Exception) {
+                    lastRemoteActionStatus = "Failed to sync preference"
                 }
             }
         }
@@ -529,6 +556,192 @@ fun MobileDashboardScreen(repository: LifeRepository) {
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Watch Face Style Selector Chips
+                        Text(
+                            "WATCH FACE STYLE",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val styles = listOf(
+                            "MODULAR" to "Modular 6-Slot",
+                            "ANALOG_CHRONO" to "Analog Chrono",
+                            "DIGITAL_BIG" to "Digital Big",
+                            "PIXEL_CONCENTRIC" to "Pixel Concentric",
+                            "SAMSUNG_SPORT" to "Galaxy Sport"
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(styles) { (styleId, styleName) ->
+                                val isSelected = faceStyle == styleId
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        faceStyle = styleId
+                                        pushWearPrefUpdate("string", "watch_face_type", styleId, "Style: $styleName")
+                                    },
+                                    label = { Text(styleName, style = MaterialTheme.typography.labelSmall) },
+                                    leadingIcon = if (isSelected) {
+                                        { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                    } else null
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Accent Color Palette Selector
+                        Text(
+                            "ACCENT THEME PALETTE",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val palettes = listOf(
+                            Triple("COBALT", "Cobalt", Color(0xFF8EAEFF)),
+                            Triple("MINT", "Mint", Color(0xFF79E2B0)),
+                            Triple("CORAL", "Coral", Color(0xFFFF9A7A)),
+                            Triple("AMBER", "Amber", Color(0xFFFFD177)),
+                            Triple("LAVENDER", "Lavender", Color(0xFFBBA5FF)),
+                            Triple("MONOCHROME", "Mono", Color(0xFFE2E2E9))
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(palettes) { (pId, pName, pColor) ->
+                                val isSelected = facePalette == pId
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        facePalette = pId
+                                        pushWearPrefUpdate("string", "watch_face_accent_color", pId, "Theme: $pName")
+                                    },
+                                    label = { Text(pName, style = MaterialTheme.typography.labelSmall) },
+                                    leadingIcon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(10.dp)
+                                                .clip(CircleShape)
+                                                .background(pColor)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Typography Selector
+                        Text(
+                            "TYPOGRAPHY FONT",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val fonts = listOf(
+                            "GOOGLE_SANS" to "Google Sans",
+                            "ROBOTO_MONO" to "Monospace",
+                            "CLASSIC_SERIF" to "Serif",
+                            "SANS_SERIF" to "Clean Sans"
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(fonts) { (fId, fName) ->
+                                val isSelected = faceFont == fId
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        faceFont = fId
+                                        pushWearPrefUpdate("string", "watch_face_font", fId, "Font: $fName")
+                                    },
+                                    label = { Text(fName, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Element Visibility Switches
+                        Text(
+                            "ELEMENTS & TOGGLES",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("AM / PM Indicator", style = MaterialTheme.typography.bodySmall)
+                            Switch(
+                                checked = faceShowAmPm,
+                                onCheckedChange = {
+                                    faceShowAmPm = it
+                                    pushWearPrefUpdate("bool", "watch_face_show_am_pm", it.toString(), "AM/PM: $it")
+                                }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Date Display", style = MaterialTheme.typography.bodySmall)
+                            Switch(
+                                checked = faceShowDate,
+                                onCheckedChange = {
+                                    faceShowDate = it
+                                    pushWearPrefUpdate("bool", "watch_face_show_date_text", it.toString(), "Date: $it")
+                                }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Battery & Weather Badges", style = MaterialTheme.typography.bodySmall)
+                            Switch(
+                                checked = faceShowStatusIcons,
+                                onCheckedChange = {
+                                    faceShowStatusIcons = it
+                                    pushWearPrefUpdate("bool", "watch_face_show_status_icons", it.toString(), "Badges: $it")
+                                }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Active Media Pill", style = MaterialTheme.typography.bodySmall)
+                            Switch(
+                                checked = faceShowMediaPill,
+                                onCheckedChange = {
+                                    faceShowMediaPill = it
+                                    pushWearPrefUpdate("bool", "watch_face_show_active_media_pill", it.toString(), "Media Pill: $it")
+                                }
+                            )
+                        }
 
                         // Complication Picker Bottom Sheet
                         if (selectedSlotForPicker != null) {

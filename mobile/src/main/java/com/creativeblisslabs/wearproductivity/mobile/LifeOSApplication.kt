@@ -1,9 +1,11 @@
 package com.creativeblisslabs.wearproductivity.mobile
 
 import android.app.Application
-import com.creativeblisslabs.wearproductivity.shared.InMemoryLifeStore
 import com.creativeblisslabs.wearproductivity.shared.LifeRepository
+import com.creativeblisslabs.wearproductivity.shared.RoomLifeStore
+import com.creativeblisslabs.wearproductivity.shared.database.DatabaseBuilder
 import com.creativeblisslabs.wearproductivity.shared.platform.AndroidWearSyncTransport
+import com.creativeblisslabs.wearproductivity.mobile.sync.MobileWearSyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,19 +21,27 @@ class LifeOSApplication : Application() {
         coerceInputValues = true
     }
     
-    // In a real app, use RoomLifeStore with LifeDatabase
+    private val database by lazy {
+        DatabaseBuilder(this).build()
+    }
+
     val repository by lazy {
         LifeRepository(
-            store = InMemoryLifeStore(),
+            store = RoomLifeStore(database),
             transport = AndroidWearSyncTransport(this, json),
             deviceId = "phone"
         )
+    }
+
+    val wearSyncManager by lazy {
+        MobileWearSyncManager(this, repository, applicationScope)
     }
 
     override fun onCreate() {
         super.onCreate()
         applicationScope.launch {
             repository.load()
+            wearSyncManager.observeAndSync()
         }
     }
 }

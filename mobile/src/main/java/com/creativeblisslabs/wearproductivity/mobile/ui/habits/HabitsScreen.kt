@@ -263,9 +263,9 @@ enum class MobileHabitsTab(val label: String, val icon: ImageVector) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitsScreen(
-    state: LifeState,
     repository: LifeRepository
 ) {
+    val state by repository.state.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var currentTab by remember { mutableStateOf(MobileHabitsTab.HABITS_DECK) }
